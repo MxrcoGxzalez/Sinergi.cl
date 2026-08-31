@@ -1,57 +1,42 @@
-MÓDULO 1: Sitio público (Landing / Corporativo)
+### Módulos
 
-- Home institucional: quiénes son, misión, trayectoria, ventajas competitivas
-- Áreas de especialización (eléctrica, incendios, climatización, obras civiles, diseño de ingeniería, sanitaria, mantención)
-- Portafolio de proyectos realizados y en ejecución (con galería de imágenes y, si aplica, visualización 3D)
-- Blog/noticias técnicas: tendencias, normativas, artículos, con sistema de suscripción
-- Widgets en tiempo real: valor UF, Dólar, Divisas, otros indicadores de interés técnico
-- Formulario de contacto + captación de leads (registro de visitantes)
-- Chatbot de atención general (info de la empresa, servicios, redirección a contacto)
-- Integración con redes sociales
-- SEO y enfoque en sector industrial / centros de distribución / infraestructura
+**Módulo 1 — Sitio público (landing/corporativo)**
+- Home institucional: misión, visión, trayectoria, ventajas competitivas
+- Áreas de especialización (eléctrica, incendios, climatización, obras civiles, diseño de ingeniería, sanitaria, telecomunicaciones, mantención)
+- Portafolio de proyectos finalizados (nombre + empresa cliente)
+- Noticias/artículos técnicos alimentados por API/RSS externo
+- Presencia de Instagram y LinkedIn integradas
+- Formulario de contacto y captación de leads
+- Chatbot general (info de la empresa y del proceso de contacto)
 
+**Módulo 2 — Portal de clientes**
+- Login únicamente (sin autoregistro)
+- Creación de tarjeta de proyecto y carga de documentos
+- Estado de verificación del proyecto
+- Visualización del desglose de hitos, actualizado en tiempo real
+- Multiproyecto por cliente, siempre separados entre sí
+- Descarga de documentos en formato original y/o PDF
+- Canal de solicitudes/chat bidireccional con la empresa
 
-MÓDULO 2: Portal de Clientes (área privada)
+**Módulo 3 — Panel de administración**
+- Verificación de proyectos entrantes
+- Constructor de diagrama de hitos por proyecto
+- Marcar proyecto como finalizado (con opción de mostrarlo en el portafolio público)
+- Dashboard con métricas generales (sin datos financieros por ahora)
+- Gestión de usuarios (solo admin)
+- Revisión de leads del sitio público
 
-- Login/registro (cuenta creada por la empresa tras el primer contacto, según el flujo que describiste)
-- Dashboard con sus proyectos activos e ID de cliente
-- Vista de avance por proyecto: pasos completados, pendientes, línea de tiempo
-- Documentación asociada: planos, propuestas, plan de proyecto, informes
-- Descarga/carga segura de archivos
-- Notificaciones de actualización por cada hito completado
-- Widget de UF y datos relevantes también disponible aquí
-- Chatbot especializado en consultas sobre su proyecto y procesos
-- Cliente puede proponer una idea/proyecto nuevo, que la empresa revisa y aprueba para iniciar el proceso formal
+**Módulo 4 — Inteligencia Artificial**
+- Chatbot único, informativo, acotado a la empresa y su proceso de trabajo
+- Sin base de conocimiento de normativas técnicas
+- En evaluación: acceso del chatbot a datos del proyecto específico del cliente
 
+**Módulo 5 — Datos, migración e infraestructura**
+- Migración de proyectos y documentos existentes
+- Pruebas con datos simulados antes de producción
+- Seguridad reforzada en el login (no hay autoregistro)
+- Backend con 3 niveles de acceso (cliente, empleado, admin)
 
-MÓDULO 3: Panel de Administración (empresa)
-
-- Gestión completa de proyectos (crear, editar, actualizar estado, asignar etapas)
-- Panel de control (dashboard) con visión global: proyectos actuales, futuros, valor real de empresa
-- Gestión de clientes: alta de cuentas, asignación de proyectos, historial
-- Gestión de documentos y planos por proyecto
-- Métricas y reportes (KPIs de avance, rentabilidad, tiempos)
-- Gestión de contenido del blog/noticias
-- Panel para revisar leads/contactos entrantes desde el sitio público
-
-
-MÓDULO 4: Inteligencia Artificial
-
-- Chatbot público: información general de la empresa y servicios
-- Chatbot cliente: consultas sobre su proyecto específico y procesos
-- Asistente técnico: recomendaciones de soluciones según requerimiento del cliente, consulta de normativas
-- (Nivel más avanzado) Motor de recomendación basado en el histórico de proyectos similares
-
-
-MÓDULO 5: Datos, migración e infraestructura
-
-- Migración de datos existentes (clientes, proyectos históricos, documentos)
-- Pruebas con documentos simulados antes de ir a producción
-- Integraciones externas: API de valor UF, API de clima, redes sociales
-- Seguridad: manejo de documentación sensible de clientes, permisos por rol
-- Backend robusto que soporte 3 tipos de usuario (público, cliente, admin) con distintos niveles de acceso
-
-
-MÓDULO 6: Inventario y Stock
-
-- por ahora sera opcional para un futuro porque aun se conversa si agregarlo o no 
+**Módulo 6 — Inventario (futuro, opcional)**
+- Materiales, insumos y herramientas de la empresa
+- Se evaluará su desarrollo una vez completados los módulos principales
