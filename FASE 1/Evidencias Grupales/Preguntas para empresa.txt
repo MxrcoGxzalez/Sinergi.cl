@@ -1,0 +1,52 @@
+
+La primera pregunta es: 
+
+¿Cómo es que quiere, que los clientes puedan interactuar con el portal de clientes en el ambito de documentos?
+
+Esto biene principalmente por que los proyectos que tengan documentos tipo word, pdf, planos, excel, o 
+similares que explican el proyecto y el como lo tienen planeado ellos
+
+porque nosotros tenemos 2 opciones principales
+
+La primera, es que los clientes como pensamos nosotros les envían los documentos a 
+ustedes como empresa, y ahi los procesan y observan la viabilidad del proyecto y demas, para 
+que despues ustedes subirian los documentos a la pagina manualmente
+
+Y la segunda es que los clientes tengan la opcion de poder subir documentos al 
+portal de clientes y que ahi en el portal de empleado empresa, es que puedan ver los 
+documentos y poder ordenar y hacer lo que normalmente harian, que asi es como nosotros 
+teniamos planeado como primera opcion para el portal de clientes, pero surgio la duda entre estas 2 opciones
+
+
+La Segunda: 
+
+¿Si quieren agregar una opcion de Inventario/Stock a la pagina web?
+
+Esto viene principalmente porque marco nos menciono, que le dijieron si es posible tambien agregar esa opcion a la pagina web,
+la cual no tendria porque ser un problema o algo que nos atrasaria, y tambien esto aprovecharia mas el uso del servidor y 
+base de datos de la pagina web, lo unico si, es como que nuestro proyecto esta principalmente planeado para gestion y 
+visualizacion de proyectos para los clientes, esta funcion estaria para cuando nos sobrara tiempo en el desarrollo
+
+
+
+Esta parte es mas bien una peticion, para poder ajustar mas la pagina web a las necesidades de la empresa y 
+tambien a su modo de trabajo:
+
+Me puede explciar como es que ustedes trabajan y procesan y desarrollan los proyectos a realizar, y tambien como es que 
+hacen el proceso de elejir los proyectos para ingenieria y como es que rechazan o piden ajustes a los proyectos
+
+
+
+Y tambien la ultima que seria:
+
+¿Si es que tienen algo mas que cambiar o quieran agregar al proyecto?
+
+Mas que nada en caso de que se les haya ocurrido algo despues de leer la idea "completa" del proyecto que tenemos 
+planeado para la empresa
+
+
+
+Porque nuestro objetivo, ademas de poder darle al cliente una forma de poder visualizar el proyecto,
+es que la empresa tambien se les facilite el proceso de poder crear esas vistas para el cliente, 
+ajustando la pagina web al metodo de trabajo que tiene la empresa, para que los que tengan que hacer 
+ese diagrama o vista para que el cliente vea el proceso del proyecto, no sea tan diferente a su metodo de trabajo normal

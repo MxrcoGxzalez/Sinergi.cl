@@ -6,7 +6,7 @@
 
 ## 1. Resumen del proyecto
 
-Sinergi es una empresa de ingeniería que ejecuta proyectos encargados por otras empresas (ellos son quienes "hacen posible" el proyecto): montaje e instalaciones, ingeniería eléctrica, sistemas contra incendios, climatización, obras civiles, diseño de ingeniería, especialidades sanitarias y agua potable, y **telecomunicaciones** (confirmado: es un tipo de proyecto real que ejecutan, no error de transcripción).
+Sinergi es una empresa de ingeniería que ejecuta proyectos encargados por otras empresas (ellos son quienes "hacen posible" el proyecto): montaje e instalaciones, ingeniería eléctrica, sistemas contra incendios, climatización, obras civiles, diseño de ingeniería, especialidades sanitarias y agua potable, y telecomunicaciones, entre otros.
 
 El proyecto migra su sitio actual (landing simple de presentación y contacto) hacia una **plataforma web integral** con tres tipos de usuario (cliente, empleado/empresa, admin), enfocada principalmente en dar seguimiento en tiempo real a los proyectos de los clientes.
 
