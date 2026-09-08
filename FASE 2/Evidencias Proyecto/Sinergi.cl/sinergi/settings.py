@@ -11,19 +11,31 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 1. Primero BASE_DIR (esto ya lo trae Django por defecto)
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 2. Ahora sí, environ puede usar BASE_DIR
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env.bool('DEBUG', default=False)
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--$0$!4@z!$fx&68f&_inmp*2e$km#s!h6)ktx8g@mr&q*sss&n'
+# SECRET_KEY = 'django-insecure--$0$!4@z!$fx&68f&_inmp*2e$km#s!h6)ktx8g@mr&q*sss&n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -37,6 +49,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'usuarios',
+    'proyectos',
+    'documentos',
+    'noticias',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -73,10 +91,7 @@ WSGI_APPLICATION = 'sinergi.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db('DATABASE_URL')
 }
 
 
