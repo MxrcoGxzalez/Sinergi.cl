@@ -14,8 +14,17 @@ from pathlib import Path
 import environ
 import os
 
+
 # 1. Primero BASE_DIR (esto ya lo trae Django por defecto)
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+AUTH_USER_MODEL = 'usuarios.CustomUser'
+
+
 
 # 2. Ahora sí, environ puede usar BASE_DIR
 env = environ.Env()
@@ -52,9 +61,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'usuarios',
     'proyectos',
-    'documentos',
-    'noticias',
-    'chat',
+    'web',
 ]
 
 MIDDLEWARE = [
@@ -72,7 +79,7 @@ ROOT_URLCONF = 'sinergi.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -129,7 +136,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

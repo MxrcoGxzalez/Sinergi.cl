@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Contacto | Sinergi{% endblock %}
+
+{% block content %}
+  <!-- Pegas aquí únicamente el <section> del hero y el <section> del formulario de contacto -->
+  <section class="bg-plan py-20 sm:py-28 border-b border-ink/10">
+    <div class="mx-auto max-w-shell px-6">
+      <form method="POST" action="{% url 'pagina_contacto' %}" id="lead-contact-form">
+        {% csrf_token %} <!-- Protección de seguridad obligatoria en formularios de Django -->
+        <input name="name" type="text" required placeholder="Roberto Salas">
+        <input name="email" type="email" required placeholder="rsalas@empresa.cl">
+        <!-- resto de inputs -->
+        <button type="submit">Enviar requerimiento →</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  <!-- Scripts específicos solo de la página de contacto -->
+{% endblock %}

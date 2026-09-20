@@ -1,0 +1,33 @@
+<!-- templates/login.html -->
+{% extends 'base_usuarios.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8 mt-10 border-t-4 border-[#d32f2f]">
+    <h2 class="text-2xl font-bold text-center text-[#0d1117] mb-2">Acceso a Clientes</h2>
+    <p class="text-gray-500 text-sm text-center mb-6">Ingresa tus credenciales de Sinergi</p>
+    <!-- Mostrar mensajes de error -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm text-center">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <!-- Formulario básico -->
+    <form method="POST" action="" class="flex flex-col gap-4">
+        {% csrf_token %} <!-- Django exige esto por seguridad en todos los POST -->
+        
+        <div>
+            <label class="block text-sm font-semibold text-gray-700">Usuario o Correo</label>
+            <input type="text" name="username" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#d32f2f] outline-none" required>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-semibold text-gray-700">Contraseña</label>
+            <input type="password" name="password" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#d32f2f] outline-none" required>
+        </div>
+
+        <button type="submit" class="btn-rojo mt-4 w-full">Iniciar Sesión</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+<!-- templates/bloqueo.html -->
+{% extends 'base_usuarios.html' %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white rounded-lg shadow-md p-8 mt-10 border-t-4 border-[#d32f2f] text-center">
+    <div class="text-[#d32f2f] mb-4">
+        <!-- Ícono de alerta -->
+        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <h2 class="text-3xl font-bold text-[#0d1117] mb-4">Acceso Bloqueado</h2>
+    <p class="text-gray-600 text-lg mb-6">Por motivos de seguridad, tu dirección IP ha sido bloqueada debido a múltiples intentos fallidos de inicio de sesión.</p>
+    <p class="text-sm font-bold text-gray-500 bg-gray-100 p-3 rounded">Por favor, inténtalo nuevamente en 1 hora o contacta al administrador de Sinergi.</p>
+</div>
+{% endblock %}

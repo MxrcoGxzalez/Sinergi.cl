@@ -1,0 +1,39 @@
+<!-- templates/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinergi - Plataforma Web</title>
+    
+    <!-- Conectamos Tailwind CSS (Vía CDN para rápido desarrollo) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Conectamos tu archivo CSS separado -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Barra de navegación que se repetirá en todas las páginas -->
+    <header class="bg-[#0d1117] text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">SINERGI<span class="text-[#d32f2f]">.</span></h1>
+            <nav>
+                <a href="#" class="hover:text-[#d32f2f] mx-2">Inicio</a>
+                <a href="{% url 'login' %}" class="hover:text-[#d32f2f] mx-2">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- AQUÍ SE INYECTARÁ EL CÓDIGO DE LAS OTRAS PÁGINAS -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-6">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-[#0d1117] text-gray-400 text-center p-4 text-sm mt-auto">
+        &copy; 2026 Sinergi SpA. Plataforma de Ingeniería.
+    </footer>
+</body>
+</html>

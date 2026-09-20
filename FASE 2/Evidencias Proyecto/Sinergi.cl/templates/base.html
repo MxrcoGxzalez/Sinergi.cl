@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es-CL" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Sinergi{% endblock %}</title>
+  <!-- Tailwind y tipografías comunes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-paper font-sans text-ink antialiased">
+
+  <!-- Header compartido -->
+  <header id="site-header" class="fixed inset-x-0 top-0 z-50 ...">
+    <!-- Tu menú de navegación actual -->
+    <nav>
+      <!-- Se usan etiquetas {% url 'nombre_ruta' %} en vez de index.html -->
+      <a href="{% url 'inicio' %}">Inicio</a>
+      <a href="{% url 'servicios' %}">Servicios</a>
+      <a href="{% url 'proyectos' %}">Proyectos</a>
+      <a href="{% url 'nosotros' %}">Nosotros</a>
+      <a href="{% url 'contacto' %}">Contacto</a>
+    </nav>
+  </header>
+
+  <!-- AQUÍ CAMBIA EL CONTENIDO DE CADA PÁGINA -->
+  <main id="main">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Footer corporativo compartido -->
+  <footer class="bg-ink-900 pb-12 pt-16 text-paper">
+    <!-- Contenido del footer común -->
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

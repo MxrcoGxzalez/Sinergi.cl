@@ -1,0 +1,106 @@
+<!-- templates/cliente_dashboard.html -->
+{% extends 'base_usuarios.html' %}
+
+{% block content %}
+<!-- Cabecera Personalizada -->
+<div class="mb-8 flex justify-between items-end border-b pb-4 border-gray-300">
+    <div>
+        <h2 class="text-3xl font-bold text-[#0d1117]">Bienvenido, {{ user.first_name|default:user.username }}</h2>
+        {% if user.empresa_cliente %}
+            <p class="text-gray-500 text-lg font-semibold">{{ user.empresa_cliente }}</p>
+        {% endif %}
+    </div>
+    <a href="{% url 'logout' %}" class="text-sm font-bold text-[#d32f2f] hover:underline">Cerrar Sesión</a>
+</div>
+<!-- Mensajes del sistema -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 font-semibold text-sm">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+<!-- Módulos (Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    <!-- Proyectos Activos (Columna Principal) -->
+    <div class="md:col-span-2 space-y-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#0d1117]">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Mis Proyectos Activos</h3>
+            
+            <!-- Bucle for: Django repetirá esto por cada proyecto que tenga el cliente -->
+            {% for proyecto in proyectos %}
+            <div class="border border-gray-200 rounded p-5 mb-4 hover:shadow-md transition">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold text-lg">{{ proyecto.nombre }}</h4>
+                    <!-- Color dinámico según el estado -->
+                    {% if proyecto.estado == 'En Curso' %}
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
+                    {% elif proyecto.estado == 'Finalizado' %}
+                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
+                    {% else %}
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-500 mb-5">Fecha de inicio: {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>
+                
+                <!-- Barra de progreso dinámica -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div class="bg-[#d32f2f] h-2.5 rounded-full" style="width: {{ proyecto.porcentaje_avance }}%"></div>
+                </div>
+                <p class="text-right text-xs font-bold text-gray-700">{{ proyecto.porcentaje_avance }}% Completado</p>
+            </div>
+            {% empty %}
+                <p class="text-gray-500 italic">No tienes proyectos activos en este momento.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Columna Lateral: Documentos y Soporte -->
+    <div class="space-y-6">
+        
+        <!-- Módulo de Documentos Reales -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-400">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">Documentos Técnicos</h3>
+            <ul class="space-y-4">
+                <!-- Bucle for: Recorremos los proyectos y sacamos sus documentos -->
+                {% for proyecto in proyectos %}
+                    {% for documento in proyecto.documentos.all %}
+                    <li class="flex justify-between items-center text-sm border-b pb-2">
+                        <span class="text-gray-700 font-medium truncate w-3/4">📄 {{ documento.nombre_archivo }}</span>
+                        <!-- El enlace real al archivo en la carpeta media -->
+                        <a href="{{ documento.archivo.url }}" download class="text-[#d32f2f] font-bold hover:underline">Bajar</a>
+                    </li>
+                    {% endfor %}
+                {% endfor %}
+                <!-- Formulario Real y Optimizado para el Cliente -->
+            <div class="mt-6 border-t pt-4">
+                <h4 class="text-sm font-bold mb-3 text-gray-700">Subir nuevo documento</h4>
+                <form method="POST" action="" enctype="multipart/form-data" class="space-y-3">
+                    {% csrf_token %}
+                    <div>
+                        {{ form.archivo }}
+                        {% if form.archivo.errors %}
+                            <div class="text-red-600 text-xs font-bold mt-1">
+                                {{ form.archivo.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="w-full bg-[#0d1117] text-white font-bold py-2 rounded text-sm hover:bg-gray-800 transition">
+                        Enviar a Sinergi
+                    </button>
+                </form>
+            </div>
+            </ul>
+        </div>
+
+        <!-- Módulo de Soporte -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#d32f2f]">
+            <h3 class="text-lg font-bold mb-2 text-gray-800">Canal de Solicitudes</h3>
+            <p class="text-sm text-gray-600 mb-5">¿Tienes dudas sobre el avance o la documentación? Escríbenos.</p>
+            <button class="w-full btn-rojo">Abrir Chat</button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

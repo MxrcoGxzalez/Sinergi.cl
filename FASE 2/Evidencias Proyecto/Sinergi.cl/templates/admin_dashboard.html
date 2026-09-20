@@ -1,0 +1,83 @@
+<!-- templates/admin_dashboard.html -->
+{% extends 'base_usuarios.html' %}
+
+{% block content %}
+<!-- Cabecera Gerencial -->
+<div class="mb-8 flex justify-between items-end border-b pb-4 border-gray-300">
+    <div>
+        <h2 class="text-3xl font-bold text-[#0d1117]">Centro de Mando Sinergi</h2>
+        <p class="text-gray-500 text-lg font-semibold">Administrador: {{ user.username }}</p>
+    </div>
+    <div class="flex flex-col items-end gap-2">
+        <!-- Botón para ir al panel de base de datos oculto -->
+        <a href="{% url 'admin:index' %}" class="btn-rojo text-sm px-4 py-2" target="_blank">Ir a Base de Datos (Admin)</a>
+        <a href="{% url 'logout' %}" class="text-sm font-bold text-[#d32f2f] hover:underline">Cerrar Sesión</a>
+    </div>
+</div>
+
+<!-- Tarjetas de KPIs (Indicadores Clave) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#0d1117]">
+        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Total Clientes Activos</h3>
+        <p class="text-4xl font-black text-gray-800">{{ total_clientes }}</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Obras en Curso</h3>
+        <p class="text-4xl font-black text-gray-800">{{ proyectos_activos }}</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#d32f2f]">
+        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Total Histórico Obras</h3>
+        <p class="text-4xl font-black text-gray-800">{{ total_proyectos }}</p>
+    </div>
+</div>
+
+<!-- Tabla General de Proyectos -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800">Visión General Operativa</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-white text-xs font-bold text-gray-500 uppercase tracking-wider border-b-2">
+                    <th class="px-6 py-4">Proyecto</th>
+                    <th class="px-6 py-4">Empresa / Cliente</th>
+                    <th class="px-6 py-4">Ingeniero Asignado</th>
+                    <th class="px-6 py-4">Estado</th>
+                    <th class="px-6 py-4">Avance</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700">
+                {% for proyecto in proyectos %}
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 font-bold text-gray-900">{{ proyecto.nombre }}</td>
+                    <td class="px-6 py-4">{{ proyecto.cliente.empresa_cliente }}</td>
+                    <td class="px-6 py-4">{{ proyecto.empleado_encargado.username|default:"<span class='text-red-500 italic'>Sin asignar</span>"|safe }}</td>
+                    <td class="px-6 py-4">
+                        {% if proyecto.estado == 'En Curso' %}
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded border border-blue-200">{{ proyecto.estado }}</span>
+                        {% elif proyecto.estado == 'Finalizado' %}
+                            <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded border border-green-200">{{ proyecto.estado }}</span>
+                        {% else %}
+                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded border border-yellow-200">{{ proyecto.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-20 bg-gray-200 rounded-full h-2">
+                                <div class="bg-[#d32f2f] h-2 rounded-full" style="width: {{ proyecto.porcentaje_avance }}%"></div>
+                            </div>
+                            <span class="text-xs font-bold">{{ proyecto.porcentaje_avance }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500 italic">No hay proyectos registrados en la plataforma.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
