@@ -1,1013 +1,711 @@
-<!DOCTYPE html>
-<html lang="es-CL" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sinergi | Ingeniería de especialidades y Technical Due Diligence</title>
-  <meta name="description" content="Sinergi Engineering & Consultancy. Ingeniería de proyectos eléctricos, protección contra incendios, climatización, sanitarios y seguridad electrónica. Santiago de Chile, desde 2006.">
-  <meta name="theme-color" content="#101417">
+{% extends "base_paginas.html" %}
 
-  <!-- Tipografías: Archivo + Instrument Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Sans:wght@400..700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+{% block title %}Sinergi | Ingeniería de especialidades y Technical Due Diligence{% endblock %}
+{% block description %}Sinergi Engineering & Consultancy. Ingeniería de proyectos eléctricos, protección contra incendios, climatización, sanitarios y seguridad electrónica. Santiago de Chile, desde 2006.{% endblock %}
+{% block page_id %}home{% endblock %}
+{% block content %}
+  <!-- Contenido principal: página de inicio -->
+      <!-- ================================================================== -->
+      <!-- 1. HERO INMERSIVO CON LEMA ORIGINAL DE SINERGI                     -->
+      <!-- ================================================================== -->
+      <section id="inicio" class="relative min-h-[96svh] flex items-end overflow-hidden bg-[#101417] text-white">
+        <img
+          src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=2400&q=88"
+          alt="Instalaciones de ingeniería de especialidades Sinergi"
+          class="absolute inset-0 h-full w-full object-cover object-center opacity-45"
+        >
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0A0E11]/95 via-[#0A0E11]/75 to-[#0A0E11]/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0A0E11] via-transparent to-[#0A0E11]/40"></div>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            display: ['Archivo', 'sans-serif'],
-            grotesk: ['"Space Grotesk"', 'sans-serif'],
-            sans: ['"Instrument Sans"', 'sans-serif'],
-          },
-          colors: {
-            ink: { DEFAULT: '#0F1B2D', 900: '#09121F', 800: '#16253A', 700: '#22344D' },
-            paper: { DEFAULT: '#F1F3F2', 200: '#E3E8E6' },
-            brick: { DEFAULT: '#9C4B44', dark: '#7F3C36', light: '#E39A91' },
-          },
-          maxWidth: { shell: '1500px' },
-          keyframes: {
-            marquee: { to: { transform: 'translateX(-50%)' } },
-          },
-          animation: {
-            marquee: 'marquee 70s linear infinite',
-          },
-        },
-      },
-    };
-  </script>
+        <div class="relative z-10 w-full max-w-shell mx-auto px-6 sm:px-10 lg:px-12 pb-16 sm:pb-20 pt-36">
+          <div class="max-w-4xl">
+            <div class="reveal flex items-center gap-3 mb-6">
+              <span class="h-px w-10 bg-brick-light"></span>
+              <span class="font-grotesk text-xs uppercase tracking-[.2em] text-white/70">Ingeniería de Especialidades · Technical Due Diligence</span>
+            </div>
 
-  <style>
-    :root {
-      --ink: #0F1B2D;
-      --brick: #9C4B44;
-      --c-elec: #C98500;
-      --c-pci: #D23F2C;
-      --c-hvac: #1B86B5;
-      --c-san: #17946F;
-      --c-seg: #6A55D6;
-    }
+            <h1 class="reveal font-display text-[clamp(2.6rem,6.8vw,6.2rem)] font-extrabold leading-[.94] tracking-[-.04em]">
+              Ingeniería de especialidades, <br>
+              <span class="text-brick-light">resuelta desde el plano.</span>
+            </h1>
 
-    [hidden] { display: none !important; }
-    .no-scrollbar { scrollbar-width: none; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-
-    /* Fondo milimetrado de ingeniería */
-    .bg-plan {
-      background-color: #F1F3F2;
-      background-image:
-        linear-gradient(rgba(15, 27, 45, .055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 27, 45, .055) 1px, transparent 1px);
-      background-size: 56px 56px;
-    }
-
-    /* Revelado en scroll */
-    .reveal {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .reveal.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Links con indicador activo (ScrollSpy) */
-    .nav-item {
-      position: relative;
-      transition: color 0.25s ease;
-    }
-    .nav-item::after {
-      content: '';
-      position: absolute;
-      bottom: -6px;
-      left: 50%;
-      width: 0;
-      height: 2px;
-      background-color: var(--brick);
-      border-radius: 9999px;
-      transform: translateX(-50%);
-      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .nav-item:hover::after,
-    .nav-item[aria-current="true"]::after {
-      width: 100%;
-    }
-    .nav-item[aria-current="true"] {
-      color: #FFFFFF !important;
-      font-weight: 600;
-    }
-
-    /* ============ PLANO SVG INTERACTIVO ============ */
-    .ln { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
-    .st { stroke: var(--ink); }
-    .thin { stroke-width: .8; opacity: .5; }
-    .gridline { stroke-dasharray: 10 4 2 4; stroke-width: .8; --o: .3; opacity: .3; }
-    .dash { stroke-dasharray: 3 3; stroke-width: 1.2; --o: .8; }
-    .cone { fill: var(--c-seg); fill-opacity: .1; stroke: none; }
-    .tx { font: 500 11px 'Instrument Sans', sans-serif; fill: var(--ink); stroke: none; }
-    .tx.sm { font-size: 9.5px; opacity: .65; }
-    .tx.bold { font-weight: 700; font-size: 10.5px; }
-
-    .dr { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.05s cubic-bezier(.6, 0, .3, 1) var(--d, 0s) forwards; }
-    .fi { opacity: 0; animation: fade .7s ease var(--d, 0s) forwards; }
-    .pp { opacity: 0; transform-box: fill-box; transform-origin: center; animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) var(--d, 0s) forwards; }
-    @keyframes draw { to { stroke-dashoffset: 0; } }
-    @keyframes fade { to { opacity: var(--o, 1); } }
-    @keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: none; } }
-
-    #plan.wait * { animation-play-state: paused; }
-    #plan .sys { transition: opacity .35s ease; }
-    #plan[data-focus] .sys { opacity: .1; }
-    #plan[data-focus="elec"] .sys-elec,
-    #plan[data-focus="pci"] .sys-pci,
-    #plan[data-focus="hvac"] .sys-hvac,
-    #plan[data-focus="san"] .sys-san,
-    #plan[data-focus="seg"] .sys-seg { opacity: 1; }
-
-    /* ============ CARRUSEL ============ */
-    .slide { position: absolute; inset: 0; visibility: hidden; z-index: 0; }
-    .slide.is-leaving { visibility: visible; z-index: 10; }
-    .slide.is-active { visibility: visible; z-index: 20; }
-
-    .slide [data-r] { opacity: 0; transform: translateY(24px); transition: opacity .3s ease, transform 0s .3s; }
-    .slide.is-active [data-r] {
-      opacity: 1; transform: none;
-      transition:
-        opacity .8s cubic-bezier(.2, .7, .2, 1) calc(.35s + var(--i, 0) * .08s),
-        transform .8s cubic-bezier(.2, .7, .2, 1) calc(.35s + var(--i, 0) * .08s);
-    }
-    .slide-img { transform: scale(1.08); transition: transform 9s cubic-bezier(.2, .6, .2, 1); }
-    .slide.is-active .slide-img { transform: scale(1); }
-    .slide.is-leaving .slide-img { transform: scale(1); }
-
-    .slide.is-active[data-dir="next"] .slide-bg { animation: wipe-next 1s cubic-bezier(.7, 0, .2, 1) both; }
-    .slide.is-active[data-dir="prev"] .slide-bg { animation: wipe-prev 1s cubic-bezier(.7, 0, .2, 1) both; }
-    @keyframes wipe-next { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0); } }
-    @keyframes wipe-prev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
-
-    .rail-btn .lbl { color: rgba(255, 255, 255, .55); transition: color .2s; }
-    .rail-btn:hover .lbl, .rail-btn[aria-current="true"] .lbl { color: #fff; }
-    .rail-btn .fill { transform: scaleX(0); transform-origin: left; }
-
-    .marquee-mask {
-      mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
-      -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
-    }
-
-    #mobile-menu { clip-path: inset(0 0 100% 0); transition: clip-path .4s cubic-bezier(0.16, 1, 0.3, 1); }
-    #mobile-menu.is-open { clip-path: inset(0 0 0 0); }
-  </style>
-</head>
-
-<body class="bg-paper font-sans text-ink antialiased selection:bg-brick selection:text-white">
-
-  <!-- ================================================================== -->
-  <!-- HEADER CON ACHICAMIENTO SUAVE Y SCROLLSPY                          -->
-  <!-- ================================================================== -->
-  <header id="site-header" class="fixed inset-x-0 top-0 z-50 transition-all duration-500 bg-[#101417]/40 backdrop-blur-md border-b border-white/10">
-    <div id="header-container" class="mx-auto flex h-24 max-w-shell items-center justify-between px-6 transition-all duration-500 sm:px-10 lg:px-12">
-
-      <a href="index.html" class="flex items-center gap-3.5 text-white group" aria-label="Sinergi, inicio">
-        <svg id="logo-icon" viewBox="0 0 32 32" class="size-10 transition-transform duration-500 group-hover:scale-105" aria-hidden="true">
-          <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
-          <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".92"/>
-        </svg>
-        <span class="leading-none">
-          <span class="block font-display text-xl font-extrabold tracking-tight">SINERGI</span>
-          <span class="mt-1 block text-[10px] font-medium uppercase tracking-[.18em] text-white/60">Engineering & Consultancy</span>
-        </span>
-      </a>
-
-      <!-- Navegación con ScrollSpy dinámico -->
-      <nav aria-label="Principal" class="hidden items-center gap-9 text-[14px] font-medium text-white/70 lg:flex">
-        <a href="#inicio" class="nav-item" data-spy="inicio">Inicio</a>
-        <a href="#especialidades" class="nav-item" data-spy="especialidades">Especialidades</a>
-        <a href="servicios.html" class="nav-item">Servicios</a>
-        <a href="#proyectos" class="nav-item" data-spy="proyectos">Proyectos</a>
-        <a href="nosotros.html" class="nav-item">Nosotros</a>
-        <a href="#noticias" class="nav-item" data-spy="noticias">Noticias</a>
-        <a href="contacto.html" class="nav-item">Contacto</a>
-      </nav>
-
-      <div class="flex items-center gap-3">
-        <button type="button" data-open-portal class="hidden rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink sm:inline-flex">
-          Portal Clientes
-        </button>
-        <a href="contacto.html" class="inline-flex rounded-full bg-brick px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-brick-dark shadow-md shadow-black/20 hover:shadow-brick/30">
-          Iniciar proyecto
-        </a>
-        <button id="menu-open" type="button" class="inline-flex size-10 items-center justify-center rounded-full border border-white/20 text-white lg:hidden" aria-label="Abrir menú">
-          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Menú móvil -->
-  <div id="mobile-menu" class="fixed inset-x-4 top-24 z-50 rounded-2xl border border-white/10 bg-[#101417]/95 p-6 shadow-2xl backdrop-blur-xl lg:hidden">
-    <nav class="flex flex-col gap-4 text-base font-semibold text-white/85">
-      <a href="#inicio" class="m-link hover:text-brick-light">Inicio</a>
-      <a href="#especialidades" class="m-link hover:text-brick-light">Especialidades</a>
-      <a href="servicios.html" class="m-link hover:text-brick-light">Servicios</a>
-      <a href="#proyectos" class="m-link hover:text-brick-light">Proyectos</a>
-      <a href="nosotros.html" class="m-link hover:text-brick-light">Nosotros</a>
-      <a href="#noticias" class="m-link hover:text-brick-light">Noticias</a>
-      <a href="contacto.html" class="m-link hover:text-brick-light">Contacto</a>
-      <hr class="border-white/10 my-2">
-      <button type="button" data-open-portal class="text-left text-sm text-brick-light font-semibold">Portal Clientes →</button>
-    </nav>
-  </div>
-
-  <main id="main">
-    <!-- ================================================================== -->
-    <!-- 1. HERO INMERSIVO CON LEMA ORIGINAL DE SINERGI                     -->
-    <!-- ================================================================== -->
-    <section id="inicio" class="relative min-h-[96svh] flex items-end overflow-hidden bg-[#101417] text-white">
-      <img
-        src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=2400&q=88"
-        alt="Instalaciones de ingeniería de especialidades Sinergi"
-        class="absolute inset-0 h-full w-full object-cover object-center opacity-45"
-      >
-      <div class="absolute inset-0 bg-gradient-to-r from-[#0A0E11]/95 via-[#0A0E11]/75 to-[#0A0E11]/30"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-[#0A0E11] via-transparent to-[#0A0E11]/40"></div>
-
-      <div class="relative z-10 w-full max-w-shell mx-auto px-6 sm:px-10 lg:px-12 pb-16 sm:pb-20 pt-36">
-        <div class="max-w-4xl">
-          <div class="reveal flex items-center gap-3 mb-6">
-            <span class="h-px w-10 bg-brick-light"></span>
-            <span class="font-grotesk text-xs uppercase tracking-[.2em] text-white/70">Ingeniería de Especialidades · Technical Due Diligence</span>
-          </div>
-
-          <h1 class="reveal font-display text-[clamp(2.6rem,6.8vw,6.2rem)] font-extrabold leading-[.94] tracking-[-.04em]">
-            Ingeniería de especialidades, <br>
-            <span class="text-brick-light">resuelta desde el plano.</span>
-          </h1>
-
-          <p class="reveal mt-7 max-w-2xl text-lg sm:text-xl font-light leading-relaxed text-white/75">
-            Diseñamos y coordinamos las instalaciones eléctricas, de incendio, climatización, sanitarias y de seguridad de centros de distribución, retail, oficinas, clínicas y plantas. Y revisamos las que ya existen.
-          </p>
-
-          <div class="reveal mt-9 flex flex-wrap items-center gap-4">
-            <a href="#especialidades" class="inline-flex items-center gap-3 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-ink transition hover:bg-paper">
-              Explorar especialidades
-              <span class="flex size-6 items-center justify-center rounded-full bg-brick text-white text-xs">→</span>
-            </a>
-            <a href="#plano-coordinacion" class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink">
-              Ver coordinación técnica
-            </a>
-          </div>
-        </div>
-
-        <div class="reveal mt-16 grid grid-cols-2 gap-6 border-t border-white/15 pt-8 sm:grid-cols-4">
-          <div>
-            <div class="font-display text-3xl font-extrabold text-white">2006</div>
-            <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Trayectoria en Chile</div>
-          </div>
-          <div>
-            <div class="font-display text-3xl font-extrabold text-white">8</div>
-            <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Especialidades Técnicas</div>
-          </div>
-          <div>
-            <div class="font-display text-3xl font-extrabold text-white">100%</div>
-            <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Resolución en Plano</div>
-          </div>
-          <div>
-            <div class="font-display text-3xl font-extrabold text-white">CL & MX</div>
-            <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Proyectos Ejecutados</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Marquee de clientes -->
-    <div class="border-y border-ink/10 bg-white py-5">
-      <div class="mx-auto flex max-w-shell items-center gap-6 px-6 sm:px-10">
-        <p class="shrink-0 text-xs font-bold uppercase tracking-widest text-ink/45">Clientes Sinergi</p>
-        <div class="marquee-mask group relative flex-1 overflow-hidden">
-          <ul id="marquee" class="flex w-max animate-marquee items-center gap-12 group-hover:[animation-play-state:paused]"></ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================================================================== -->
-    <!-- 2. PLANO SVG COMPLETO ORIGINAL CON TODAS SUS CAPAS Y RÓTULO        -->
-    <!-- ================================================================== -->
-    <section id="plano-coordinacion" class="bg-plan py-24 sm:py-32 border-b border-ink/10">
-      <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
-        <div class="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
-
-          <div class="reveal lg:col-span-5">
-            <span class="inline-block font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Diseño Multidisciplinario</span>
-            <h2 class="mt-3 font-display text-[clamp(2.1rem,4vw,3.6rem)] font-extrabold leading-tight tracking-[-.03em]">
-              Anticipación técnica antes de la faena.
-            </h2>
-            <p class="mt-6 text-base sm:text-lg leading-relaxed text-ink/75">
-              Cada disciplina se superpone en el modelo para garantizar cotas de montaje libres de colisiones. El plano integra las redes de potencia eléctrica, canalizaciones de CCTV, matrices de rociadores, ventilación forzada y colectores sanitarios.
+            <p class="reveal mt-7 max-w-2xl text-lg sm:text-xl font-light leading-relaxed text-white/75">
+              Diseñamos y coordinamos las instalaciones eléctricas, de incendio, climatización, sanitarias y de seguridad de centros de distribución, retail, oficinas, clínicas y plantas. Y revisamos las que ya existen.
             </p>
-            <div class="mt-8 flex flex-wrap gap-3">
-              <a href="servicios.html" class="rounded-full bg-brick px-6 py-3 text-sm font-semibold text-white hover:bg-brick-dark transition shadow-md shadow-brick/20">Ver servicios de ingeniería</a>
-              <a href="proyectos.html" class="rounded-full border border-ink/20 px-6 py-3 text-sm font-semibold text-ink hover:bg-ink hover:text-white transition">Casos de estudio</a>
+
+            <div class="reveal mt-9 flex flex-wrap items-center gap-4">
+              <a href="#especialidades" class="inline-flex items-center gap-3 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-ink transition hover:bg-paper">
+                Explorar especialidades
+                <span class="flex size-6 items-center justify-center rounded-full bg-brick text-white text-xs">→</span>
+              </a>
+              <a href="#plano-coordinacion" class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink">
+                Ver coordinación técnica
+              </a>
             </div>
           </div>
 
-          <figure class="reveal lg:col-span-7">
-            <div class="rounded-3xl border border-ink/15 bg-white p-6 sm:p-10 shadow-xl shadow-ink/5">
-              <svg id="plan" viewBox="0 0 620 640" class="wait mx-auto block h-auto max-h-[62svh] w-full" role="img" aria-labelledby="plan-t" preserveAspectRatio="xMidYMid meet">
-                <title id="plan-t">Corte de un edificio de cuatro niveles con las redes eléctrica, de incendio, climatización, sanitaria y de seguridad coordinadas en un mismo plano</title>
-                <g class="ln st">
-                  <path class="fi gridline" style="--d:0.50s" d="M100,44 V592"/>
-                  <g class="fi" style="--d:0.50s"><circle cx="100" cy="30" r="11"/><text x="100" y="34" text-anchor="middle" class="tx">A</text></g>
-                  <path class="fi gridline" style="--d:0.60s" d="M240,44 V592"/>
-                  <g class="fi" style="--d:0.60s"><circle cx="240" cy="30" r="11"/><text x="240" y="34" text-anchor="middle" class="tx">B</text></g>
-                  <path class="fi gridline" style="--d:0.70s" d="M380,44 V592"/>
-                  <g class="fi" style="--d:0.70s"><circle cx="380" cy="30" r="11"/><text x="380" y="34" text-anchor="middle" class="tx">C</text></g>
-                  <path class="fi gridline" style="--d:0.80s" d="M520,44 V592"/>
-                  <g class="fi" style="--d:0.80s"><circle cx="520" cy="30" r="11"/><text x="520" y="34" text-anchor="middle" class="tx">D</text></g>
-                  <path class="dr" pathLength="1" style="--d:0.00s" d="M30,560 H590" stroke-width="2"/>
-                  <path class="dr thin" pathLength="1" style="--d:0.20s" d="M40,562 l-8,10 M53,562 l-8,10 M66,562 l-8,10 M79,562 l-8,10 M92,562 l-8,10 M105,562 l-8,10 M118,562 l-8,10 M131,562 l-8,10 M144,562 l-8,10 M157,562 l-8,10 M170,562 l-8,10 M183,562 l-8,10 M196,562 l-8,10 M209,562 l-8,10 M222,562 l-8,10 M235,562 l-8,10 M248,562 l-8,10 M261,562 l-8,10 M274,562 l-8,10 M287,562 l-8,10 M300,562 l-8,10 M313,562 l-8,10 M326,562 l-8,10 M339,562 l-8,10 M352,562 l-8,10 M365,562 l-8,10 M378,562 l-8,10 M391,562 l-8,10 M404,562 l-8,10 M417,562 l-8,10 M430,562 l-8,10 M443,562 l-8,10 M456,562 l-8,10 M469,562 l-8,10 M482,562 l-8,10 M495,562 l-8,10 M508,562 l-8,10 M521,562 l-8,10 M534,562 l-8,10 M547,562 l-8,10 M560,562 l-8,10 M573,562 l-8,10 M586,562 l-8,10"/>
-                  <path class="dr" pathLength="1" style="--d:0.15s" d="M100,552 V88"/>
-                  <path class="dr" pathLength="1" style="--d:0.25s" d="M520,552 V88"/>
-                  <path class="dr" pathLength="1" style="--d:0.50s" d="M100,80 V70 H114 M520,80 V70 H506"/>
-                  <path class="dr" pathLength="1" style="--d:0.30s" d="M92,80 H528 V88 H92 Z"/>
-                  <path class="dr" pathLength="1" style="--d:0.42s" d="M92,200 H528 V208 H92 Z"/>
-                  <path class="dr" pathLength="1" style="--d:0.54s" d="M92,320 H528 V328 H92 Z"/>
-                  <path class="dr" pathLength="1" style="--d:0.66s" d="M92,440 H528 V448 H92 Z"/>
-                  <path class="dr" pathLength="1" style="--d:0.30s" d="M92,552 H528 V560 H92 Z" stroke-width="1.6"/>
-                </g>
-                <g class="fi ln st" style="--d:0.9s">
-                  <path class="thin" d="M22,560 H92"/><text x="22" y="555" class="tx sm">+0.00</text>
-                  <path class="thin" d="M22,440 H92"/><text x="22" y="435" class="tx sm">+3.50</text>
-                  <path class="thin" d="M22,320 H92"/><text x="22" y="315" class="tx sm">+7.00</text>
-                  <path class="thin" d="M22,200 H92"/><text x="22" y="195" class="tx sm">+10.50</text>
-                  <path class="thin" d="M22,80 H92"/><text x="22" y="75" class="tx sm">+14.00</text>
-                  <path class="thin" d="M562,80 V560"/>
-                  <path class="thin" d="M556,85 l12,-10"/>
-                  <path class="thin" d="M556,205 l12,-10"/>
-                  <path class="thin" d="M556,325 l12,-10"/>
-                  <path class="thin" d="M556,445 l12,-10"/>
-                  <path class="thin" d="M556,565 l12,-10"/>
-                  <text x="572" y="143" class="tx sm">3.50</text>
-                  <text x="572" y="263" class="tx sm">3.50</text>
-                  <text x="572" y="383" class="tx sm">3.50</text>
-                  <text x="572" y="503" class="tx sm">3.50</text>
-                </g>
-                <!-- Red Eléctrica -->
-                <g class="sys sys-elec ln" style="stroke:var(--c-elec)">
-                  <path class="dr" pathLength="1" style="--d:0.90s" d="M132,552 V92" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:1.00s" d="M120,516 V552 H144 V516 Z M136,522 l-6,12 h8 l-6,12" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:1.05s" d="M132,460 H488" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:1.25s" d="M196,460 v6 M187,467 h18 M284,460 v6 M275,467 h18 M372,460 v6 M363,467 h18 M460,460 v6 M451,467 h18" stroke-width="2"/>
-                  <path class="dr" pathLength="1" style="--d:1.19s" d="M132,340 H488" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:1.39s" d="M196,340 v6 M187,347 h18 M284,340 v6 M275,347 h18 M372,340 v6 M363,347 h18 M460,340 v6 M451,347 h18" stroke-width="2"/>
-                  <path class="dr" pathLength="1" style="--d:1.33s" d="M132,220 H488" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:1.53s" d="M196,220 v6 M187,227 h18 M284,220 v6 M275,227 h18 M372,220 v6 M363,227 h18 M460,220 v6 M451,227 h18" stroke-width="2"/>
-                  <path class="dr" pathLength="1" style="--d:1.47s" d="M132,100 H488" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:1.67s" d="M196,100 v6 M187,107 h18 M284,100 v6 M275,107 h18 M372,100 v6 M363,107 h18 M460,100 v6 M451,107 h18" stroke-width="2"/>
-                </g>
-                <!-- Red Contra Incendio (PCI) -->
-                <g class="sys sys-pci ln" style="stroke:var(--c-pci)">
-                  <path class="dr" pathLength="1" style="--d:1.40s" d="M500,526 V92" stroke-width="2.4"/>
-                  <g class="pp" style="--d:1.40s"><circle cx="500" cy="538" r="11" stroke-width="2"/><path d="M494,538 h12 M500,532 v12" stroke-width="1.6"/></g>
-                  <path class="dr" pathLength="1" style="--d:1.55s" d="M500,478 H262 M462,478 v7 M414,478 v7 M366,478 v7 M318,478 v7 M270,478 v7" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:2.00s" cx="462" cy="488" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.05s" cx="414" cy="488" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.10s" cx="366" cy="488" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.15s" cx="318" cy="488" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.20s" cx="270" cy="488" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:1.69s" d="M500,358 H262 M462,358 v7 M414,358 v7 M366,358 v7 M318,358 v7 M270,358 v7" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:2.14s" cx="462" cy="368" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.19s" cx="414" cy="368" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.24s" cx="366" cy="368" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.29s" cx="318" cy="368" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.34s" cx="270" cy="368" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:1.83s" d="M500,238 H262 M462,238 v7 M414,238 v7 M366,238 v7 M318,238 v7 M270,238 v7" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:2.28s" cx="462" cy="248" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.33s" cx="414" cy="248" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.38s" cx="366" cy="248" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.43s" cx="318" cy="248" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.48s" cx="270" cy="248" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:1.97s" d="M500,118 H262 M462,118 v7 M414,118 v7 M366,118 v7 M318,118 v7 M270,118 v7" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:2.42s" cx="462" cy="128" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.47s" cx="414" cy="128" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.52s" cx="366" cy="128" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.57s" cx="318" cy="128" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:2.62s" cx="270" cy="128" r="3" stroke-width="1.6"/>
-                </g>
-                <!-- Climatización (HVAC) -->
-                <g class="sys sys-hvac ln" style="stroke:var(--c-hvac)">
-                  <path class="dr" pathLength="1" style="--d:1.90s" d="M228,552 V80 M244,552 V80" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.20s" d="M244,66 H250 M250,80 V52 H330 V80" stroke-width="1.8"/>
-                  <g class="pp" style="--d:2.50s"><circle cx="290" cy="66" r="9" stroke-width="1.6"/><path d="M290,58 v16 M282,66 h16" stroke-width="1.4"/></g>
-                  <path class="dr" pathLength="1" style="--d:2.05s" d="M244,500 H440 V514 H244" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.30s" d="M300,514 v5 M290,519 h20 M360,514 v5 M350,519 h20 M420,514 v5 M410,519 h20" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.19s" d="M244,380 H440 V394 H244" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.44s" d="M300,394 v5 M290,399 h20 M360,394 v5 M350,399 h20 M420,394 v5 M410,399 h20" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.33s" d="M244,260 H440 V274 H244" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.58s" d="M300,274 v5 M290,279 h20 M360,274 v5 M350,279 h20 M420,274 v5 M410,279 h20" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.47s" d="M244,140 H440 V154 H244" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.72s" d="M300,154 v5 M290,159 h20 M360,154 v5 M350,159 h20 M420,154 v5 M410,159 h20" stroke-width="1.8"/>
-                </g>
-                <!-- Red Sanitaria -->
-                <g class="sys sys-san ln" style="stroke:var(--c-san)">
-                  <path class="dr" pathLength="1" style="--d:2.40s" d="M168,552 V64" stroke-width="2.2"/>
-                  <path class="dr" pathLength="1" style="--d:2.70s" d="M150,80 V56 H206 V80 M150,66 H206" stroke-width="1.8"/>
-                  <path class="dr" pathLength="1" style="--d:2.55s" d="M168,538 H470 M300,538 v-9 M380,538 v-9 M440,538 v-9" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:2.95s" cx="300" cy="525" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.00s" cx="380" cy="525" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.05s" cx="440" cy="525" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:2.69s" d="M168,426 H470 M300,426 v-9 M380,426 v-9 M440,426 v-9" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:3.09s" cx="300" cy="413" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.14s" cx="380" cy="413" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.19s" cx="440" cy="413" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:2.83s" d="M168,306 H470 M300,306 v-9 M380,306 v-9 M440,306 v-9" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:3.23s" cx="300" cy="293" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.28s" cx="380" cy="293" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.33s" cx="440" cy="293" r="3" stroke-width="1.6"/>
-                  <path class="dr" pathLength="1" style="--d:2.97s" d="M168,186 H470 M300,186 v-9 M380,186 v-9 M440,186 v-9" stroke-width="2.2"/>
-                  <circle class="pp" style="--d:3.37s" cx="300" cy="173" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.42s" cx="380" cy="173" r="3" stroke-width="1.6"/>
-                  <circle class="pp" style="--d:3.47s" cx="440" cy="173" r="3" stroke-width="1.6"/>
-                </g>
-                <!-- Seguridad Electrónica -->
-                <g class="sys sys-seg ln" style="stroke:var(--c-seg)">
-                  <path class="fi cone" style="--d:3.20s" d="M122,464 L198,550 L216,498 Z"/>
-                  <path class="dr" pathLength="1" style="--d:2.90s" d="M106,458 h10 v9 h-10 z M116,460 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
-                  <path class="fi dash" style="--d:3.20s" d="M122,464 L198,550 M122,464 L216,498"/>
-                  <path class="fi cone" style="--d:3.34s" d="M122,344 L198,438 L216,378 Z"/>
-                  <path class="dr" pathLength="1" style="--d:3.04s" d="M106,338 h10 v9 h-10 z M116,340 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
-                  <path class="fi dash" style="--d:3.34s" d="M122,344 L198,438 M122,344 L216,378"/>
-                  <path class="fi cone" style="--d:3.48s" d="M122,224 L198,318 L216,258 Z"/>
-                  <path class="dr" pathLength="1" style="--d:3.18s" d="M106,218 h10 v9 h-10 z M116,220 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
-                  <path class="fi dash" style="--d:3.48s" d="M122,224 L198,318 M122,224 L216,258"/>
-                  <path class="fi cone" style="--d:3.62s" d="M122,104 L198,198 L216,138 Z"/>
-                  <path class="dr" pathLength="1" style="--d:3.32s" d="M106,98 h10 v9 h-10 z M116,100 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
-                  <path class="fi dash" style="--d:3.62s" d="M122,104 L198,198 M122,104 L216,138"/>
-                </g>
-                <!-- Rótulo del Plano -->
-                <g class="fi ln st" style="--d:3.6s">
-                  <path d="M340,596 H600 V634 H340 Z"/><path class="thin" d="M340,612 H600"/>
-                  <text x="350" y="608" class="tx bold">Plano de coordinación de especialidades</text>
-                  <text x="350" y="626" class="tx sm">Corte A–A, escala 1:100</text>
-                  <rect x="574" y="617" width="16" height="12" rx="2" fill="var(--brick)" fill-opacity=".9" stroke="none"/>
-                  <rect x="568" y="614" width="16" height="12" rx="2" fill="#0F1B2D" fill-opacity=".9" stroke="none"/>
-                </g>
-              </svg>
+          <div class="reveal mt-16 grid grid-cols-2 gap-6 border-t border-white/15 pt-8 sm:grid-cols-4">
+            <div>
+              <div class="font-display text-3xl font-extrabold text-white">2006</div>
+              <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Trayectoria en Chile</div>
+            </div>
+            <div>
+              <div class="font-display text-3xl font-extrabold text-white">8</div>
+              <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Especialidades Técnicas</div>
+            </div>
+            <div>
+              <div class="font-display text-3xl font-extrabold text-white">100%</div>
+              <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Resolución en Plano</div>
+            </div>
+            <div>
+              <div class="font-display text-3xl font-extrabold text-white">CL & MX</div>
+              <div class="mt-1 text-[11px] uppercase tracking-wider text-white/50">Proyectos Ejecutados</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <!-- Leyenda interactiva -->
-              <div class="mt-4 pt-4">
-                <p class="text-center text-xs text-ink/60 mb-3">Cada red tiene su color. Pase el cursor por una para verla sola.</p>
-                <ul id="plan-legend" class="flex flex-wrap justify-center gap-2">
-                  <li><button type="button" data-sys="elec" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-elec)"></span>Eléctrica</button></li>
-                  <li><button type="button" data-sys="pci" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-pci)"></span>Incendio</button></li>
-                  <li><button type="button" data-sys="hvac" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-hvac)"></span>Climatización</button></li>
-                  <li><button type="button" data-sys="san" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-san)"></span>Sanitaria</button></li>
-                  <li><button type="button" data-sys="seg" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-seg)"></span>Seguridad</button></li>
-                </ul>
+      <!-- Marquee de clientes -->
+      <div class="border-y border-ink/10 bg-white py-5">
+        <div class="mx-auto flex max-w-shell items-center gap-6 px-6 sm:px-10">
+          <p class="shrink-0 text-xs font-bold uppercase tracking-widest text-ink/45">Clientes Sinergi</p>
+          <div class="marquee-mask group relative flex-1 overflow-hidden">
+            <ul id="marquee" class="flex w-max animate-marquee items-center gap-12 group-hover:[animation-play-state:paused]"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- 2. PLANO SVG COMPLETO ORIGINAL CON TODAS SUS CAPAS Y RÓTULO        -->
+      <!-- ================================================================== -->
+      <section id="plano-coordinacion" class="bg-plan py-24 sm:py-32 border-b border-ink/10">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
+
+            <div class="reveal lg:col-span-5">
+              <span class="inline-block font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Diseño Multidisciplinario</span>
+              <h2 class="mt-3 font-display text-[clamp(2.1rem,4vw,3.6rem)] font-extrabold leading-tight tracking-[-.03em]">
+                Anticipación técnica antes de la faena.
+              </h2>
+              <p class="mt-6 text-base sm:text-lg leading-relaxed text-ink/75">
+                Cada disciplina se superpone en el modelo para garantizar cotas de montaje libres de colisiones. El plano integra las redes de potencia eléctrica, canalizaciones de CCTV, matrices de rociadores, ventilación forzada y colectores sanitarios.
+              </p>
+              <div class="mt-8 flex flex-wrap gap-3">
+                <a href="servicios.html" class="rounded-full bg-brick px-6 py-3 text-sm font-semibold text-white hover:bg-brick-dark transition shadow-md shadow-brick/20">Ver servicios de ingeniería</a>
+                <a href="proyectos.html" class="rounded-full border border-ink/20 px-6 py-3 text-sm font-semibold text-ink hover:bg-ink hover:text-white transition">Casos de estudio</a>
               </div>
             </div>
-          </figure>
 
-        </div>
-      </div>
-    </section>
+            <figure class="reveal lg:col-span-7">
+              <div class="rounded-3xl border border-ink/15 bg-white p-6 sm:p-10 shadow-xl shadow-ink/5">
+                <svg id="plan" viewBox="0 0 620 640" class="wait mx-auto block h-auto max-h-[62svh] w-full" role="img" aria-labelledby="plan-t" preserveAspectRatio="xMidYMid meet">
+                  <title id="plan-t">Corte de un edificio de cuatro niveles con las redes eléctrica, de incendio, climatización, sanitaria y de seguridad coordinadas en un mismo plano</title>
+                  <g class="ln st">
+                    <path class="fi gridline" style="--d:0.50s" d="M100,44 V592"/>
+                    <g class="fi" style="--d:0.50s"><circle cx="100" cy="30" r="11"/><text x="100" y="34" text-anchor="middle" class="tx">A</text></g>
+                    <path class="fi gridline" style="--d:0.60s" d="M240,44 V592"/>
+                    <g class="fi" style="--d:0.60s"><circle cx="240" cy="30" r="11"/><text x="240" y="34" text-anchor="middle" class="tx">B</text></g>
+                    <path class="fi gridline" style="--d:0.70s" d="M380,44 V592"/>
+                    <g class="fi" style="--d:0.70s"><circle cx="380" cy="30" r="11"/><text x="380" y="34" text-anchor="middle" class="tx">C</text></g>
+                    <path class="fi gridline" style="--d:0.80s" d="M520,44 V592"/>
+                    <g class="fi" style="--d:0.80s"><circle cx="520" cy="30" r="11"/><text x="520" y="34" text-anchor="middle" class="tx">D</text></g>
+                    <path class="dr" pathLength="1" style="--d:0.00s" d="M30,560 H590" stroke-width="2"/>
+                    <path class="dr thin" pathLength="1" style="--d:0.20s" d="M40,562 l-8,10 M53,562 l-8,10 M66,562 l-8,10 M79,562 l-8,10 M92,562 l-8,10 M105,562 l-8,10 M118,562 l-8,10 M131,562 l-8,10 M144,562 l-8,10 M157,562 l-8,10 M170,562 l-8,10 M183,562 l-8,10 M196,562 l-8,10 M209,562 l-8,10 M222,562 l-8,10 M235,562 l-8,10 M248,562 l-8,10 M261,562 l-8,10 M274,562 l-8,10 M287,562 l-8,10 M300,562 l-8,10 M313,562 l-8,10 M326,562 l-8,10 M339,562 l-8,10 M352,562 l-8,10 M365,562 l-8,10 M378,562 l-8,10 M391,562 l-8,10 M404,562 l-8,10 M417,562 l-8,10 M430,562 l-8,10 M443,562 l-8,10 M456,562 l-8,10 M469,562 l-8,10 M482,562 l-8,10 M495,562 l-8,10 M508,562 l-8,10 M521,562 l-8,10 M534,562 l-8,10 M547,562 l-8,10 M560,562 l-8,10 M573,562 l-8,10 M586,562 l-8,10"/>
+                    <path class="dr" pathLength="1" style="--d:0.15s" d="M100,552 V88"/>
+                    <path class="dr" pathLength="1" style="--d:0.25s" d="M520,552 V88"/>
+                    <path class="dr" pathLength="1" style="--d:0.50s" d="M100,80 V70 H114 M520,80 V70 H506"/>
+                    <path class="dr" pathLength="1" style="--d:0.30s" d="M92,80 H528 V88 H92 Z"/>
+                    <path class="dr" pathLength="1" style="--d:0.42s" d="M92,200 H528 V208 H92 Z"/>
+                    <path class="dr" pathLength="1" style="--d:0.54s" d="M92,320 H528 V328 H92 Z"/>
+                    <path class="dr" pathLength="1" style="--d:0.66s" d="M92,440 H528 V448 H92 Z"/>
+                    <path class="dr" pathLength="1" style="--d:0.30s" d="M92,552 H528 V560 H92 Z" stroke-width="1.6"/>
+                  </g>
+                  <g class="fi ln st" style="--d:0.9s">
+                    <path class="thin" d="M22,560 H92"/><text x="22" y="555" class="tx sm">+0.00</text>
+                    <path class="thin" d="M22,440 H92"/><text x="22" y="435" class="tx sm">+3.50</text>
+                    <path class="thin" d="M22,320 H92"/><text x="22" y="315" class="tx sm">+7.00</text>
+                    <path class="thin" d="M22,200 H92"/><text x="22" y="195" class="tx sm">+10.50</text>
+                    <path class="thin" d="M22,80 H92"/><text x="22" y="75" class="tx sm">+14.00</text>
+                    <path class="thin" d="M562,80 V560"/>
+                    <path class="thin" d="M556,85 l12,-10"/>
+                    <path class="thin" d="M556,205 l12,-10"/>
+                    <path class="thin" d="M556,325 l12,-10"/>
+                    <path class="thin" d="M556,445 l12,-10"/>
+                    <path class="thin" d="M556,565 l12,-10"/>
+                    <text x="572" y="143" class="tx sm">3.50</text>
+                    <text x="572" y="263" class="tx sm">3.50</text>
+                    <text x="572" y="383" class="tx sm">3.50</text>
+                    <text x="572" y="503" class="tx sm">3.50</text>
+                  </g>
+                  <!-- Red Eléctrica -->
+                  <g class="sys sys-elec ln" style="stroke:var(--c-elec)">
+                    <path class="dr" pathLength="1" style="--d:0.90s" d="M132,552 V92" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:1.00s" d="M120,516 V552 H144 V516 Z M136,522 l-6,12 h8 l-6,12" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:1.05s" d="M132,460 H488" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:1.25s" d="M196,460 v6 M187,467 h18 M284,460 v6 M275,467 h18 M372,460 v6 M363,467 h18 M460,460 v6 M451,467 h18" stroke-width="2"/>
+                    <path class="dr" pathLength="1" style="--d:1.19s" d="M132,340 H488" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:1.39s" d="M196,340 v6 M187,347 h18 M284,340 v6 M275,347 h18 M372,340 v6 M363,347 h18 M460,340 v6 M451,347 h18" stroke-width="2"/>
+                    <path class="dr" pathLength="1" style="--d:1.33s" d="M132,220 H488" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:1.53s" d="M196,220 v6 M187,227 h18 M284,220 v6 M275,227 h18 M372,220 v6 M363,227 h18 M460,220 v6 M451,227 h18" stroke-width="2"/>
+                    <path class="dr" pathLength="1" style="--d:1.47s" d="M132,100 H488" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:1.67s" d="M196,100 v6 M187,107 h18 M284,100 v6 M275,107 h18 M372,100 v6 M363,107 h18 M460,100 v6 M451,107 h18" stroke-width="2"/>
+                  </g>
+                  <!-- Red Contra Incendio (PCI) -->
+                  <g class="sys sys-pci ln" style="stroke:var(--c-pci)">
+                    <path class="dr" pathLength="1" style="--d:1.40s" d="M500,526 V92" stroke-width="2.4"/>
+                    <g class="pp" style="--d:1.40s"><circle cx="500" cy="538" r="11" stroke-width="2"/><path d="M494,538 h12 M500,532 v12" stroke-width="1.6"/></g>
+                    <path class="dr" pathLength="1" style="--d:1.55s" d="M500,478 H262 M462,478 v7 M414,478 v7 M366,478 v7 M318,478 v7 M270,478 v7" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:2.00s" cx="462" cy="488" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.05s" cx="414" cy="488" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.10s" cx="366" cy="488" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.15s" cx="318" cy="488" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.20s" cx="270" cy="488" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:1.69s" d="M500,358 H262 M462,358 v7 M414,358 v7 M366,358 v7 M318,358 v7 M270,358 v7" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:2.14s" cx="462" cy="368" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.19s" cx="414" cy="368" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.24s" cx="366" cy="368" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.29s" cx="318" cy="368" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.34s" cx="270" cy="368" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:1.83s" d="M500,238 H262 M462,238 v7 M414,238 v7 M366,238 v7 M318,238 v7 M270,238 v7" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:2.28s" cx="462" cy="248" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.33s" cx="414" cy="248" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.38s" cx="366" cy="248" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.43s" cx="318" cy="248" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.48s" cx="270" cy="248" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:1.97s" d="M500,118 H262 M462,118 v7 M414,118 v7 M366,118 v7 M318,118 v7 M270,118 v7" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:2.42s" cx="462" cy="128" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.47s" cx="414" cy="128" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.52s" cx="366" cy="128" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.57s" cx="318" cy="128" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:2.62s" cx="270" cy="128" r="3" stroke-width="1.6"/>
+                  </g>
+                  <!-- Climatización (HVAC) -->
+                  <g class="sys sys-hvac ln" style="stroke:var(--c-hvac)">
+                    <path class="dr" pathLength="1" style="--d:1.90s" d="M228,552 V80 M244,552 V80" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.20s" d="M244,66 H250 M250,80 V52 H330 V80" stroke-width="1.8"/>
+                    <g class="pp" style="--d:2.50s"><circle cx="290" cy="66" r="9" stroke-width="1.6"/><path d="M290,58 v16 M282,66 h16" stroke-width="1.4"/></g>
+                    <path class="dr" pathLength="1" style="--d:2.05s" d="M244,500 H440 V514 H244" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.30s" d="M300,514 v5 M290,519 h20 M360,514 v5 M350,519 h20 M420,514 v5 M410,519 h20" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.19s" d="M244,380 H440 V394 H244" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.44s" d="M300,394 v5 M290,399 h20 M360,394 v5 M350,399 h20 M420,394 v5 M410,399 h20" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.33s" d="M244,260 H440 V274 H244" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.58s" d="M300,274 v5 M290,279 h20 M360,274 v5 M350,279 h20 M420,274 v5 M410,279 h20" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.47s" d="M244,140 H440 V154 H244" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.72s" d="M300,154 v5 M290,159 h20 M360,154 v5 M350,159 h20 M420,154 v5 M410,159 h20" stroke-width="1.8"/>
+                  </g>
+                  <!-- Red Sanitaria -->
+                  <g class="sys sys-san ln" style="stroke:var(--c-san)">
+                    <path class="dr" pathLength="1" style="--d:2.40s" d="M168,552 V64" stroke-width="2.2"/>
+                    <path class="dr" pathLength="1" style="--d:2.70s" d="M150,80 V56 H206 V80 M150,66 H206" stroke-width="1.8"/>
+                    <path class="dr" pathLength="1" style="--d:2.55s" d="M168,538 H470 M300,538 v-9 M380,538 v-9 M440,538 v-9" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:2.95s" cx="300" cy="525" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.00s" cx="380" cy="525" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.05s" cx="440" cy="525" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:2.69s" d="M168,426 H470 M300,426 v-9 M380,426 v-9 M440,426 v-9" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:3.09s" cx="300" cy="413" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.14s" cx="380" cy="413" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.19s" cx="440" cy="413" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:2.83s" d="M168,306 H470 M300,306 v-9 M380,306 v-9 M440,306 v-9" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:3.23s" cx="300" cy="293" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.28s" cx="380" cy="293" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.33s" cx="440" cy="293" r="3" stroke-width="1.6"/>
+                    <path class="dr" pathLength="1" style="--d:2.97s" d="M168,186 H470 M300,186 v-9 M380,186 v-9 M440,186 v-9" stroke-width="2.2"/>
+                    <circle class="pp" style="--d:3.37s" cx="300" cy="173" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.42s" cx="380" cy="173" r="3" stroke-width="1.6"/>
+                    <circle class="pp" style="--d:3.47s" cx="440" cy="173" r="3" stroke-width="1.6"/>
+                  </g>
+                  <!-- Seguridad Electrónica -->
+                  <g class="sys sys-seg ln" style="stroke:var(--c-seg)">
+                    <path class="fi cone" style="--d:3.20s" d="M122,464 L198,550 L216,498 Z"/>
+                    <path class="dr" pathLength="1" style="--d:2.90s" d="M106,458 h10 v9 h-10 z M116,460 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
+                    <path class="fi dash" style="--d:3.20s" d="M122,464 L198,550 M122,464 L216,498"/>
+                    <path class="fi cone" style="--d:3.34s" d="M122,344 L198,438 L216,378 Z"/>
+                    <path class="dr" pathLength="1" style="--d:3.04s" d="M106,338 h10 v9 h-10 z M116,340 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
+                    <path class="fi dash" style="--d:3.34s" d="M122,344 L198,438 M122,344 L216,378"/>
+                    <path class="fi cone" style="--d:3.48s" d="M122,224 L198,318 L216,258 Z"/>
+                    <path class="dr" pathLength="1" style="--d:3.18s" d="M106,218 h10 v9 h-10 z M116,220 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
+                    <path class="fi dash" style="--d:3.48s" d="M122,224 L198,318 M122,224 L216,258"/>
+                    <path class="fi cone" style="--d:3.62s" d="M122,104 L198,198 L216,138 Z"/>
+                    <path class="dr" pathLength="1" style="--d:3.32s" d="M106,98 h10 v9 h-10 z M116,100 l6,-2 v13 l-6,-2" stroke-width="1.8"/>
+                    <path class="fi dash" style="--d:3.62s" d="M122,104 L198,198 M122,104 L216,138"/>
+                  </g>
+                  <!-- Rótulo del Plano -->
+                  <g class="fi ln st" style="--d:3.6s">
+                    <path d="M340,596 H600 V634 H340 Z"/><path class="thin" d="M340,612 H600"/>
+                    <text x="350" y="608" class="tx bold">Plano de coordinación de especialidades</text>
+                    <text x="350" y="626" class="tx sm">Corte A–A, escala 1:100</text>
+                    <rect x="574" y="617" width="16" height="12" rx="2" fill="var(--brick)" fill-opacity=".9" stroke="none"/>
+                    <rect x="568" y="614" width="16" height="12" rx="2" fill="#0F1B2D" fill-opacity=".9" stroke="none"/>
+                  </g>
+                </svg>
 
-    <!-- ================================================================== -->
-    <!-- 3. CARRUSEL A PANTALLA COMPLETA                                    -->
-    <!-- ================================================================== -->
-    <section id="especialidades" aria-roledescription="carrusel" aria-label="Especialidades de ingeniería"
-      class="relative h-[100svh] min-h-[660px] overflow-hidden bg-ink-900 text-white" style="--accent:#C98500">
+                <!-- Leyenda interactiva -->
+                <div class="mt-4 pt-4">
+                  <p class="text-center text-xs text-ink/60 mb-3">Cada red tiene su color. Pase el cursor por una para verla sola.</p>
+                  <ul id="plan-legend" class="flex flex-wrap justify-center gap-2">
+                    <li><button type="button" data-sys="elec" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-elec)"></span>Eléctrica</button></li>
+                    <li><button type="button" data-sys="pci" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-pci)"></span>Incendio</button></li>
+                    <li><button type="button" data-sys="hvac" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-hvac)"></span>Climatización</button></li>
+                    <li><button type="button" data-sys="san" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-san)"></span>Sanitaria</button></li>
+                    <li><button type="button" data-sys="seg" class="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-paper/70 px-3.5 py-1.5 text-xs font-semibold hover:border-ink transition"><span class="size-2 rounded-full" style="background:var(--c-seg)"></span>Seguridad</button></li>
+                  </ul>
+                </div>
+              </div>
+            </figure>
 
-      <div id="slides" class="absolute inset-0" aria-live="off"></div>
-
-      <div class="pointer-events-none absolute inset-x-0 bottom-0 z-30">
-        <div class="pointer-events-auto mx-auto max-w-shell px-6 pb-6 sm:px-10 sm:pb-8 lg:px-12">
-          <div class="mb-4 flex items-center justify-between">
-            <p class="font-grotesk text-sm font-semibold tabular-nums text-white/80">
-              <span id="c-cur">01</span><span class="text-white/40"> / <span id="c-total">08</span></span>
-            </p>
-            <div class="flex items-center gap-2">
-              <button id="c-toggle" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Pausar">
-                <svg id="ico-pause" class="size-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-                <svg id="ico-play" class="hidden size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>
-              </button>
-              <button id="c-prev" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Anterior">
-                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 19l-7-7 7-7"/></svg>
-              </button>
-              <button id="c-next" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Siguiente">
-                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </div>
           </div>
-          <div id="rail" class="flex gap-2 lg:gap-3"></div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ================================================================== -->
-    <!-- 4. SECCIÓN PROYECTOS                                               -->
-    <!-- ================================================================== -->
-    <section id="proyectos" class="bg-white py-24 sm:py-32">
-      <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
-        <div class="grid gap-12 lg:grid-cols-12 lg:gap-14">
+      <!-- ================================================================== -->
+      <!-- 3. CARRUSEL A PANTALLA COMPLETA                                    -->
+      <!-- ================================================================== -->
+      <section id="especialidades" aria-roledescription="carrusel" aria-label="Especialidades de ingeniería"
+        class="relative h-[100svh] min-h-[660px] overflow-hidden bg-ink-900 text-white" style="--accent:#C98500">
 
-          <div class="lg:col-span-4">
-            <div class="lg:sticky lg:top-28">
-              <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Experiencia Demostrada</span>
-              <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Proyectos y clientes</h2>
-              <p class="mt-4 text-ink/75 leading-relaxed">Instalaciones destacadas donde hemos ejecutado desarrollo y consultoría en Chile y México.</p>
+        <div id="slides" class="absolute inset-0" aria-live="off"></div>
 
-              <div class="mt-8 flex flex-col gap-2" role="group" aria-label="Tipo de proyecto">
-                <button type="button" id="tab-proy" class="flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition">
-                  <span>Ingeniería de proyectos</span>
-                  <span class="text-xs opacity-75">21</span>
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 z-30">
+          <div class="pointer-events-auto mx-auto max-w-shell px-6 pb-6 sm:px-10 sm:pb-8 lg:px-12">
+            <div class="mb-4 flex items-center justify-between">
+              <p class="font-grotesk text-sm font-semibold tabular-nums text-white/80">
+                <span id="c-cur">01</span><span class="text-white/40"> / <span id="c-total">08</span></span>
+              </p>
+              <div class="flex items-center gap-2">
+                <button id="c-toggle" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Pausar">
+                  <svg id="ico-pause" class="size-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                  <svg id="ico-play" class="hidden size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg>
                 </button>
-                <button type="button" id="tab-tdd" class="flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink">
-                  <span>Technical Due Diligence</span>
-                  <span class="text-xs opacity-75">8</span>
+                <button id="c-prev" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Anterior">
+                  <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button id="c-next" type="button" class="inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/5 transition hover:bg-white hover:text-ink" aria-label="Siguiente">
+                  <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
                 </button>
               </div>
+            </div>
+            <div id="rail" class="flex gap-2 lg:gap-3"></div>
+          </div>
+        </div>
+      </section>
 
-              <div id="dots-legend" class="mt-6">
-                <p class="text-xs font-bold uppercase tracking-wider text-ink/50">Especialidades aplicadas</p>
-                <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-ink/75">
-                  <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-elec)"></span>Eléctrica</li>
-                  <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-pci)"></span>Incendio</li>
-                  <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-hvac)"></span>Climatización</li>
-                  <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-san)"></span>Sanitaria</li>
-                  <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-seg)"></span>Seguridad</li>
-                </ul>
-              </div>
+      <!-- ================================================================== -->
+      <!-- 4. SECCIÓN PROYECTOS                                               -->
+      <!-- ================================================================== -->
+      <section id="proyectos" class="bg-white py-24 sm:py-32">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="grid gap-12 lg:grid-cols-12 lg:gap-14">
 
-              <div class="mt-8 pt-6 border-t border-ink/10">
-                <a href="proyectos.html" class="inline-flex items-center text-sm font-semibold text-brick hover:underline">
-                  Ver catálogo completo de proyectos (29) →
-                </a>
+            <div class="lg:col-span-4">
+              <div class="lg:sticky lg:top-28">
+                <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Experiencia Demostrada</span>
+                <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Proyectos y clientes</h2>
+                <p class="mt-4 text-ink/75 leading-relaxed">Instalaciones destacadas donde hemos ejecutado desarrollo y consultoría en Chile y México.</p>
+
+                <div class="mt-8 flex flex-col gap-2" role="group" aria-label="Tipo de proyecto">
+                  <button type="button" id="tab-proy" class="flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition">
+                    <span>Ingeniería de proyectos</span>
+                    <span class="text-xs opacity-75">21</span>
+                  </button>
+                  <button type="button" id="tab-tdd" class="flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink">
+                    <span>Technical Due Diligence</span>
+                    <span class="text-xs opacity-75">8</span>
+                  </button>
+                </div>
+
+                <div id="dots-legend" class="mt-6">
+                  <p class="text-xs font-bold uppercase tracking-wider text-ink/50">Especialidades aplicadas</p>
+                  <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-ink/75">
+                    <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-elec)"></span>Eléctrica</li>
+                    <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-pci)"></span>Incendio</li>
+                    <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-hvac)"></span>Climatización</li>
+                    <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-san)"></span>Sanitaria</li>
+                    <li class="flex items-center gap-1.5"><span class="size-2 rounded-full" style="background:var(--c-seg)"></span>Seguridad</li>
+                  </ul>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-ink/10">
+                  <a href="proyectos.html" class="inline-flex items-center text-sm font-semibold text-brick hover:underline">
+                    Ver catálogo completo de proyectos (29) →
+                  </a>
+                </div>
               </div>
+            </div>
+
+            <div class="lg:col-span-8">
+              <ul id="proj-container" class="divide-y divide-ink/15 border-y border-ink/15">
+                <!-- Render dinámico vía JS -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- 5. NOTICIAS TÉCNICAS Y ARTÍCULOS                                   -->
+      <!-- ================================================================== -->
+      <section id="noticias" class="bg-paper py-24 sm:py-32 border-t border-ink/10">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-10">
+            <div class="reveal">
+              <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Actualidad</span>
+              <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Noticias y normativa</h2>
+              <p class="mt-2 text-ink/70">Artículos técnicos, novedades de la industria y cambios normativos aplicados.</p>
+            </div>
+            <div class="reveal">
+              <a href="noticias.html" class="text-sm font-semibold underline decoration-brick decoration-2 underline-offset-4">Ver más artículos →</a>
             </div>
           </div>
 
-          <div class="lg:col-span-8">
-            <ul id="proj-container" class="divide-y divide-ink/15 border-y border-ink/15">
-              <!-- Render dinámico vía JS -->
-            </ul>
+          <div class="grid gap-6 md:grid-cols-3 mt-4">
+            <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
+              <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Technical Due Diligence</span>
+              <h3 class="mt-5 font-display text-xl font-bold leading-snug">Qué verificar en una inspección técnica antes de adquirir o arrendar un edificio</h3>
+              <p class="mt-3 text-sm text-ink/70 leading-relaxed">Criterios de evaluación en vida útil de equipamiento y cumplimiento de normativas locales e internacionales.</p>
+              <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
+            </article>
+
+            <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
+              <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Normativa SEC</span>
+              <h3 class="mt-5 font-display text-xl font-bold leading-snug">Pliegos técnicos y consideraciones en proyectos de distribución y potencia</h3>
+              <p class="mt-3 text-sm text-ink/70 leading-relaxed">Actualizaciones sobre RIC N°01 a N°19 y directrices para tableros generales en plantas comerciales.</p>
+              <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
+            </article>
+
+            <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
+              <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Protección Incendio</span>
+              <h3 class="mt-5 font-display text-xl font-bold leading-snug">Sistemas de rociadores y extinción según estándares NFPA 13, 20 & 72</h3>
+              <p class="mt-3 text-sm text-ink/70 leading-relaxed">Coordinación de matrices húmedas y salas de bombas para aprobación de aseguradoras y Factory Mutual.</p>
+              <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
+            </article>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ================================================================== -->
-    <!-- 5. NOTICIAS TÉCNICAS Y ARTÍCULOS                                   -->
-    <!-- ================================================================== -->
-    <section id="noticias" class="bg-paper py-24 sm:py-32 border-t border-ink/10">
-      <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-10">
-          <div class="reveal">
-            <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Actualidad</span>
-            <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Noticias y normativa</h2>
-            <p class="mt-2 text-ink/70">Artículos técnicos, novedades de la industria y cambios normativos aplicados.</p>
-          </div>
-          <div class="reveal">
-            <a href="noticias.html" class="text-sm font-semibold underline decoration-brick decoration-2 underline-offset-4">Ver más artículos →</a>
-          </div>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-3 mt-4">
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Technical Due Diligence</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Qué verificar en una inspección técnica antes de adquirir o arrendar un edificio</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Criterios de evaluación en vida útil de equipamiento y cumplimiento de normativas locales e internacionales.</p>
-            <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
-          </article>
-
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Normativa SEC</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Pliegos técnicos y consideraciones en proyectos de distribución y potencia</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Actualizaciones sobre RIC N°01 a N°19 y directrices para tableros generales en plantas comerciales.</p>
-            <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
-          </article>
-
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Protección Incendio</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Sistemas de rociadores y extinción según estándares NFPA 13, 20 & 72</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Coordinación de matrices húmedas y salas de bombas para aprobación de aseguradoras y Factory Mutual.</p>
-            <a href="noticias.html" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================================================================== -->
-    <!-- 6. BANNER DE CONTACTO PREVIO AL FOOTER (IMAGEN DE REFERENCIA)      -->
-    <!-- ================================================================== -->
-    <section class="bg-paper pb-24 sm:pb-32 pt-10">
-      <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
-        <div class="reveal rounded-[2.5rem] bg-[#0E1520] p-9 sm:p-14 lg:p-16 text-white flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl">
-          <div class="max-w-2xl text-left">
-            <h2 class="font-display text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold leading-[1.12] tracking-tight">
-              ¿Tiene un proyecto en desarrollo o una instalación que evaluar?
-            </h2>
-            <p class="mt-4 text-white/75 text-base sm:text-lg leading-relaxed font-normal">
-              Nuestro equipo de ingenieros puede revisar sus requerimientos y estructurar una propuesta técnica precisa.
-            </p>
-          </div>
-          <div class="shrink-0 w-full lg:w-auto flex justify-start lg:justify-end">
-            <a href="contacto.html" class="inline-flex items-center justify-center rounded-full bg-[#A84B43] hover:bg-[#8E3E37] px-8 py-4 text-base font-semibold text-white transition-all duration-300 shadow-[0_10px_25px_rgba(168,75,67,0.35)] hover:shadow-[0_15px_30px_rgba(168,75,67,0.5)] active:scale-95">
-              Ir al formulario de contacto →
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- ================================================================== -->
-  <!-- 7. FOOTER CORPORATIVO EXACTO                                       -->
-  <!-- ================================================================== -->
-  <footer class="bg-ink-900 pb-12 pt-16 text-paper border-t border-white/10">
-    <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
-      <div class="grid gap-12 md:grid-cols-12">
-
-        <!-- Columna 1: Marca y Redes -->
-        <div class="md:col-span-5">
-          <div class="flex items-center gap-3">
-            <svg viewBox="0 0 32 32" class="size-8" aria-hidden="true">
-              <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
-              <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".9"/>
-            </svg>
-            <span class="font-display text-xl font-extrabold tracking-[.01em]">SINERGI</span>
-          </div>
-          <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/65">
-            Ingeniería y consultoría de especialidades técnicas para clientes públicos y privados. Desde 2006, en Santiago de Chile.
-          </p>
-          <div class="mt-6 flex gap-3">
-            <a href="https://cl.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Sinergi" class="inline-flex size-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white hover:text-ink">
-              <svg class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.34 18.34V10H5.67v8.34h2.67ZM7 8.8a1.55 1.55 0 1 0 0-3.1 1.55 1.55 0 0 0 0 3.1Zm11.34 9.54v-4.58c0-2.25-1.2-3.3-2.8-3.3-1.29 0-1.86.71-2.18 1.21V10h-2.67c.04.75 0 8.34 0 8.34h2.67v-4.66c0-.25.02-.5.09-.68.2-.5.66-1.01 1.43-1.01 1 0 1.4.77 1.4 1.9v4.45h2.06Z"/></svg>
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram Sinergi" class="inline-flex size-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white hover:text-ink">
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6" fill="currentColor"/></svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- Columna 2: Navegación del Sitio -->
-        <nav aria-label="Sitio" class="md:col-span-3">
-          <p class="font-display text-sm font-bold uppercase tracking-wider text-white">Sitio</p>
-          <ul class="mt-4 space-y-2.5 text-sm text-white/70">
-            <li><a href="#especialidades" class="hover:text-white transition">Especialidades</a></li>
-            <li><a href="servicios.html" class="hover:text-white transition">Servicios</a></li>
-            <li><a href="#proyectos" class="hover:text-white transition">Proyectos y clientes</a></li>
-            <li><a href="nosotros.html" class="hover:text-white transition">Nosotros</a></li>
-            <li><a href="#noticias" class="hover:text-white transition">Noticias</a></li>
-            <li><button type="button" data-open-portal class="hover:text-white transition">Portal de clientes</button></li>
-          </ul>
-        </nav>
-
-        <!-- Columna 3: Contacto -->
-        <div class="md:col-span-4">
-          <p class="font-display text-sm font-bold uppercase tracking-wider text-white">Contacto</p>
-          <address class="mt-4 space-y-2.5 not-italic text-sm text-white/70">
-            <p>Pedro Aguirre Cerda #885<br>Ñuñoa, Santiago</p>
-            <p><a href="tel:+56222390951" class="hover:text-white transition">+56 2 2239 0951</a></p>
-            <p><a href="mailto:info@sinergi.cl" class="hover:text-white transition">info@sinergi.cl</a></p>
-          </address>
-        </div>
-      </div>
-
-      <!-- Barra de Copyright Oficial -->
-      <div class="mt-14 border-t border-white/15 pt-6 text-xs text-white/50 leading-relaxed">
-        <p>© 2006 - 2026 Sinergi - Engineering and Consultancy - Todos los derechos reservados. | Todas las marcas registradas, nombres comerciales, logos e imágenes pertenecen a sus respectivos dueños.</p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Modal Portal Clientes -->
-  <dialog id="portal-dialog" class="m-auto w-[min(92vw,26rem)] rounded-3xl border border-white/15 bg-ink p-7 text-white backdrop:bg-ink-900/80 backdrop:backdrop-blur-sm">
-    <div class="flex items-start justify-between">
-      <div>
-        <h3 class="font-display text-xl font-bold">Portal de clientes</h3>
-        <p class="mt-1 text-xs text-white/60 leading-relaxed">Para clientes con proyectos activos. Las cuentas las habilita Sinergi.</p>
-      </div>
-      <button type="button" data-close-portal class="text-white/60 hover:text-white text-lg">✕</button>
-    </div>
-    <form class="mt-6 space-y-4">
-      <div>
-        <label class="block text-xs font-semibold uppercase text-white/70 mb-1">Correo electrónico</label>
-        <input type="email" required placeholder="nombre@empresa.cl" class="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brick">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold uppercase text-white/70 mb-1">Contraseña</label>
-        <input type="password" required class="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brick">
-      </div>
-      <button type="submit" class="w-full rounded-full bg-brick py-3 text-sm font-semibold hover:bg-brick-dark transition">Ingresar al sistema</button>
-      <p class="text-[11px] text-white/40 text-center">¿Primera vez? Use el enlace de activación que recibió por correo.</p>
-    </form>
-  </dialog>
-
-  <!-- ================================================================== -->
-  <!-- SCRIPTS FUNCIONALES                                                -->
-  <!-- ================================================================== -->
-  <script>
-  (() => {
-    'use strict';
-    const $ = (s, r = document) => r.querySelector(s);
-    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-
-    /* ===================================================================
-       1. HEADER REDUCTION AL SCROLL (DE 96px A 60px)
-       =================================================================== */
-    const header = $('#site-header');
-    const headerContainer = $('#header-container');
-    const logoIcon = $('#logo-icon');
-
-    const onScroll = () => {
-      if (window.scrollY > 30) {
-        header.classList.add('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
-        header.classList.remove('bg-[#101417]/40', 'border-white/10');
-        headerContainer.classList.add('h-[60px]');
-        headerContainer.classList.remove('h-24');
-        logoIcon.classList.add('size-8');
-        logoIcon.classList.remove('size-10');
-      } else {
-        header.classList.remove('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
-        header.classList.add('bg-[#101417]/40', 'border-white/10');
-        headerContainer.classList.remove('h-[60px]');
-        headerContainer.classList.add('h-24');
-        logoIcon.classList.remove('size-8');
-        logoIcon.classList.add('size-10');
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    /* ===================================================================
-       2. SCROLLSPY (INDICADOR DE SECCIÓN EN EL HEADER)
-       =================================================================== */
-    const spyLinks = $$('.nav-item[data-spy]');
-    const sections = ['inicio', 'especialidades', 'proyectos', 'noticias'].map(id => $(`#${id}`)).filter(Boolean);
-
-    const spyObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const id = entry.target.id;
-          spyLinks.forEach(link => {
-            link.setAttribute('aria-current', String(link.dataset.spy === id));
-          });
-        }
-      });
-    }, { rootMargin: '-40% 0px -50% 0px' });
-
-    sections.forEach(sec => spyObserver.observe(sec));
-
-    /* ===================================================================
-       3. REVEAL ON SCROLL
-       =================================================================== */
-    const revObserver = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-visible');
-          revObserver.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.1 });
-    $$('.reveal').forEach(el => revObserver.observe(el));
-
-    /* ===================================================================
-       4. MENÚ MÓVIL
-       =================================================================== */
-    const mOpen = $('#menu-open');
-    const mMenu = $('#mobile-menu');     mOpen.addEventListener('click', () => mMenu.classList.toggle('is-open'));     $$('.m-link', mMenu).forEach(a => a.addEventListener('click', () => mMenu.classList.remove('is-open')));
-
-    /* ===================================================================
-       5. CLIENTES MARQUEE
-       =================================================================== */
-    const MARQUEE = ['Microsoft', 'Anglo American', 'ENAP', 'Adidas', 'Ripley', 'Cencosud', 'Mall Plaza', 'Bristol-Myers Squibb', 'Dupont Pioneer', 'Red Salud UC Christus', 'Preunic', 'Integramedica'];
-    const mq = $('#marquee');
-    mq.innerHTML = MARQUEE.map(n => `<li class="flex items-center gap-8 font-display font-semibold text-ink/75"><span>${n}</span><span class="size-1.5 rounded-full bg-brick"></span></li>`).join('') +
-                   MARQUEE.map(n => `<li aria-hidden="true" class="flex items-center gap-8 font-display font-semibold text-ink/75"><span>${n}</span><span class="size-1.5 rounded-full bg-brick"></span></li>`).join('');
-
-    /* ===================================================================
-       6. PLANO SVG COMPLETO Y SU INTERACTIVIDAD
-       =================================================================== */
-    const plan = $('#plan');     new IntersectionObserver(([e], o) => {       if (e.isIntersecting) { plan.classList.remove('wait'); o.disconnect(); }     }, { threshold: 0.3 }).observe(plan);      $$('#plan-legend button').forEach(btn => {
-      const on = () => { plan.dataset.focus = btn.dataset.sys; };
-      const off = () => { delete plan.dataset.focus; };
-      btn.addEventListener('mouseenter', on);
-      btn.addEventListener('mouseleave', off);
-      btn.addEventListener('click', () => { plan.dataset.focus === btn.dataset.sys ? off() : on(); });
-    });
-
-    /* ===================================================================
-       7. CARRUSEL COMPLETO DE ESPECIALIDADES
-       =================================================================== */
-    const ESPECIALIDADES = [
-      { key: 'elec', short: 'Eléctrica', name: 'Eléctrica y corrientes débiles', accent: '#C98500',
-        desc: 'Proyectos de instalaciones eléctricas y de corrientes débiles, desarrollados según la norma de cada especialidad para lograr la aprobación de la SEC y de los demás entes competentes.',
-        alcance: ['Instalaciones eléctricas de potencia', 'Corrientes débiles y control', 'Coordinación con las demás especialidades'],
-        img: 'photo-1504307651254-35680f356dfd' },
-      { key: 'pci', short: 'Incendios', name: 'Protección contra incendios', accent: '#D23F2C',
-        desc: 'Ingeniería de sistemas activos de detección y extinción de incendio, con la calidad necesaria para ser aprobada por compañías de seguros, Factory Mutual, la SEC u otro ente acreditado.',
-        alcance: ['Detección y alarma temprana', 'Extinción automática y red húmeda', 'Estudios de cobertura'],
-        img: 'photo-1581094794329-c8112a89af12' },
-      { key: 'hvac', short: 'Climatización', name: 'Climatización y ventilación', accent: '#1B86B5',
-        desc: 'Proyectos de HVAC: calefacción, ventilación y aire acondicionado para edificios de oficinas, centros médicos, laboratorios y plantas industriales.',
-        alcance: ['Climatización de confort', 'Ventilación mecánica', 'Coordinación con arquitectura y demás especialidades'],
-        img: 'photo-1621905251189-08b45d6a269e' },
-      { key: 'seg', short: 'Seguridad', name: 'Seguridad electrónica', accent: '#6A55D6',
-        desc: 'Sistemas de CCTV, intrusión y control de acceso, con estudios de cobertura para definir dónde y cómo se instalan.',
-        alcance: ['CCTV y cobertura perimetral', 'Intrusión y alarmas', 'Control de acceso y citofonía'],
-        img: 'photo-1557597774-9d273605dfa9' },
-      { key: 'san', short: 'Sanitaria', name: 'Sanitaria y agua potable', accent: '#17946F',
-        desc: 'Redes de agua potable, alcantarillado, ventilación sanitaria y aguas lluvias, desarrolladas según la normativa que corresponde a cada proyecto.',
-        alcance: ['Agua potable', 'Alcantarillado', 'Aguas lluvias y ventilación'],
-        img: 'photo-1585704032915-c3400ca199e7' },
-      { key: 'civ', short: 'Civiles', name: 'Obras civiles', accent: '#E0A070',
-        desc: 'Ingeniería civil asociada a los proyectos de especialidades: salas técnicas, canalizaciones, fundaciones de equipos y soportes.',
-        alcance: ['Salas técnicas', 'Canalizaciones y ductos', 'Fundaciones y soportes de equipos'],
-        img: 'photo-1541888946425-d0fbb186c5f9' },
-      { key: 'tel', short: 'Telecom', name: 'Telecomunicaciones', accent: '#F07BC0',
-        desc: 'Infraestructura de telecomunicaciones para edificios y salas de datos: canalizaciones, cableado estructurado y salas técnicas.',
-        alcance: ['Cableado estructurado', 'Salas de datos', 'Canalizaciones y conectividad'],
-        img: 'photo-1544197150-b99a580bb7a8' },
-      { key: 'bim', short: 'Diseño', name: 'Diseño y coordinación de ingeniería', accent: '#B7DB4A',
-        desc: 'Coordinamos las ingenierías multidisciplinarias en etapas conceptual, básica y de detalle, y formulamos las bases técnicas para los procesos de licitación.',
-        alcance: ['Ingeniería conceptual, básica y de detalle', 'Bases técnicas de licitación', 'Consultoría integral'],
-        img: 'photo-1503387762-592deb58ef4e' }
-    ];
-
-    const unsplash = (id, w = 1800) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
-    const pad = n => String(n).padStart(2, '0');
-
-    const AUTOPLAY_MS = 6500;
-    const section = $('#especialidades');
-    const slidesEl = $('#slides');
-    const railEl = $('#rail');
-    const N = ESPECIALIDADES.length;
-
-    slidesEl.innerHTML = ESPECIALIDADES.map((s, i) => `
-      <article class="slide${i === 0 ? ' is-active' : ''}" data-i="${i}" style="--accent:${s.accent}" role="group">
-        <div class="slide-bg absolute inset-0 overflow-hidden bg-ink-900">
-          <img class="slide-img absolute inset-0 h-full w-full object-cover" src="${unsplash(s.img)}" alt="" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
-          <div class="absolute inset-0 opacity-40 mix-blend-multiply" style="background:${s.accent}"></div>
-          <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/80 to-transparent"></div>
-          <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink-900 to-transparent"></div>
-        </div>
-        <div class="relative z-10 mx-auto flex h-full max-w-shell items-center px-6 pb-36 pt-24 sm:px-10 lg:px-12">
-          <div class="max-w-2xl">
-            <span data-r style="--i:0" class="inline-block font-mono text-xs uppercase tracking-widest font-semibold" style="color:var(--accent)">
-              Especialidad 0${i + 1}
-            </span>
-            <h3 data-r style="--i:1" class="mt-3 font-display text-[clamp(2.2rem,4.5vw,4.2rem)] font-extrabold leading-tight">
-              <span style="color:var(--accent)">${s.name}</span>
-            </h3>
-            <p data-r style="--i:2" class="mt-4 text-base sm:text-lg leading-relaxed text-white/80">
-              ${s.desc}
-            </p>
-            <ul data-r style="--i:3" class="mt-6 flex flex-wrap gap-2">
-              ${s.alcance.map(t => `<li class="rounded-full border border-white/20 bg-white/5 px-3.5 py-1 text-xs text-white/85">${t}</li>`).join('')}
-            </ul>
-            <div data-r style="--i:4" class="mt-8">
-              <a href="servicios.html" class="inline-flex rounded-full px-7 py-3 text-sm font-bold text-ink transition hover:brightness-110" style="background:var(--accent)">
-                Consultar especialidad
+      <!-- ================================================================== -->
+      <!-- 6. BANNER DE CONTACTO PREVIO AL FOOTER (IMAGEN DE REFERENCIA)      -->
+      <!-- ================================================================== -->
+      <section class="bg-paper pb-24 sm:pb-32 pt-10">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="reveal rounded-[2.5rem] bg-[#0E1520] p-9 sm:p-14 lg:p-16 text-white flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl">
+            <div class="max-w-2xl text-left">
+              <h2 class="font-display text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold leading-[1.12] tracking-tight">
+                ¿Tiene un proyecto en desarrollo o una instalación que evaluar?
+              </h2>
+              <p class="mt-4 text-white/75 text-base sm:text-lg leading-relaxed font-normal">
+                Nuestro equipo de ingenieros puede revisar sus requerimientos y estructurar una propuesta técnica precisa.
+              </p>
+            </div>
+            <div class="shrink-0 w-full lg:w-auto flex justify-start lg:justify-end">
+              <a href="{% url 'contacto' %}" class="inline-flex items-center justify-center rounded-full bg-[#A84B43] hover:bg-[#8E3E37] px-8 py-4 text-base font-semibold text-white transition-all duration-300 shadow-[0_10px_25px_rgba(168,75,67,0.35)] hover:shadow-[0_15px_30px_rgba(168,75,67,0.5)] active:scale-95">
+                Ir al formulario de contacto →
               </a>
             </div>
           </div>
         </div>
-      </article>`).join('');
+      </section>
+    
+{% endblock %}
 
-    railEl.innerHTML = ESPECIALIDADES.map((s, i) => `
-      <button type="button" class="rail-btn group min-w-0 flex-1 py-2 text-left" data-i="${i}" aria-current="${i === 0}">
-        <span class="block h-[3px] w-full overflow-hidden rounded-full bg-white/20">
-          <span class="fill block h-full rounded-full" style="background:${s.accent}"></span>
-        </span>
-        <span class="lbl mt-2 hidden truncate font-mono text-[11px] font-semibold uppercase tracking-wider lg:block">${s.short}</span>
-      </button>`).join('');
+{% block extra_scripts %}
+  <!-- JavaScript específico: se conserva para animaciones e interacciones de esta página -->
+  <script>
+    (() => {
+      'use strict';
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-    $('#c-total').textContent = pad(N);
-    const slides = $$('.slide', slidesEl);     const rails = $$('.rail-btn', railEl);
-    let curIdx = 0, elapsed = 0, isPlaying = true, raf = 0, lastT = 0;
+      /* ===================================================================
+         1. HEADER REDUCTION AL SCROLL (DE 96px A 60px)
+         =================================================================== */
+      const header = $('#site-header');
+      const headerContainer = $('#header-container');
+      const logoIcon = $('#logo-icon');
 
-    function paintProgress() {
-      rails.forEach((r, i) => {
-        r.querySelector('.fill').style.transform = i === curIdx ? `scaleX(${Math.min(elapsed / AUTOPLAY_MS, 1)})` : 'scaleX(0)';
+      const onScroll = () => {
+        if (window.scrollY > 30) {
+          header.classList.add('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
+          header.classList.remove('bg-[#101417]/40', 'border-white/10');
+          headerContainer.classList.add('h-[60px]');
+          headerContainer.classList.remove('h-24');
+          logoIcon.classList.add('size-8');
+          logoIcon.classList.remove('size-10');
+        } else {
+          header.classList.remove('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
+          header.classList.add('bg-[#101417]/40', 'border-white/10');
+          headerContainer.classList.remove('h-[60px]');
+          headerContainer.classList.add('h-24');
+          logoIcon.classList.remove('size-8');
+          logoIcon.classList.add('size-10');
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      /* ===================================================================
+         2. SCROLLSPY (INDICADOR DE SECCIÓN EN EL HEADER)
+         =================================================================== */
+      const spyLinks = $$('.nav-item[data-spy]');
+      const sections = ['inicio', 'especialidades', 'proyectos', 'noticias'].map(id => $(`#${id}`)).filter(Boolean);
+
+      const spyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            spyLinks.forEach(link => {
+              link.setAttribute('aria-current', String(link.dataset.spy === id));
+            });
+          }
+        });
+      }, { rootMargin: '-40% 0px -50% 0px' });
+
+      sections.forEach(sec => spyObserver.observe(sec));
+
+      /* ===================================================================
+         3. REVEAL ON SCROLL
+         =================================================================== */
+      const revObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            revObserver.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      $$('.reveal').forEach(el => revObserver.observe(el));
+
+      /* ===================================================================
+         4. MENÚ MÓVIL
+         =================================================================== */
+      const mOpen = $('#menu-open');
+      const mMenu = $('#mobile-menu');     mOpen.addEventListener('click', () => mMenu.classList.toggle('is-open'));     $$('.m-link', mMenu).forEach(a => a.addEventListener('click', () => mMenu.classList.remove('is-open')));
+
+      /* ===================================================================
+         5. CLIENTES MARQUEE
+         =================================================================== */
+      const MARQUEE = ['Microsoft', 'Anglo American', 'ENAP', 'Adidas', 'Ripley', 'Cencosud', 'Mall Plaza', 'Bristol-Myers Squibb', 'Dupont Pioneer', 'Red Salud UC Christus', 'Preunic', 'Integramedica'];
+      const mq = $('#marquee');
+      mq.innerHTML = MARQUEE.map(n => `<li class="flex items-center gap-8 font-display font-semibold text-ink/75"><span>${n}</span><span class="size-1.5 rounded-full bg-brick"></span></li>`).join('') +
+                     MARQUEE.map(n => `<li aria-hidden="true" class="flex items-center gap-8 font-display font-semibold text-ink/75"><span>${n}</span><span class="size-1.5 rounded-full bg-brick"></span></li>`).join('');
+
+      /* ===================================================================
+         6. PLANO SVG COMPLETO Y SU INTERACTIVIDAD
+         =================================================================== */
+      const plan = $('#plan');     new IntersectionObserver(([e], o) => {       if (e.isIntersecting) { plan.classList.remove('wait'); o.disconnect(); }     }, { threshold: 0.3 }).observe(plan);      $$('#plan-legend button').forEach(btn => {
+        const on = () => { plan.dataset.focus = btn.dataset.sys; };
+        const off = () => { delete plan.dataset.focus; };
+        btn.addEventListener('mouseenter', on);
+        btn.addEventListener('mouseleave', off);
+        btn.addEventListener('click', () => { plan.dataset.focus === btn.dataset.sys ? off() : on(); });
       });
-    }
 
-    function goTo(n, dir = 1) {
-      n = (n + N) % N;
-      if (n === curIdx) return;
-      const prev = slides[curIdx];
-      const next = slides[n];
-      slides.forEach(s => s.classList.remove('is-leaving'));
-      prev.classList.remove('is-active');
-      prev.classList.add('is-leaving');
-      next.dataset.dir = dir > 0 ? 'next' : 'prev';
-      next.classList.add('is-active');
+      /* ===================================================================
+         7. CARRUSEL COMPLETO DE ESPECIALIDADES
+         =================================================================== */
+      const ESPECIALIDADES = [
+        { key: 'elec', short: 'Eléctrica', name: 'Eléctrica y corrientes débiles', accent: '#C98500',
+          desc: 'Proyectos de instalaciones eléctricas y de corrientes débiles, desarrollados según la norma de cada especialidad para lograr la aprobación de la SEC y de los demás entes competentes.',
+          alcance: ['Instalaciones eléctricas de potencia', 'Corrientes débiles y control', 'Coordinación con las demás especialidades'],
+          img: 'photo-1504307651254-35680f356dfd' },
+        { key: 'pci', short: 'Incendios', name: 'Protección contra incendios', accent: '#D23F2C',
+          desc: 'Ingeniería de sistemas activos de detección y extinción de incendio, con la calidad necesaria para ser aprobada por compañías de seguros, Factory Mutual, la SEC u otro ente acreditado.',
+          alcance: ['Detección y alarma temprana', 'Extinción automática y red húmeda', 'Estudios de cobertura'],
+          img: 'photo-1581094794329-c8112a89af12' },
+        { key: 'hvac', short: 'Climatización', name: 'Climatización y ventilación', accent: '#1B86B5',
+          desc: 'Proyectos de HVAC: calefacción, ventilación y aire acondicionado para edificios de oficinas, centros médicos, laboratorios y plantas industriales.',
+          alcance: ['Climatización de confort', 'Ventilación mecánica', 'Coordinación con arquitectura y demás especialidades'],
+          img: 'photo-1621905251189-08b45d6a269e' },
+        { key: 'seg', short: 'Seguridad', name: 'Seguridad electrónica', accent: '#6A55D6',
+          desc: 'Sistemas de CCTV, intrusión y control de acceso, con estudios de cobertura para definir dónde y cómo se instalan.',
+          alcance: ['CCTV y cobertura perimetral', 'Intrusión y alarmas', 'Control de acceso y citofonía'],
+          img: 'photo-1557597774-9d273605dfa9' },
+        { key: 'san', short: 'Sanitaria', name: 'Sanitaria y agua potable', accent: '#17946F',
+          desc: 'Redes de agua potable, alcantarillado, ventilación sanitaria y aguas lluvias, desarrolladas según la normativa que corresponde a cada proyecto.',
+          alcance: ['Agua potable', 'Alcantarillado', 'Aguas lluvias y ventilación'],
+          img: 'photo-1585704032915-c3400ca199e7' },
+        { key: 'civ', short: 'Civiles', name: 'Obras civiles', accent: '#E0A070',
+          desc: 'Ingeniería civil asociada a los proyectos de especialidades: salas técnicas, canalizaciones, fundaciones de equipos y soportes.',
+          alcance: ['Salas técnicas', 'Canalizaciones y ductos', 'Fundaciones y soportes de equipos'],
+          img: 'photo-1541888946425-d0fbb186c5f9' },
+        { key: 'tel', short: 'Telecom', name: 'Telecomunicaciones', accent: '#F07BC0',
+          desc: 'Infraestructura de telecomunicaciones para edificios y salas de datos: canalizaciones, cableado estructurado y salas técnicas.',
+          alcance: ['Cableado estructurado', 'Salas de datos', 'Canalizaciones y conectividad'],
+          img: 'photo-1544197150-b99a580bb7a8' },
+        { key: 'bim', short: 'Diseño', name: 'Diseño y coordinación de ingeniería', accent: '#B7DB4A',
+          desc: 'Coordinamos las ingenierías multidisciplinarias en etapas conceptual, básica y de detalle, y formulamos las bases técnicas para los procesos de licitación.',
+          alcance: ['Ingeniería conceptual, básica y de detalle', 'Bases técnicas de licitación', 'Consultoría integral'],
+          img: 'photo-1503387762-592deb58ef4e' }
+      ];
 
-      setTimeout(() => prev.classList.remove('is-leaving'), 1000);
-      curIdx = n;
-      elapsed = 0;
-      rails.forEach((r, i) => r.setAttribute('aria-current', String(i === n)));
-      section.style.setProperty('--accent', ESPECIALIDADES[n].accent);
-      $('#c-cur').textContent = pad(n + 1);
-      paintProgress();
-    }
+      const unsplash = (id, w = 1800) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
+      const pad = n => String(n).padStart(2, '0');
 
-    function loop(t) {
-      raf = requestAnimationFrame(loop);
-      const dt = Math.min(t - (lastT || t), 100);
-      lastT = t;
-      if (!isPlaying) return;
-      elapsed += dt;
-      paintProgress();
-      if (elapsed >= AUTOPLAY_MS) goTo(curIdx + 1, 1);
-    }
-    raf = requestAnimationFrame(loop);
+      const AUTOPLAY_MS = 6500;
+      const section = $('#especialidades');
+      const slidesEl = $('#slides');
+      const railEl = $('#rail');
+      const N = ESPECIALIDADES.length;
 
-    $('#c-next').addEventListener('click', () => goTo(curIdx + 1, 1));
-    $('#c-prev').addEventListener('click', () => goTo(curIdx - 1, -1));
-    $('#c-toggle').addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      $('#ico-pause').classList.toggle('hidden', !isPlaying);
-      $('#ico-play').classList.toggle('hidden', isPlaying);
-    });
-    rails.forEach((r, i) => r.addEventListener('click', () => goTo(i, i > curIdx ? 1 : -1)));
-
-    /* ===================================================================
-       8. PROYECTOS Y TECHNICAL DUE DILIGENCE CON INDICADORES
-       =================================================================== */
-    const DISC = { elec: 'Eléctrica', pci: 'Incendio', hvac: 'Climatización', san: 'Sanitaria', seg: 'Seguridad' };
-    const PROYECTOS_DATA = [
-      { c: 'Ripley Los Dominicos', s: 'Proyecto de protección contra incendios: sistemas de detección y extinción.', d: ['pci'] },
-      { c: 'Dupont Pioneer México', s: 'Ingeniería de incendio, intrusión y CCTV para plantas en Guadalajara, Los Mochis, Puerto Vallarta y Culiacán.', d: ['pci', 'seg'] },
-      { c: 'Aeropuerto Arturo Merino Benítez', s: 'Estudios de cobertura e ingeniería de los sistemas de CCTV para la ampliación.', d: ['seg'] },
-      { c: 'MPLD – Integramedica', s: 'Electricidad y corrientes débiles, sanitarios, climatización, incendio, intrusión y aire comprimido.', d: ['elec', 'pci', 'hvac', 'san', 'seg'] },
-      { c: 'BCG (The Boston Consulting Group)', s: 'Desarrollo y coordinación de incendio, instalaciones eléctricas y sanitarias, CCTV, climatización y control de acceso.', d: ['pci', 'elec', 'san', 'seg', 'hvac'] }
-    ];
-
-    const TDD_DATA = [
-      { c: 'Penta Las Américas', s: 'Inspección técnica de especialidades, cumplimiento normativo y estado de instalaciones.', d: [] },
-      { c: 'Mall Plaza', s: 'Technical Due Diligence de especialidades en centros comerciales operando.', d: [] },
-      { c: 'Cencosud', s: 'Auditoría técnica de instalaciones para procesos de adquisición inmobiliaria.', d: [] },
-      { c: 'Colliers International', s: 'Revisión y verificación técnica para carteras de activos corporativos.', d: [] },
-      { c: 'Sencorp', s: 'Inspección técnica multidisciplinaria en edificios de oficinas clase A.', d: [] }
-    ];
-
-    let currentTab = 'proy';
-    const projContainer = $('#proj-container');
-    const tabProy = $('#tab-proy');
-    const tabTdd = $('#tab-tdd');
-    const dotsLegend = $('#dots-legend');
-
-    const renderDots = d => d.length ? `
-      <ul class="mt-2.5 flex items-center gap-1.5" aria-label="Especialidades: ${d.map(k => DISC[k]).join(', ')}">
-        ${d.map(k => `<li title="${DISC[k]}" class="size-2 rounded-full" style="background:var(--c-${k})"></li>`).join('')}
-      </ul>` : '';
-
-    function renderProjList() {
-      const isP = currentTab === 'proy';
-      const data = isP ? PROYECTOS_DATA : TDD_DATA;
-      dotsLegend.style.display = isP ? '' : 'none';
-
-      projContainer.innerHTML = data.map(p => `
-        <li class="py-5 px-3 transition hover:bg-paper/80">
-          <div class="grid gap-x-6 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-            <h3 class="font-display text-lg sm:text-xl font-bold tracking-tight text-ink">${p.c}</h3>
-            <div>
-              <p class="text-sm text-ink/75 leading-relaxed">${p.s}</p>
-              ${isP ? renderDots(p.d) : ''}
+      slidesEl.innerHTML = ESPECIALIDADES.map((s, i) => `
+        <article class="slide${i === 0 ? ' is-active' : ''}" data-i="${i}" style="--accent:${s.accent}" role="group">
+          <div class="slide-bg absolute inset-0 overflow-hidden bg-ink-900">
+            <img class="slide-img absolute inset-0 h-full w-full object-cover" src="${unsplash(s.img)}" alt="" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+            <div class="absolute inset-0 opacity-40 mix-blend-multiply" style="background:${s.accent}"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/80 to-transparent"></div>
+            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink-900 to-transparent"></div>
+          </div>
+          <div class="relative z-10 mx-auto flex h-full max-w-shell items-center px-6 pb-36 pt-24 sm:px-10 lg:px-12">
+            <div class="max-w-2xl">
+              <span data-r style="--i:0" class="inline-block font-mono text-xs uppercase tracking-widest font-semibold" style="color:var(--accent)">
+                Especialidad 0${i + 1}
+              </span>
+              <h3 data-r style="--i:1" class="mt-3 font-display text-[clamp(2.2rem,4.5vw,4.2rem)] font-extrabold leading-tight">
+                <span style="color:var(--accent)">${s.name}</span>
+              </h3>
+              <p data-r style="--i:2" class="mt-4 text-base sm:text-lg leading-relaxed text-white/80">
+                ${s.desc}
+              </p>
+              <ul data-r style="--i:3" class="mt-6 flex flex-wrap gap-2">
+                ${s.alcance.map(t => `<li class="rounded-full border border-white/20 bg-white/5 px-3.5 py-1 text-xs text-white/85">${t}</li>`).join('')}
+              </ul>
+              <div data-r style="--i:4" class="mt-8">
+                <a href="servicios.html" class="inline-flex rounded-full px-7 py-3 text-sm font-bold text-ink transition hover:brightness-110" style="background:var(--accent)">
+                  Consultar especialidad
+                </a>
+              </div>
             </div>
           </div>
-        </li>
-      `).join('');
-    }
+        </article>`).join('');
 
-    tabProy.addEventListener('click', () => {
-      currentTab = 'proy';
-      tabProy.className = 'flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition';
-      tabTdd.className = 'flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink';
+      railEl.innerHTML = ESPECIALIDADES.map((s, i) => `
+        <button type="button" class="rail-btn group min-w-0 flex-1 py-2 text-left" data-i="${i}" aria-current="${i === 0}">
+          <span class="block h-[3px] w-full overflow-hidden rounded-full bg-white/20">
+            <span class="fill block h-full rounded-full" style="background:${s.accent}"></span>
+          </span>
+          <span class="lbl mt-2 hidden truncate font-mono text-[11px] font-semibold uppercase tracking-wider lg:block">${s.short}</span>
+        </button>`).join('');
+
+      $('#c-total').textContent = pad(N);
+      const slides = $$('.slide', slidesEl);     const rails = $$('.rail-btn', railEl);
+      let curIdx = 0, elapsed = 0, isPlaying = true, raf = 0, lastT = 0;
+
+      function paintProgress() {
+        rails.forEach((r, i) => {
+          r.querySelector('.fill').style.transform = i === curIdx ? `scaleX(${Math.min(elapsed / AUTOPLAY_MS, 1)})` : 'scaleX(0)';
+        });
+      }
+
+      function goTo(n, dir = 1) {
+        n = (n + N) % N;
+        if (n === curIdx) return;
+        const prev = slides[curIdx];
+        const next = slides[n];
+        slides.forEach(s => s.classList.remove('is-leaving'));
+        prev.classList.remove('is-active');
+        prev.classList.add('is-leaving');
+        next.dataset.dir = dir > 0 ? 'next' : 'prev';
+        next.classList.add('is-active');
+
+        setTimeout(() => prev.classList.remove('is-leaving'), 1000);
+        curIdx = n;
+        elapsed = 0;
+        rails.forEach((r, i) => r.setAttribute('aria-current', String(i === n)));
+        section.style.setProperty('--accent', ESPECIALIDADES[n].accent);
+        $('#c-cur').textContent = pad(n + 1);
+        paintProgress();
+      }
+
+      function loop(t) {
+        raf = requestAnimationFrame(loop);
+        const dt = Math.min(t - (lastT || t), 100);
+        lastT = t;
+        if (!isPlaying) return;
+        elapsed += dt;
+        paintProgress();
+        if (elapsed >= AUTOPLAY_MS) goTo(curIdx + 1, 1);
+      }
+      raf = requestAnimationFrame(loop);
+
+      $('#c-next').addEventListener('click', () => goTo(curIdx + 1, 1));
+      $('#c-prev').addEventListener('click', () => goTo(curIdx - 1, -1));
+      $('#c-toggle').addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        $('#ico-pause').classList.toggle('hidden', !isPlaying);
+        $('#ico-play').classList.toggle('hidden', isPlaying);
+      });
+      rails.forEach((r, i) => r.addEventListener('click', () => goTo(i, i > curIdx ? 1 : -1)));
+
+      /* ===================================================================
+         8. PROYECTOS Y TECHNICAL DUE DILIGENCE CON INDICADORES
+         =================================================================== */
+      const DISC = { elec: 'Eléctrica', pci: 'Incendio', hvac: 'Climatización', san: 'Sanitaria', seg: 'Seguridad' };
+      const PROYECTOS_DATA = [
+        { c: 'Ripley Los Dominicos', s: 'Proyecto de protección contra incendios: sistemas de detección y extinción.', d: ['pci'] },
+        { c: 'Dupont Pioneer México', s: 'Ingeniería de incendio, intrusión y CCTV para plantas en Guadalajara, Los Mochis, Puerto Vallarta y Culiacán.', d: ['pci', 'seg'] },
+        { c: 'Aeropuerto Arturo Merino Benítez', s: 'Estudios de cobertura e ingeniería de los sistemas de CCTV para la ampliación.', d: ['seg'] },
+        { c: 'MPLD – Integramedica', s: 'Electricidad y corrientes débiles, sanitarios, climatización, incendio, intrusión y aire comprimido.', d: ['elec', 'pci', 'hvac', 'san', 'seg'] },
+        { c: 'BCG (The Boston Consulting Group)', s: 'Desarrollo y coordinación de incendio, instalaciones eléctricas y sanitarias, CCTV, climatización y control de acceso.', d: ['pci', 'elec', 'san', 'seg', 'hvac'] }
+      ];
+
+      const TDD_DATA = [
+        { c: 'Penta Las Américas', s: 'Inspección técnica de especialidades, cumplimiento normativo y estado de instalaciones.', d: [] },
+        { c: 'Mall Plaza', s: 'Technical Due Diligence de especialidades en centros comerciales operando.', d: [] },
+        { c: 'Cencosud', s: 'Auditoría técnica de instalaciones para procesos de adquisición inmobiliaria.', d: [] },
+        { c: 'Colliers International', s: 'Revisión y verificación técnica para carteras de activos corporativos.', d: [] },
+        { c: 'Sencorp', s: 'Inspección técnica multidisciplinaria en edificios de oficinas clase A.', d: [] }
+      ];
+
+      let currentTab = 'proy';
+      const projContainer = $('#proj-container');
+      const tabProy = $('#tab-proy');
+      const tabTdd = $('#tab-tdd');
+      const dotsLegend = $('#dots-legend');
+
+      const renderDots = d => d.length ? `
+        <ul class="mt-2.5 flex items-center gap-1.5" aria-label="Especialidades: ${d.map(k => DISC[k]).join(', ')}">
+          ${d.map(k => `<li title="${DISC[k]}" class="size-2 rounded-full" style="background:var(--c-${k})"></li>`).join('')}
+        </ul>` : '';
+
+      function renderProjList() {
+        const isP = currentTab === 'proy';
+        const data = isP ? PROYECTOS_DATA : TDD_DATA;
+        dotsLegend.style.display = isP ? '' : 'none';
+
+        projContainer.innerHTML = data.map(p => `
+          <li class="py-5 px-3 transition hover:bg-paper/80">
+            <div class="grid gap-x-6 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+              <h3 class="font-display text-lg sm:text-xl font-bold tracking-tight text-ink">${p.c}</h3>
+              <div>
+                <p class="text-sm text-ink/75 leading-relaxed">${p.s}</p>
+                ${isP ? renderDots(p.d) : ''}
+              </div>
+            </div>
+          </li>
+        `).join('');
+      }
+
+      tabProy.addEventListener('click', () => {
+        currentTab = 'proy';
+        tabProy.className = 'flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition';
+        tabTdd.className = 'flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink';
+        renderProjList();
+      });
+
+      tabTdd.addEventListener('click', () => {
+        currentTab = 'tdd';
+        tabTdd.className = 'flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition';
+        tabProy.className = 'flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink';
+        renderProjList();
+      });
+
       renderProjList();
-    });
 
-    tabTdd.addEventListener('click', () => {
-      currentTab = 'tdd';
-      tabTdd.className = 'flex items-center justify-between rounded-2xl border border-ink bg-ink px-5 py-3.5 text-left font-semibold text-white transition';
-      tabProy.className = 'flex items-center justify-between rounded-2xl border border-ink/20 bg-transparent px-5 py-3.5 text-left font-semibold text-ink transition hover:border-ink';
-      renderProjList();
-    });
-
-    renderProjList();
-
-    /* ===================================================================
-       9. MODAL PORTAL DE CLIENTES
-       =================================================================== */
-    const pDlg = $('#portal-dialog');
-    $$('[data-open-portal]').forEach(b => b.addEventListener('click', () => {       mMenu.classList.remove('is-open');       pDlg.showModal();     }));     $$
-('[data-close-portal]').forEach(b => b.addEventListener('click', () => pDlg.close()));
-  })();
-  </script>
-</body>
-</html>
+      /* ===================================================================
+         9. MODAL PORTAL DE CLIENTES
+         =================================================================== */
+      const pDlg = $('#portal-dialog');
+      $$('[data-open-portal]').forEach(b => b.addEventListener('click', () => {       mMenu.classList.remove('is-open');       pDlg.showModal();     }));     $$
+  ('[data-close-portal]').forEach(b => b.addEventListener('click', () => pDlg.close()));
+    })();
+    </script>
+{% endblock %}

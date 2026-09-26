@@ -1,26 +1,130 @@
-/* static/css/style.css */
+/* ==========================================================================
+   SINERGI - Estilos personalizados de las páginas públicas
+   Tailwind permanece en las plantillas HTML; aquí vive el CSS propio.
+   ========================================================================== */
+
+/* Variables y elementos globales */
 :root {
-    --color-blanco: #ffffff;
-    --color-negro: #0d1117;
-    --color-rojo: #d32f2f;
-    --color-gris: #f3f4f6;
+  --ink: #0F1B2D;
+  --brick: #9C4B44;
+  --c-elec: #C98500;
+  --c-pci: #D23F2C;
+  --c-hvac: #1B86B5;
+  --c-san: #17946F;
+  --c-seg: #6A55D6;
 }
 
-body {
-    background-color: var(--color-gris);
-    font-family: system-ui, -apple-system, sans-serif;
+[hidden] { display: none !important; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Fondo tipo plano de ingeniería */
+.bg-plan {
+  background-color: #F1F3F2;
+  background-image:
+    linear-gradient(rgba(15, 27, 45, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 27, 45, .055) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
-.btn-rojo {
-    background-color: var(--color-rojo);
-    color: var(--color-blanco);
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: bold;
-    text-align: center;
-    transition: background 0.3s ease;
+/* Animaciones de entrada al hacer scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.btn-rojo:hover {
-    background-color: #b71c1c;
+/* Navegación activa */
+.nav-item { position: relative; transition: color 0.25s ease; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background-color: var(--brick);
+  border-radius: 9999px;
+  transform: translateX(-50%);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-item:hover::after,
+.nav-item[aria-current="true"]::after { width: 100%; }
+.nav-item[aria-current="true"] { color: #FFFFFF !important; font-weight: 600; }
+
+/* Menú móvil */
+#mobile-menu { clip-path: inset(0 0 100% 0); transition: clip-path .4s cubic-bezier(0.16, 1, 0.3, 1); }
+#mobile-menu.is-open { clip-path: inset(0 0 0 0); }
+
+/* Animación de filas de proyectos */
+.proj-row { transition: background-color 0.25s ease, transform 0.25s ease; }
+.proj-row:hover { background-color: #0F1B2D; color: #FFFFFF; }
+.proj-row:hover .proj-desc { color: rgba(255, 255, 255, 0.8); }
+.proj-row:hover .proj-tag {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+/* Etapas de ingeniería animadas */
+.stages .node { transition: background-color .5s ease, border-color .5s ease, color .5s ease; }
+.stages .track { transform: scaleX(0); transform-origin: left; transition: transform 1.6s cubic-bezier(.6, 0, .3, 1); }
+.stages.is-in .track { transform: scaleX(1); }
+.stages.is-in .node { background: var(--brick); border-color: var(--brick); color: #fff; transition-delay: calc(var(--n) * .35s); }
+
+/* Plano SVG interactivo de la página principal */
+.ln { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+.st { stroke: var(--ink); }
+.thin { stroke-width: .8; opacity: .5; }
+.gridline { stroke-dasharray: 10 4 2 4; stroke-width: .8; --o: .3; opacity: .3; }
+.dash { stroke-dasharray: 3 3; stroke-width: 1.2; --o: .8; }
+.cone { fill: var(--c-seg); fill-opacity: .1; stroke: none; }
+.tx { font: 500 11px 'Instrument Sans', sans-serif; fill: var(--ink); stroke: none; }
+.tx.sm { font-size: 9.5px; opacity: .65; }
+.tx.bold { font-weight: 700; font-size: 10.5px; }
+
+.dr { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.05s cubic-bezier(.6, 0, .3, 1) var(--d, 0s) forwards; }
+.fi { opacity: 0; animation: fade .7s ease var(--d, 0s) forwards; }
+.pp { opacity: 0; transform-box: fill-box; transform-origin: center; animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) var(--d, 0s) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fade { to { opacity: var(--o, 1); } }
+@keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: none; } }
+
+#plan.wait * { animation-play-state: paused; }
+#plan .sys { transition: opacity .35s ease; }
+#plan[data-focus] .sys { opacity: .1; }
+#plan[data-focus="elec"] .sys-elec,
+#plan[data-focus="pci"] .sys-pci,
+#plan[data-focus="hvac"] .sys-hvac,
+#plan[data-focus="san"] .sys-san,
+#plan[data-focus="seg"] .sys-seg { opacity: 1; }
+
+/* Carrusel de proyectos */
+.slide { position: absolute; inset: 0; visibility: hidden; z-index: 0; }
+.slide.is-leaving { visibility: visible; z-index: 10; }
+.slide.is-active { visibility: visible; z-index: 20; }
+.slide [data-r] { opacity: 0; transform: translateY(24px); transition: opacity .3s ease, transform 0s .3s; }
+.slide.is-active [data-r] {
+  opacity: 1; transform: none;
+  transition:
+    opacity .8s cubic-bezier(.2, .7, .2, 1) calc(.35s + var(--i, 0) * .08s),
+    transform .8s cubic-bezier(.2, .7, .2, 1) calc(.35s + var(--i, 0) * .08s);
+}
+.slide-img { transform: scale(1.08); transition: transform 9s cubic-bezier(.2, .6, .2, 1); }
+.slide.is-active .slide-img { transform: scale(1); }
+.slide.is-leaving .slide-img { transform: scale(1); }
+.slide.is-active[data-dir="next"] .slide-bg { animation: wipe-next 1s cubic-bezier(.7, 0, .2, 1) both; }
+.slide.is-active[data-dir="prev"] .slide-bg { animation: wipe-prev 1s cubic-bezier(.7, 0, .2, 1) both; }
+@keyframes wipe-next { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0); } }
+@keyframes wipe-prev { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+.rail-btn .lbl { color: rgba(255, 255, 255, .55); transition: color .2s; }
+.rail-btn:hover .lbl, .rail-btn[aria-current="true"] .lbl { color: #fff; }
+.rail-btn .fill { transform: scaleX(0); transform-origin: left; }
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }

@@ -1,22 +1,362 @@
-{% extends 'base.html' %}
+{% extends "base_paginas.html" %}
 
-{% block title %}Contacto | Sinergi{% endblock %}
-
+{% block title %}Contacto | Sinergi - Engineering & Consultancy{% endblock %}
+{% block description %}Inicie su requerimiento técnico de ingeniería o Technical Due Diligence con Sinergi. Pedro Aguirre Cerda #885, Ñuñoa, Santiago de Chile.{% endblock %}
+{% block page_id %}contacto{% endblock %}
 {% block content %}
-  <!-- Pegas aquí únicamente el <section> del hero y el <section> del formulario de contacto -->
-  <section class="bg-plan py-20 sm:py-28 border-b border-ink/10">
-    <div class="mx-auto max-w-shell px-6">
-      <form method="POST" action="{% url 'pagina_contacto' %}" id="lead-contact-form">
-        {% csrf_token %} <!-- Protección de seguridad obligatoria en formularios de Django -->
-        <input name="name" type="text" required placeholder="Roberto Salas">
-        <input name="email" type="email" required placeholder="rsalas@empresa.cl">
-        <!-- resto de inputs -->
-        <button type="submit">Enviar requerimiento →</button>
-      </form>
-    </div>
-  </section>
+  <!-- Contenido principal: formulario y datos de contacto -->
+      <!-- ================================================================== -->
+      <!-- HERO HEADER DE CONTACTO                                            -->
+      <!-- ================================================================== -->
+      <section class="relative min-h-[48svh] flex items-end overflow-hidden bg-[#101417] text-white">
+        <img
+          src="https://images.unsplash.com/photo-1541888946425-d0fbb186c5f9?auto=format&fit=crop&w=2400&q=88"
+          alt="Ingeniería y faenas Sinergi"
+          class="absolute inset-0 h-full w-full object-cover object-center opacity-25"
+        >
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0A0E11]/95 via-[#0A0E11]/85 to-[#0A0E11]/40"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0A0E11] via-transparent to-[#0A0E11]/40"></div>
+
+        <div class="relative z-10 w-full max-w-shell mx-auto px-6 sm:px-10 lg:px-12 pb-14 pt-36 sm:pb-16">
+          <div class="max-w-4xl">
+            <div class="reveal flex items-center gap-3 mb-4">
+              <span class="h-px w-8 bg-brick-light"></span>
+              <span class="font-grotesk text-xs uppercase tracking-[.2em] text-white/70">Mesa de Entrada & Consultoría</span>
+            </div>
+
+            <h1 class="reveal font-display text-[clamp(2.4rem,5.5vw,4.5rem)] font-extrabold leading-[.98] tracking-[-.035em]">
+              Inicie su requerimiento <br>
+              <span class="text-brick-light">con nuestro equipo técnico.</span>
+            </h1>
+
+            <p class="reveal mt-4 max-w-2xl text-base sm:text-lg font-light leading-relaxed text-white/75">
+              Canal formal para proyectos de ingeniería, coordinación multidisciplinaria o inspecciones de Technical Due Diligence en todo el país.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN CÓMO FUNCIONA EL CONTACTO                                  -->
+      <!-- ================================================================== -->
+      <section class="bg-white py-14 sm:py-18 border-b border-ink/10">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="max-w-3xl reveal">
+            <span class="font-mono text-xs uppercase tracking-[.2em] text-brick font-semibold">Proceso de Atención</span>
+            <h2 class="mt-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
+              ¿Cómo funciona el primer contacto en Sinergi?
+            </h2>
+            <p class="mt-3 text-sm sm:text-base leading-relaxed text-ink/75">
+              Para una coordinación técnica ágil, recomendamos el contacto directo vía telefónica. También puede registrar su requerimiento mediante este formulario, el cual crea una ficha de lead para evaluación de nuestro equipo de operaciones antes de formalizar la apertura de un proyecto.
+            </p>
+          </div>
+
+          <div class="mt-10 grid gap-6 sm:grid-cols-3">
+            <div class="reveal rounded-2xl border border-ink/10 bg-paper p-6">
+              <span class="font-mono text-xs font-bold text-brick uppercase">Paso 01 · Contacto Directo</span>
+              <h3 class="mt-2 font-display text-lg font-bold text-ink">Llamada o Formulario</h3>
+              <p class="mt-2 text-xs sm:text-sm text-ink/70 leading-relaxed">
+                Lo ideal y recomendado es llamar directamente a nuestra central telefónica (+56 2 2239 0951). Si prefiere vía web, complete el formulario para registrar su requerimiento como lead.
+              </p>
+            </div>
+
+            <div class="reveal rounded-2xl border border-ink/10 bg-paper p-6">
+              <span class="font-mono text-xs font-bold text-brick uppercase">Paso 02 · Evaluación Técnica</span>
+              <h3 class="mt-2 font-display text-lg font-bold text-ink">Revisión de Operaciones</h3>
+              <p class="mt-2 text-xs sm:text-sm text-ink/70 leading-relaxed">
+                El equipo de ingenieros revisa la envergadura, normativa aplicable (SEC, NFPA) y plazos, coordinando una visita o reunión de contraparte técnica.
+              </p>
+            </div>
+
+            <div class="reveal rounded-2xl border border-ink/10 bg-paper p-6">
+              <span class="font-mono text-xs font-bold text-brick uppercase">Paso 03 · Habilitación Formal</span>
+              <h3 class="mt-2 font-display text-lg font-bold text-ink">Activación de Cuenta</h3>
+              <p class="mt-2 text-xs sm:text-sm text-ink/70 leading-relaxed">
+                Al formalizar el servicio, el administrador genera su cuenta en el Portal de Clientes y le remite un enlace único y seguro de activación. Sin autorregistro público.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN PRINCIPAL: FORMULARIO Y CANALES DIRECTOS                   -->
+      <!-- ================================================================== -->
+      <section class="bg-plan py-20 sm:py-28 border-b border-ink/10">
+        <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+          <div class="grid gap-12 lg:grid-cols-12 lg:gap-14 items-start">
+
+            <!-- Columna Izquierda: Información de contacto y recomendación telefónica -->
+            <div class="lg:col-span-5 reveal">
+              <h2 class="font-display text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold tracking-tight leading-[1.05] text-ink">
+                Hablemos de su próximo proyecto.
+              </h2>
+              <p class="mt-5 text-base sm:text-lg leading-relaxed text-ink/75 font-normal">
+                Cuéntenos brevemente sobre su faena o requerimiento técnico. El equipo de operaciones de Sinergi coordinará una primera reunión o visita a terreno.
+              </p>
+
+              <!-- Tarjeta destacada de llamada prioritaria -->
+              <div class="mt-8 rounded-3xl border-2 border-brick/30 bg-brick/5 p-6 shadow-sm">
+                <div class="flex items-center gap-3">
+                  <span class="flex size-3 rounded-full bg-brick animate-pulse"></span>
+                  <span class="font-mono text-xs font-bold uppercase tracking-wider text-brick">Canal preferente de entrada</span>
+                </div>
+                <p class="mt-2 text-sm text-ink/80 leading-relaxed">
+                  Para urgencias de faena, cotizaciones de inspección inmediata o consultas de plazos, recomendamos contactar por vía telefónica directa:
+                </p>
+                <a href="tel:+56222390951" class="mt-4 inline-flex items-center gap-2 font-display text-xl font-extrabold text-ink hover:text-brick transition">
+                  <svg class="size-5 text-brick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  +56 2 2239 0951
+                </a>
+              </div>
+
+              <!-- Tarjeta de canales directos -->
+              <div class="mt-6 rounded-3xl border border-ink/15 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+                <div class="flex items-start gap-4">
+                  <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-paper text-brick">
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-mono text-[10px] uppercase tracking-wider text-ink/50 font-bold block">Dirección Casa Central</span>
+                    <a href="https://www.google.com/maps/search/?api=1&query=Pedro+Aguirre+Cerda+885,+%C3%91u%C3%B1oa,+Santiago" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-ink hover:text-brick transition mt-0.5 inline-block">
+                      Pedro Aguirre Cerda #885, Ñuñoa, Santiago de Chile
+                    </a>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-4 border-t border-ink/10 pt-5">
+                  <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-paper text-brick">
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-mono text-[10px] uppercase tracking-wider text-ink/50 font-bold block">Correo Electrónico</span>
+                    <div class="text-sm font-semibold text-ink mt-0.5">
+                      <a href="mailto:info@sinergi.cl" class="hover:text-brick transition">info@sinergi.cl</a>
+                      <span class="text-ink/30 mx-1">/</span>
+                      <a href="mailto:proyectos@sinergi.cl" class="hover:text-brick transition">proyectos@sinergi.cl</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recuadro informativo de seguridad y reglas de acceso -->
+              <div class="mt-6 rounded-2xl border border-ink/15 bg-white/70 p-5 shadow-sm text-xs leading-relaxed text-ink/75 font-mono">
+                <span class="font-bold text-ink flex items-center gap-1.5 mb-1.5">
+                  <svg class="size-4 text-brick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Aviso de Privacidad y Seguridad:
+                </span>
+                No existe registro abierto en la web. Al adjudicar o iniciar un servicio, la administración de Sinergi habilita la cuenta del cliente enviando un link único de activación.
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Formulario de Requerimiento (Captura de Lead) -->
+            <div class="lg:col-span-7 reveal">
+              <form id="lead-contact-form" novalidate class="rounded-[2.5rem] border border-ink/15 bg-white p-7 sm:p-12 shadow-xl shadow-ink/5">
+                <div class="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <label for="c-name" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                      Nombre y Apellido <span class="text-brick">*</span>
+                    </label>
+                    <input
+                      id="c-name"
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="Roberto Salas"
+                      class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
+                    >
+                  </div>
+
+                  <div>
+                    <label for="c-company" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                      Empresa / Razón Social <span class="text-brick">*</span>
+                    </label>
+                    <input
+                      id="c-company"
+                      name="company"
+                      type="text"
+                      required
+                      placeholder="Logística & Bodegas SpA"
+                      class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
+                    >
+                  </div>
+
+                  <div>
+                    <label for="c-email" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                      Correo Corporativo <span class="text-brick">*</span>
+                    </label>
+                    <input
+                      id="c-email"
+                      name="email"
+                      type="email"
+                      required
+                      placeholder="rsalas@empresa.cl"
+                      class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
+                    >
+                  </div>
+
+                  <div>
+                    <label for="c-phone" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                      Teléfono de Contacto
+                    </label>
+                    <input
+                      id="c-phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="+56 9 1234 5678"
+                      class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
+                    >
+                  </div>
+                </div>
+
+                <!-- Selector de Especialidad -->
+                <div class="mt-6">
+                  <label for="c-specialty" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                    Especialidad Principal o Tipo de Servicio
+                  </label>
+                  <div class="relative">
+                    <select
+                      id="c-specialty"
+                      name="specialty"
+                      class="w-full appearance-none rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition pr-10"
+                    >
+                      <option value="01. Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)">01. Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)</option>
+                      <option value="02. Protección Contra Incendios (PCI - NFPA 13, 20 & 72)">02. Protección Contra Incendios (PCI - NFPA 13, 20 & 72)</option>
+                      <option value="03. Climatización y Ventilación Mecánica (HVAC)">03. Climatización y Ventilación Mecánica (HVAC)</option>
+                      <option value="04. Seguridad Electrónica (CCTV, Intrusión & Control de Acceso)">04. Seguridad Electrónica (CCTV, Intrusión & Control de Acceso)</option>
+                      <option value="05. Sanitaria, Agua Potable y Alcantarillado">05. Sanitaria, Agua Potable y Alcantarillado</option>
+                      <option value="06. Technical Due Diligence de Especialidades">06. Technical Due Diligence de Especialidades</option>
+                      <option value="07. Coordinación Multidisciplinaria Completa">07. Coordinación Multidisciplinaria Completa</option>
+                    </select>
+                    <svg class="size-4 pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Mensaje / Requerimiento -->
+                <div class="mt-6">
+                  <label for="c-message" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
+                    Descripción Breve del Requerimiento <span class="text-brick">*</span>
+                  </label>
+                  <textarea
+                    id="c-message"
+                    name="message"
+                    rows="5"
+                    required
+                    placeholder="Indique la comuna, metros cuadrados aproximados y requerimiento técnico..."
+                    class="w-full resize-y rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
+                  ></textarea>
+                </div>
+
+                <!-- Estado de validación -->
+                <div id="c-status" class="hidden mt-6 rounded-xl px-4 py-3 text-xs font-semibold"></div>
+
+                <!-- Footer del formulario -->
+                <div class="mt-8 pt-6 border-t border-ink/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                  <span class="text-[11px] font-mono text-ink/60 leading-tight">
+                    La solicitud ingresará al panel de administración para su asignación.
+                  </span>
+                  <button
+                    type="submit"
+                    class="shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-8 py-3.5 text-xs font-semibold text-white transition hover:bg-brick shadow-md shadow-black/20 hover:shadow-brick/30"
+                  >
+                    Enviar requerimiento →
+                  </button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    
 {% endblock %}
 
-{% block extra_js %}
-  <!-- Scripts específicos solo de la página de contacto -->
+{% block extra_scripts %}
+  <!-- JavaScript específico: se conserva para animaciones e interacciones de esta página -->
+  <script>
+    (() => {
+      'use strict';
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+      /* Header Shrink */
+      const header = $('#site-header');
+      const headerContainer = $('#header-container');
+      const logoIcon = $('#logo-icon');
+
+      const onScroll = () => {
+        if (window.scrollY > 30) {
+          header.classList.add('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
+          header.classList.remove('bg-[#101417]/40', 'border-white/10');
+          headerContainer.classList.add('h-[60px]');
+          headerContainer.classList.remove('h-24');
+          logoIcon.classList.add('size-8');
+          logoIcon.classList.remove('size-10');
+        } else {
+          header.classList.remove('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
+          header.classList.add('bg-[#101417]/40', 'border-white/10');
+          headerContainer.classList.remove('h-[60px]');
+          headerContainer.classList.add('h-24');
+          logoIcon.classList.remove('size-8');
+          logoIcon.classList.add('size-10');
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      /* Reveal on Scroll */
+      const revObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            revObserver.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      $$('.reveal').forEach(el => revObserver.observe(el));
+
+      /* Menú móvil */
+      const mOpen = $('#menu-open');
+      const mMenu = $('#mobile-menu');
+      mOpen.addEventListener('click', () => mMenu.classList.toggle('is-open'));
+
+      /* Modal Portal */
+      const pDlg = $('#portal-dialog');
+      $$('[data-open-portal]').forEach(b => b.addEventListener('click', () => {
+        mMenu.classList.remove('is-open');
+        pDlg.showModal();
+      }));
+      $$('[data-close-portal]').forEach(b => b.addEventListener('click', () => pDlg.close()));
+
+      /* Manejo del formulario de contacto (Lead) */
+      const contactForm = $('#lead-contact-form');
+      const statusMsg = $('#c-status');
+
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = $('#c-name');
+        const company = $('#c-company');
+        const email = $('#c-email');
+        const message = $('#c-message');
+
+        if (!name.value.trim() || !company.value.trim() || !email.value.trim() || !message.value.trim()) {
+          statusMsg.textContent = 'Por favor complete todos los campos obligatorios (*).';
+          statusMsg.className = 'mt-6 rounded-xl bg-brick/10 border border-brick/30 text-brick-dark px-4 py-3 text-xs font-semibold block';
+          return;
+        }
+
+        statusMsg.textContent = 'Requerimiento registrado como lead. El equipo técnico revisará los antecedentes y se contactará a la brevedad.';
+        statusMsg.className = 'mt-6 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-xs font-semibold block';
+        contactForm.reset();
+      });
+    })();
+    </script>
 {% endblock %}

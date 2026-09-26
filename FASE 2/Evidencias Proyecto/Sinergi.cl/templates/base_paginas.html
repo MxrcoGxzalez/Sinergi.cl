@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es-CL" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sinergi - Engineering & Consultancy{% endblock %}</title>
+  <meta name="description" content="{% block description %}Ingeniería y consultoría de especialidades técnicas de Sinergi.{% endblock %}">
+  <meta name="theme-color" content="#101417">
+
+  <!-- Tipografías compartidas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS: sus utilidades permanecen en el HTML -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Archivo', 'sans-serif'],
+            grotesk: ['"Space Grotesk"', 'sans-serif'],
+            sans: ['"Instrument Sans"', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0F1B2D', 900: '#09121F', 800: '#16253A', 700: '#22344D' },
+            paper: { DEFAULT: '#F1F3F2', 200: '#E3E8E6' },
+            brick: { DEFAULT: '#9C4B44', dark: '#7F3C36', light: '#E39A91' },
+          },
+          maxWidth: { shell: '1500px' },
+          keyframes: {
+            marquee: { to: { transform: 'translateX(-50%)' } },
+          },
+          animation: {
+            marquee: 'marquee 70s linear infinite',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- CSS personalizado compartido -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body data-page="{% block page_id %}home{% endblock %}" class="bg-paper font-sans text-ink antialiased selection:bg-brick selection:text-white">
+
+  <!-- Header y navegación principal -->
+  <header id="site-header" class="fixed inset-x-0 top-0 z-50 transition-all duration-500 bg-[#101417]/40 backdrop-blur-md border-b border-white/10">
+    <div id="header-container" class="mx-auto flex h-24 max-w-shell items-center justify-between px-6 transition-all duration-500 sm:px-10 lg:px-12">
+      <a href="{% url 'inicio' %}" class="flex items-center gap-3.5 text-white group" aria-label="Sinergi, inicio">
+        <svg id="logo-icon" viewBox="0 0 32 32" class="size-10 transition-transform duration-500 group-hover:scale-105" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
+          <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".92"/>
+        </svg>
+        <span class="leading-none">
+          <span class="block font-display text-xl font-extrabold tracking-tight">SINERGI</span>
+          <span class="mt-1 block text-[10px] font-medium uppercase tracking-[.18em] text-white/60">Engineering & Consultancy</span>
+        </span>
+      </a>
+
+      <!-- Navegación principal; el estado activo se marca según data-page -->
+      <nav aria-label="Principal" class="hidden items-center gap-9 text-[14px] font-medium text-white/70 lg:flex">
+        <a href="{% url 'inicio' %}" class="nav-item" data-page-link="home" data-spy="inicio">Inicio</a>
+        <a href="{% url 'inicio' %}#especialidades" class="nav-item" data-page-link="especialidades" data-spy="especialidades">Especialidades</a>
+        <a href="{% url 'servicios' %}" class="nav-item" data-page-link="servicios">Servicios</a>
+        <a href="{% url 'proyectos' %}" class="nav-item" data-page-link="proyectos">Proyectos</a>
+        <a href="{% url 'nosotros' %}" class="nav-item" data-page-link="nosotros">Nosotros</a>
+        <a href="{% url 'inicio' %}#noticias" class="nav-item" data-page-link="noticias" data-spy="noticias">Noticias</a>
+        <a href="{% url 'contacto' %}" class="nav-item" data-page-link="contacto">Contacto</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <button type="button" data-open-portal class="hidden rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink sm:inline-flex">
+          Portal Clientes
+        </button>
+        <a href="{% url 'contacto' %}" class="inline-flex rounded-full bg-brick px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-brick-dark shadow-md shadow-black/20 hover:shadow-brick/30">
+          Iniciar proyecto
+        </a>
+        <button id="menu-open" type="button" class="inline-flex size-10 items-center justify-center rounded-full border border-white/20 text-white lg:hidden" aria-label="Abrir menú">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Menú móvil -->
+  <div id="mobile-menu" class="fixed inset-x-4 top-24 z-50 rounded-2xl border border-white/10 bg-[#101417]/95 p-6 shadow-2xl backdrop-blur-xl lg:hidden">
+    <nav class="flex flex-col gap-4 text-base font-semibold text-white/85">
+      <a href="{% url 'inicio' %}" class="m-link hover:text-brick-light" data-page-link="home">Inicio</a>
+      <a href="{% url 'inicio' %}#especialidades" class="m-link hover:text-brick-light" data-page-link="especialidades">Especialidades</a>
+      <a href="{% url 'servicios' %}" class="m-link hover:text-brick-light" data-page-link="servicios">Servicios</a>
+      <a href="{% url 'proyectos' %}" class="m-link hover:text-brick-light" data-page-link="proyectos">Proyectos</a>
+      <a href="{% url 'nosotros' %}" class="m-link hover:text-brick-light" data-page-link="nosotros">Nosotros</a>
+      <a href="{% url 'inicio' %}#noticias" class="m-link hover:text-brick-light" data-page-link="noticias">Noticias</a>
+      <a href="{% url 'contacto' %}" class="m-link hover:text-brick-light" data-page-link="contacto">Contacto</a>
+      <hr class="border-white/10 my-2">
+      <button type="button" data-open-portal class="text-left text-sm text-brick-light font-semibold">Portal Clientes →</button>
+    </nav>
+  </div>
+
+  <!-- Contenido específico de cada página -->
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer compartido -->
+  <footer class="bg-ink-900 pb-12 pt-16 text-paper border-t border-white/10">
+    <div class="mx-auto max-w-shell px-6 sm:px-10 lg:px-12">
+      <div class="grid gap-12 md:grid-cols-12">
+        <!-- Marca y redes -->
+        <div class="md:col-span-5">
+          <div class="flex items-center gap-3">
+            <svg viewBox="0 0 32 32" class="size-8" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
+              <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".9"/>
+            </svg>
+            <span class="font-display text-xl font-extrabold tracking-[.01em]">SINERGI</span>
+          </div>
+          <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/65">
+            Ingeniería y consultoría de especialidades técnicas para clientes públicos y privados. Desde 2006, en Santiago de Chile.
+          </p>
+          <div class="mt-6 flex gap-3">
+            <a href="https://cl.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Sinergi" class="inline-flex size-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white hover:text-ink">
+              <svg class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.34 18.34V10H5.67v8.34h2.67ZM7 8.8a1.55 1.55 0 1 0 0-3.1 1.55 1.55 0 0 0 0 3.1Zm11.34 9.54v-4.58c0-2.25-1.2-3.3-2.8-3.3-1.29 0-1.86.71-2.18 1.21V10h-2.67c.04.75 0 8.34 0 8.34h2.67v-4.66c0-.25.02-.5.09-.68.2-.5.66-1.01 1.43-1.01 1 0 1.4.77 1.4 1.9v4.45h2.06Z"/></svg>
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram Sinergi" class="inline-flex size-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white hover:text-ink">
+              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6" fill="currentColor"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Navegación del sitio -->
+        <nav aria-label="Sitio" class="md:col-span-3">
+          <p class="font-display text-sm font-bold uppercase tracking-wider text-white">Sitio</p>
+          <ul class="mt-4 space-y-2.5 text-sm text-white/70">
+            <li><a href="{% url 'inicio' %}#especialidades" class="hover:text-white transition">Especialidades</a></li>
+            <li><a href="{% url 'servicios' %}" class="hover:text-white transition">Servicios</a></li>
+            <li><a href="{% url 'proyectos' %}" class="hover:text-white transition">Proyectos y clientes</a></li>
+            <li><a href="{% url 'nosotros' %}" class="hover:text-white transition">Nosotros</a></li>
+            <li><a href="{% url 'inicio' %}#noticias" class="hover:text-white transition">Noticias</a></li>
+            <li><button type="button" data-open-portal class="hover:text-white transition">Portal de clientes</button></li>
+          </ul>
+        </nav>
+
+        <!-- Información de contacto -->
+        <div class="md:col-span-4">
+          <p class="font-display text-sm font-bold uppercase tracking-wider text-white">Contacto</p>
+          <address class="mt-4 space-y-2.5 not-italic text-sm text-white/70">
+            <p>Pedro Aguirre Cerda #885<br>Ñuñoa, Santiago</p>
+            <p><a href="tel:+56222390951" class="hover:text-white transition">+56 2 2239 0951</a></p>
+            <p><a href="mailto:info@sinergi.cl" class="hover:text-white transition">info@sinergi.cl</a></p>
+          </address>
+        </div>
+      </div>
+
+      <!-- Copyright -->
+      <div class="mt-14 border-t border-white/15 pt-6 text-xs text-white/50 leading-relaxed">
+        <p>© 2006 - 2026 Sinergi - Engineering and Consultancy - Todos los derechos reservados. | Todas las marcas registradas, nombres comerciales, logos e imágenes pertenecen a sus respectivos dueños.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal del Portal de Clientes -->
+  <dialog id="portal-dialog" class="m-auto w-[min(92vw,26rem)] rounded-3xl border border-white/15 bg-ink p-7 text-white backdrop:bg-ink-900/80 backdrop:backdrop-blur-sm">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="font-display text-xl font-bold">Portal de clientes</h3>
+        <p class="mt-1 text-xs text-white/60 leading-relaxed">Para clientes con proyectos activos. Las cuentas las habilita Sinergi.</p>
+      </div>
+      <button type="button" data-close-portal class="text-white/60 hover:text-white text-lg">✕</button>
+    </div>
+    <form class="mt-6 space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-white/70 mb-1">Correo electrónico</label>
+        <input type="email" required placeholder="nombre@empresa.cl" class="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brick">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase text-white/70 mb-1">Contraseña</label>
+        <input type="password" required class="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brick">
+      </div>
+      <button type="submit" class="w-full rounded-full bg-brick py-3 text-sm font-semibold hover:bg-brick-dark transition">Ingresar al sistema</button>
+      <p class="text-[11px] text-white/40 text-center">¿Primera vez? Use el enlace de activación que recibió por correo.</p>
+    </form>
+  </dialog>
+
+  <!-- Comportamiento compartido del header y navegación -->
+  <script>
+    (() => {
+      const page = document.body.dataset.page;
+      document.querySelectorAll('[data-page-link]').forEach(link => {
+        if (link.dataset.pageLink === page) {
+          link.setAttribute('aria-current', 'true');
+          link.classList.add('text-brick-light');
+        }
+      });
+    })();
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
