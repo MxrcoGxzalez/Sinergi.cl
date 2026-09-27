@@ -1,0 +1,34 @@
+/* ==========================================================================
+   Variables y colores globales del portal de usuarios
+   ========================================================================== */
+:root {
+    --color-blanco: #ffffff;
+    --color-negro: #0d1117;
+    --color-rojo: #d32f2f;
+    --color-gris: #f3f4f6;
+}
+
+/* ==========================================================================
+   Estilos base del cuerpo
+   ========================================================================== */
+body {
+    background-color: var(--color-gris);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* ==========================================================================
+   Botones corporativos
+   ========================================================================== */
+.btn-rojo {
+    background-color: var(--color-rojo);
+    color: var(--color-blanco);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+.btn-rojo:hover {
+    background-color: #b71c1c;
+}

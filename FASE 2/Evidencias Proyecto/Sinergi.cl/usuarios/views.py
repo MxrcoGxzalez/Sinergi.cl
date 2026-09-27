@@ -7,18 +7,32 @@ from proyectos.forms import DocumentoForm, DocumentoClienteForm
 from .models import CustomUser
 
 def vista_login(request):
+    """
+    Procesa el inicio de sesión desde el modal en el header (base_paginas.html).
+    Si es exitoso, va a 'dashboard'.
+    Si falla, se queda en la misma página con el modal abierto.
+    """
     if request.method == 'POST':
         usuario = request.POST.get('username')
         clave = request.POST.get('password')
+        
+        # 1. Obtener la página en la que estaba el usuario
+        siguiente = request.POST.get('siguiente') or request.META.get('HTTP_REFERER') or '/'
+        
         user = authenticate(request, username=usuario, password=clave)
         
         if user is not None:
             login(request, user)
-            return redirect('dashboard') 
+            return redirect('dashboard')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos. Intenta nuevamente.')
             
-    return render(request, 'login.html')
+            # Limpiar parámetros previos si existieran y agregar login_error=1
+            base_url = siguiente.split('?')[0]
+            return redirect(f"{base_url}?login_error=1")
+
+    # Si alguien intenta entrar por GET a /login/, lo enviamos a la página principal
+    return redirect('inicio')
 
 @login_required(login_url='login')
 def dashboard(request):

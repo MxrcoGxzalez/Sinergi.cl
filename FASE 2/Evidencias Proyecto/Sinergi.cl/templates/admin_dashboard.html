@@ -1,83 +1,249 @@
-<!-- templates/admin_dashboard.html -->
 {% extends 'base_usuarios.html' %}
 
+{% block title %}Sinergi — Panel de Administración{% endblock %}
+
 {% block content %}
-<!-- Cabecera Gerencial -->
-<div class="mb-8 flex justify-between items-end border-b pb-4 border-gray-300">
-    <div>
-        <h2 class="text-3xl font-bold text-[#0d1117]">Centro de Mando Sinergi</h2>
-        <p class="text-gray-500 text-lg font-semibold">Administrador: {{ user.username }}</p>
-    </div>
-    <div class="flex flex-col items-end gap-2">
-        <!-- Botón para ir al panel de base de datos oculto -->
-        <a href="{% url 'admin:index' %}" class="btn-rojo text-sm px-4 py-2" target="_blank">Ir a Base de Datos (Admin)</a>
-        <a href="{% url 'logout' %}" class="text-sm font-bold text-[#d32f2f] hover:underline">Cerrar Sesión</a>
-    </div>
-</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-<!-- Tarjetas de KPIs (Indicadores Clave) -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#0d1117]">
-        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Total Clientes Activos</h3>
-        <p class="text-4xl font-black text-gray-800">{{ total_clientes }}</p>
-    </div>
-    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Obras en Curso</h3>
-        <p class="text-4xl font-black text-gray-800">{{ proyectos_activos }}</p>
-    </div>
-    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#d32f2f]">
-        <h3 class="text-gray-500 font-bold text-xs uppercase tracking-wider mb-1">Total Histórico Obras</h3>
-        <p class="text-4xl font-black text-gray-800">{{ total_proyectos }}</p>
-    </div>
-</div>
+    <!-- ================================================================= -->
+    <!-- BARRA LATERAL IZQUIERDA: CONTROL GERENCIAL                        -->
+    <!-- ================================================================= -->
+    <aside class="lg:col-span-3 bg-white border border-[#DEE1DC] rounded-lg p-5 shadow-xs space-y-6">
+        
+        <!-- Perfil Administrador -->
+        <div class="border-b border-[#DEE1DC] pb-5">
+            <div class="flex items-center gap-3">
+                <div class="size-10 rounded-md bg-[#1B222C] text-white flex items-center justify-center font-bold text-sm shrink-0 font-mono">
+                    AD
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-bold text-sm text-[#1B222C] truncate leading-tight">{{ user.username }}</h3>
+                    <p class="text-xs text-[#5B6470] truncate mt-0.5">Control General Sinergi</p>
+                    <span class="inline-block mt-1 font-mono text-[10px] text-[#D32F2F] bg-[#FBEAE8] px-2 py-0.5 rounded font-semibold uppercase">Superadmin</span>
+                </div>
+            </div>
+        </div>
 
-<!-- Tabla General de Proyectos -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-bold text-gray-800">Visión General Operativa</h3>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-white text-xs font-bold text-gray-500 uppercase tracking-wider border-b-2">
-                    <th class="px-6 py-4">Proyecto</th>
-                    <th class="px-6 py-4">Empresa / Cliente</th>
-                    <th class="px-6 py-4">Ingeniero Asignado</th>
-                    <th class="px-6 py-4">Estado</th>
-                    <th class="px-6 py-4">Avance</th>
-                </tr>
-            </thead>
-            <tbody class="text-sm text-gray-700">
+        <!-- Menú de Pestañas -->
+        <nav class="space-y-1 text-sm font-medium">
+            <button type="button" onclick="selectAdminTab('a-perfil', this)" class="a-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span>1. Mi Perfil</span>
+            </button>
+
+            <button type="button" onclick="selectAdminTab('a-proyectos', this)" class="a-tab active w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#1B222C] font-semibold bg-black/5 border-l-2 border-[#2F6690] transition text-left">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span>2. Monitor de Proyectos</span>
+            </button>
+
+            <button type="button" onclick="selectAdminTab('a-documentos', this)" class="a-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                <span>3. Auditoría de Documentos</span>
+            </button>
+
+            <button type="button" onclick="selectAdminTab('a-solicitudes', this)" class="a-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                <span>4. Bandeja de Solicitudes</span>
+            </button>
+
+            <!-- 5. Registrar Proyecto (destacado en rojo) -->
+            <div class="pt-3">
+                <button type="button" onclick="selectAdminTab('a-creador', this)" class="a-tab w-full flex items-center gap-2.5 px-3 py-3 rounded-md bg-[#D32F2F] text-white hover:bg-[#B71C1C] transition text-left font-bold text-xs uppercase tracking-wider shadow-sm">
+                    <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>5. Crear Nuevo Proyecto</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Accesos rápidos de administración -->
+        <div class="border-t border-[#DEE1DC] pt-4 space-y-2">
+            <a href="{% url 'admin:index' %}" target="_blank" class="w-full block text-center border border-[#DEE1DC] py-2 rounded text-xs font-mono font-bold text-[#1B222C] hover:bg-black/5 transition">
+                Base de Datos (Django Admin)
+            </a>
+        </div>
+    </aside>
+
+    <!-- ================================================================= -->
+    <!-- ÁREA DE CONTENIDO ADMINISTRATIVO                                  -->
+    <!-- ================================================================= -->
+    <main class="lg:col-span-9 space-y-6">
+
+        <!-- PESTAÑA 1: PERFIL ADMIN -->
+        <section id="a-perfil" class="a-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Perfil de Administración</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Manejo de permisos, gestión de usuarios y seguridad del servidor[cite: 18].</p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Usuario Activo</span>
+                    <p class="text-base font-bold text-[#1B222C] mt-1">{{ user.username }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Privilegios Globales</span>
+                    <p class="text-base font-bold text-[#D32F2F] mt-1">Superusuario / Acceso Completo</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 2: MONITOR DE PROYECTOS (Activa por defecto) -->
+        <section id="a-proyectos" class="a-pane space-y-6">
+            <!-- Indicadores Clave (KPIs) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white border border-[#DEE1DC] border-l-4 border-l-[#1B222C] p-4 rounded-md shadow-xs">
+                    <span class="font-mono text-[10px] uppercase font-bold text-[#5B6470]">Clientes Activos</span>
+                    <p class="text-3xl font-black text-[#1B222C] mt-1">{{ total_clientes }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] border-l-4 border-l-[#2F6690] p-4 rounded-md shadow-xs">
+                    <span class="font-mono text-[10px] uppercase font-bold text-[#2F6690]">Obras en Curso</span>
+                    <p class="text-3xl font-black text-[#1B222C] mt-1">{{ proyectos_activos }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] border-l-4 border-l-[#D32F2F] p-4 rounded-md shadow-xs">
+                    <span class="font-mono text-[10px] uppercase font-bold text-[#D32F2F]">Total Histórico</span>
+                    <p class="text-3xl font-black text-[#1B222C] mt-1">{{ total_proyectos }}</p>
+                </div>
+            </div>
+
+            <!-- Tabla General de Proyectos -->
+            <div class="bg-white border border-[#DEE1DC] rounded-md overflow-hidden">
+                <div class="bg-[#F6F6F3] px-5 py-3 border-b border-[#DEE1DC] flex justify-between items-center">
+                    <h2 class="font-bold text-xs uppercase tracking-wider text-[#1B222C]">Visión General Operativa</h2>
+                    <span class="font-mono text-[11px] text-[#5B6470]">Actualizado</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-white text-[#5B6470] font-mono border-b border-[#DEE1DC]">
+                                <th class="px-5 py-3 font-semibold">Proyecto</th>
+                                <th class="px-5 py-3 font-semibold">Cliente Mandante</th>
+                                <th class="px-5 py-3 font-semibold">Ingeniero Asignado</th>
+                                <th class="px-5 py-3 font-semibold">Estado</th>
+                                <th class="px-5 py-3 font-semibold">Avance</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#DEE1DC] text-[#1B222C]">
+                            {% for proyecto in proyectos %}
+                            <tr class="hover:bg-[#F6F6F3]/50 transition">
+                                <td class="px-5 py-3.5 font-bold">{{ proyecto.nombre }}</td>
+                                <td class="px-5 py-3.5">{{ proyecto.cliente.empresa_cliente }}</td>
+                                <td class="px-5 py-3.5 font-mono text-[11px]">{{ proyecto.empleado_encargado.username|default:"<span class='text-[#D32F2F] italic'>Sin asignar</span>"|safe }}</td>
+                                <td class="px-5 py-3.5">
+                                    {% if proyecto.estado == 'En Curso' %}
+                                        <span class="badge-status en-curso">En Curso</span>
+                                    {% elif proyecto.estado == 'Finalizado' %}
+                                        <span class="badge-status finalizado">Finalizado</span>
+                                    {% else %}
+                                        <span class="badge-status verificacion">{{ proyecto.estado|default:"En Verificación" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-20 bg-[#DEE1DC] rounded-full h-2 overflow-hidden">
+                                            <div class="bg-[#D32F2F] h-full" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+                                        </div>
+                                        <span class="font-mono text-[11px] font-bold">{{ proyecto.porcentaje_avance }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-5 py-8 text-center text-[#5B6470] italic">No hay proyectos registrados en la plataforma.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 3: AUDITORÍA DE DOCUMENTOS -->
+        <section id="a-documentos" class="a-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Repositorio General de Archivos</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Inspección de planos y memorias técnicas subidas por clientes y contrapartes[cite: 16].</p>
+            </div>
+
+            <div class="space-y-4">
                 {% for proyecto in proyectos %}
-                <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 font-bold text-gray-900">{{ proyecto.nombre }}</td>
-                    <td class="px-6 py-4">{{ proyecto.cliente.empresa_cliente }}</td>
-                    <td class="px-6 py-4">{{ proyecto.empleado_encargado.username|default:"<span class='text-red-500 italic'>Sin asignar</span>"|safe }}</td>
-                    <td class="px-6 py-4">
-                        {% if proyecto.estado == 'En Curso' %}
-                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded border border-blue-200">{{ proyecto.estado }}</span>
-                        {% elif proyecto.estado == 'Finalizado' %}
-                            <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded border border-green-200">{{ proyecto.estado }}</span>
-                        {% else %}
-                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded border border-yellow-200">{{ proyecto.estado }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-20 bg-gray-200 rounded-full h-2">
-                                <div class="bg-[#d32f2f] h-2 rounded-full" style="width: {{ proyecto.porcentaje_avance }}%"></div>
-                            </div>
-                            <span class="text-xs font-bold">{{ proyecto.porcentaje_avance }}%</span>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500 italic">No hay proyectos registrados en la plataforma.</td>
-                </tr>
+                <div class="bg-white border border-[#DEE1DC] rounded-md p-4">
+                    <span class="font-mono text-[10px] text-[#5B6470] block">PROYECTO #{{ proyecto.id }}</span>
+                    <h3 class="font-bold text-sm text-[#1B222C] mt-0.5">{{ proyecto.nombre }}</h3>
+                    <ul class="mt-3 divide-y divide-[#DEE1DC] text-xs">
+                        {% for doc in proyecto.documentos.all %}
+                        <li class="py-2 flex justify-between items-center">
+                            <span class="text-[#5B6470]">📄 {{ doc.nombre_archivo }}</span>
+                            <a href="{{ doc.archivo.url }}" download class="text-[#2F6690] font-bold hover:underline">Descargar</a>
+                        </li>
+                        {% empty %}
+                        <li class="py-2 text-[#5B6470] italic">Sin documentos registrados.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 4: BANDEJA DE SOLICITUDES -->
+        <section id="a-solicitudes" class="a-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Bandeja de Entrada de Solicitudes</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Supervisión de requerimientos y chats directos entre clientes y equipo técnico[cite: 16].</p>
+            </div>
+
+            <div class="bg-white border border-[#DEE1DC] rounded-md p-6 text-center text-xs text-[#5B6470]">
+                No existen alertas no resueltas en los canales de proyectos.
+            </div>
+        </section>
+
+        <!-- PESTAÑA 5: CREADOR DE PROYECTO (Destacado) -->
+        <section id="a-creador" class="a-pane hidden space-y-6">
+            <div class="border-b-2 border-[#D32F2F] pb-4">
+                <span class="font-mono text-xs uppercase tracking-wider text-[#D32F2F] font-bold">Gestión Interna</span>
+                <h1 class="text-2xl font-bold text-[#1B222C] mt-1">Registrar Nuevo Proyecto</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Apertura manual de proyectos que ingresan por canales directos o licitaciones cerradas[cite: 18].</p>
+            </div>
+
+            <form method="POST" action="" class="bg-white border border-[#DEE1DC] p-6 rounded-md space-y-5 text-xs">
+                {% csrf_token %}
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Nombre Oficial del Proyecto</label>
+                        <input type="text" placeholder="Ej: Red de Rociadores Centro Logístico Pudahuel" class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C]">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Empresa Cliente</label>
+                        <input type="text" placeholder="Razón social del cliente mandante" class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C]">
+                    </div>
+                </div>
+
+                <button type="button" class="btn-rojo w-full py-3.5 text-xs tracking-wider uppercase font-bold shadow-md">
+                    Guardar y Habilitar Proyecto en el Sistema
+                </button>
+            </form>
+        </section>
+
+    </main>
 </div>
+
+<script>
+function selectAdminTab(paneId, btn) {
+    document.querySelectorAll('.a-pane').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.a-tab').forEach(el => {
+        if (!el.classList.contains('bg-[#D32F2F]')) {
+            el.classList.remove('bg-black/5', 'text-[#1B222C]', 'border-[#2F6690]', 'font-semibold');
+            el.classList.add('text-[#5B6470]', 'border-transparent');
+        }
+    });
+
+    const activePane = document.getElementById(paneId);
+    if (activePane) activePane.classList.remove('hidden');
+
+    if (!btn.classList.contains('bg-[#D32F2F]')) {
+        btn.classList.add('bg-black/5', 'text-[#1B222C]', 'border-[#2F6690]', 'font-semibold');
+        btn.classList.remove('text-[#5B6470]', 'border-transparent');
+    }
+}
+</script>
 {% endblock %}

@@ -1,106 +1,394 @@
-<!-- templates/cliente_dashboard.html -->
 {% extends 'base_usuarios.html' %}
 
-{% block content %}
-<!-- Cabecera Personalizada -->
-<div class="mb-8 flex justify-between items-end border-b pb-4 border-gray-300">
-    <div>
-        <h2 class="text-3xl font-bold text-[#0d1117]">Bienvenido, {{ user.first_name|default:user.username }}</h2>
-        {% if user.empresa_cliente %}
-            <p class="text-gray-500 text-lg font-semibold">{{ user.empresa_cliente }}</p>
-        {% endif %}
-    </div>
-    <a href="{% url 'logout' %}" class="text-sm font-bold text-[#d32f2f] hover:underline">Cerrar Sesión</a>
-</div>
-<!-- Mensajes del sistema -->
-{% if messages %}
-    {% for message in messages %}
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 font-semibold text-sm">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
-<!-- Módulos (Grid) -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    
-    <!-- Proyectos Activos (Columna Principal) -->
-    <div class="md:col-span-2 space-y-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#0d1117]">
-            <h3 class="text-xl font-bold mb-4 text-gray-800">Mis Proyectos Activos</h3>
-            
-            <!-- Bucle for: Django repetirá esto por cada proyecto que tenga el cliente -->
-            {% for proyecto in proyectos %}
-            <div class="border border-gray-200 rounded p-5 mb-4 hover:shadow-md transition">
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-bold text-lg">{{ proyecto.nombre }}</h4>
-                    <!-- Color dinámico según el estado -->
-                    {% if proyecto.estado == 'En Curso' %}
-                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
-                    {% elif proyecto.estado == 'Finalizado' %}
-                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
-                    {% else %}
-                        <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded">{{ proyecto.estado }}</span>
-                    {% endif %}
-                </div>
-                <p class="text-sm text-gray-500 mb-5">Fecha de inicio: {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>
-                
-                <!-- Barra de progreso dinámica -->
-                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                    <div class="bg-[#d32f2f] h-2.5 rounded-full" style="width: {{ proyecto.porcentaje_avance }}%"></div>
-                </div>
-                <p class="text-right text-xs font-bold text-gray-700">{{ proyecto.porcentaje_avance }}% Completado</p>
-            </div>
-            {% empty %}
-                <p class="text-gray-500 italic">No tienes proyectos activos en este momento.</p>
-            {% endfor %}
-        </div>
-    </div>
+{% block title %}Sinergi — Portal de Clientes{% endblock %}
 
-    <!-- Columna Lateral: Documentos y Soporte -->
-    <div class="space-y-6">
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- ================================================================= -->
+    <!-- BARRA LATERAL IZQUIERDA: TABLERO DE OPCIONES                     -->
+    <!-- ================================================================= -->
+    <aside class="lg:col-span-3 bg-white border border-[#DEE1DC] rounded-lg p-5 shadow-xs space-y-6">
         
-        <!-- Módulo de Documentos Reales -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-400">
-            <h3 class="text-lg font-bold mb-4 text-gray-800">Documentos Técnicos</h3>
-            <ul class="space-y-4">
-                <!-- Bucle for: Recorremos los proyectos y sacamos sus documentos -->
+        <!-- Tarjeta Resumen Perfil (Arriba del Sidebar) -->
+        <div class="border-b border-[#DEE1DC] pb-5">
+            <div class="flex items-center gap-3">
+                <div class="size-10 rounded-md bg-[#1B222C] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    {{ user.first_name|default:user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-bold text-sm text-[#1B222C] truncate leading-tight">{{ user.first_name|default:user.username }}</h3>
+                    <p class="text-xs text-[#5B6470] truncate mt-0.5">{{ user.empresa_cliente|default:"Cliente Sinergi" }}</p>
+                    <span class="inline-block mt-1 font-mono text-[10px] text-[#2F6690] bg-[#E7EEF2] px-2 py-0.5 rounded font-semibold uppercase">Portal Cliente</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú de Pestañas en Orden Requerido -->
+        <nav class="space-y-1 text-sm font-medium">
+            <button type="button" onclick="selectTab('c-perfil', this)" class="c-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span>1. Mi Perfil</span>
+            </button>
+
+            <button type="button" onclick="selectTab('c-proyectos', this)" class="c-tab active w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#1B222C] font-semibold bg-black/5 border-l-2 border-[#2F6690] transition text-left">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="1.8"/></svg>
+                <span>2. Mis Proyectos</span>
+            </button>
+
+            <button type="button" onclick="selectTab('c-documentos', this)" class="c-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>3. Documentos por Proyecto</span>
+            </button>
+
+            <button type="button" onclick="selectTab('c-solicitudes', this)" class="c-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-[#5B6470] hover:text-[#1B222C] hover:bg-black/5 transition text-left border-l-2 border-transparent">
+                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                <span>4. Solicitudes & Chat</span>
+            </button>
+
+            <!-- 5. Iniciar Proyecto (destacado en rojo) -->
+            <div class="pt-3">
+                <button type="button" onclick="selectTab('c-creador', this)" class="c-tab w-full flex items-center gap-2.5 px-3 py-3 rounded-md bg-[#D32F2F] text-white hover:bg-[#B71C1C] transition text-left font-bold text-xs uppercase tracking-wider shadow-sm">
+                    <svg class="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>5. Iniciar Nuevo Proyecto</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Información de pie de sidebar -->
+        <div class="border-t border-[#DEE1DC] pt-4 text-xs text-[#5B6470] space-y-1">
+            <p class="font-mono text-[11px]">Sinergi Client Portal</p>
+            <p>Atención: Lun a Vie 08:30 - 18:00</p>
+        </div>
+    </aside>
+
+    <!-- ================================================================= -->
+    <!-- ÁREA DE CONTENIDO PRINCIPAL                                       -->
+    <!-- ================================================================= -->
+    <main class="lg:col-span-9 space-y-6">
+
+        <!-- Mensajes del sistema -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-md text-xs font-semibold flex items-center gap-2">
+                    <span>✓</span> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- PESTAÑA 1: PERFIL -->
+        <section id="c-perfil" class="c-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Ficha de la Cuenta</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Antecedentes corporativos vinculados a su contraparte técnica en Sinergi.</p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Contacto Oficial</span>
+                    <p class="text-base font-bold text-[#1B222C] mt-1">{{ user.first_name|default:user.username }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Empresa / Razón Social</span>
+                    <p class="text-base font-bold text-[#1B222C] mt-1">{{ user.empresa_cliente|default:"Constructora Mandante" }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Correo Electrónico</span>
+                    <p class="text-base font-bold text-[#1B222C] mt-1">{{ user.email|default:"Sin correo asignado" }}</p>
+                </div>
+                <div class="bg-white border border-[#DEE1DC] p-5 rounded-md">
+                    <span class="text-xs font-mono text-[#5B6470] uppercase">Identificador de Usuario</span>
+                    <p class="text-base font-bold text-[#1B222C] mt-1">{{ user.username }}</p>
+                </div>
+            </div>
+
+            <div class="bg-white border border-[#DEE1DC] rounded-md p-5 text-xs text-[#5B6470] leading-relaxed">
+                <strong class="text-[#1B222C] block font-semibold mb-1">Políticas de Registro Sinergi:</strong>
+                Las cuentas son habilitadas de forma exclusiva por la administración del proyecto[cite: 18]. No existe autorregistro público[cite: 18]. Si requiere autorizar nuevos supervisores o modificar correos de notificación, solicítelo mediante el canal de solicitudes[cite: 16].
+            </div>
+        </section>
+
+        <!-- PESTAÑA 2: MIS PROYECTOS (Activa por defecto) -->
+        <section id="c-proyectos" class="c-pane space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#DEE1DC] pb-4 gap-2">
+                <div>
+                    <h1 class="text-xl font-bold text-[#1B222C]">Mis Proyectos en Curso</h1>
+                    <p class="text-xs text-[#5B6470] mt-1">Supervisión en tiempo real de avance, hitos y aprobaciones SEC/NFPA[cite: 1, 18].</p>
+                </div>
+                <span class="text-xs font-mono text-[#5B6470]">{{ proyectos|length }} obra(s) vinculada(s)</span>
+            </div>
+
+            <!-- Listado tipo Tarjeta Técnica -->
+            <div class="space-y-4">
                 {% for proyecto in proyectos %}
-                    {% for documento in proyecto.documentos.all %}
-                    <li class="flex justify-between items-center text-sm border-b pb-2">
-                        <span class="text-gray-700 font-medium truncate w-3/4">📄 {{ documento.nombre_archivo }}</span>
-                        <!-- El enlace real al archivo en la carpeta media -->
-                        <a href="{{ documento.archivo.url }}" download class="text-[#d32f2f] font-bold hover:underline">Bajar</a>
-                    </li>
-                    {% endfor %}
+                <div class="card-item p-5 cursor-pointer" data-status="{{ proyecto.estado }}" onclick="toggleProjectDetail('detail-{{ proyecto.id }}')">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <span class="font-mono text-[11px] text-[#5B6470]">EXPEDIENTE #SNG-{{ proyecto.id }}</span>
+                            <h2 class="text-base font-bold text-[#1B222C] mt-0.5">{{ proyecto.nombre }}</h2>
+                            <p class="text-xs text-[#5B6470] mt-0.5">Fecha inicio: {{ proyecto.fecha_inicio|date:"d M Y"|default:"En curso" }}</p>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            {% if proyecto.estado == 'En Curso' %}
+                                <span class="badge-status en-curso">En Curso</span>
+                            {% elif proyecto.estado == 'Finalizado' %}
+                                <span class="badge-status finalizado">Finalizado</span>
+                            {% else %}
+                                <span class="badge-status verificacion">{{ proyecto.estado|default:"En Verificación" }}</span>
+                            {% endif %}
+
+                            <div class="w-32 text-right">
+                                <div class="w-full bg-[#DEE1DC] rounded-full h-2 overflow-hidden">
+                                    <div class="bg-[#2F6690] h-full rounded-full transition-all duration-500" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+                                </div>
+                                <span class="font-mono text-[11px] text-[#5B6470] mt-1 inline-block">{{ proyecto.porcentaje_avance }}% avance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalle Desplegable con Diagrama de Hitos -->
+                    <div id="detail-{{ proyecto.id }}" class="mt-6 pt-5 border-t border-[#DEE1DC] grid md:grid-cols-12 gap-6 hidden">
+                        <div class="md:col-span-7">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-[#1B222C] mb-4">Línea de Avance e Hitos</h3>
+                            <div class="space-y-4 relative pl-1">
+                                <div class="tl-item done relative flex gap-3">
+                                    <div><div class="tl-node"></div><div class="tl-line"></div></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-[#1B222C]">Levantamiento y antecedentes técnicos</p>
+                                        <span class="font-mono text-[10px] text-[#5B6470]">Aprobado y registrado</span>
+                                    </div>
+                                </div>
+                                <div class="tl-item {% if proyecto.porcentaje_avance >= 40 %}done{% else %}active{% endif %} relative flex gap-3">
+                                    <div><div class="tl-node"></div><div class="tl-line"></div></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-[#1B222C]">Ingeniería conceptual y básica aprobada</p>
+                                        <span class="font-mono text-[10px] text-[#5B6470]">Planos y memoria en revisión</span>
+                                    </div>
+                                </div>
+                                <div class="tl-item {% if proyecto.porcentaje_avance >= 80 %}done{% elif proyecto.porcentaje_avance >= 40 %}active{% endif %} relative flex gap-3">
+                                    <div><div class="tl-node"></div><div class="tl-line"></div></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-[#1B222C]">Inspección técnica y faena en terreno</p>
+                                        <span class="font-mono text-[10px] text-[#5B6470]">En ejecución activa</span>
+                                    </div>
+                                </div>
+                                <div class="tl-item {% if proyecto.porcentaje_avance == 100 %}done{% endif %} relative flex gap-3">
+                                    <div><div class="tl-node"></div></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-[#1B222C]">Recepción final y entrega de carpetas</p>
+                                        <span class="font-mono text-[10px] text-[#5B6470]">Pendiente de cierre</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-5 bg-[#F6F6F3] p-4 rounded-md border border-[#DEE1DC] space-y-3">
+                            <h4 class="text-xs font-bold text-[#1B222C]">Archivos de la Obra</h4>
+                            <ul class="text-xs space-y-2">
+                                {% for doc in proyecto.documentos.all|slice:":3" %}
+                                <li class="flex justify-between items-center">
+                                    <span class="truncate w-3/4 text-[#5B6470]">📄 {{ doc.nombre_archivo }}</span>
+                                    <a href="{{ doc.archivo.url }}" download class="text-[#2F6690] font-bold hover:underline">Descargar</a>
+                                </li>
+                                {% empty %}
+                                <li class="text-[#5B6470] italic">Sin documentos emitidos.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white border border-[#DEE1DC] rounded-lg p-10 text-center text-[#5B6470]">
+                    <p class="font-semibold text-sm">No existen proyectos activos registrados a su nombre.</p>
+                    <p class="text-xs mt-1">Utilice la opción "Iniciar Nuevo Proyecto" para ingresar su requerimiento a operaciones.</p>
+                </div>
                 {% endfor %}
-                <!-- Formulario Real y Optimizado para el Cliente -->
-            <div class="mt-6 border-t pt-4">
-                <h4 class="text-sm font-bold mb-3 text-gray-700">Subir nuevo documento</h4>
-                <form method="POST" action="" enctype="multipart/form-data" class="space-y-3">
+            </div>
+        </section>
+
+        <!-- PESTAÑA 3: DOCUMENTOS POR PROYECTO -->
+        <section id="c-documentos" class="c-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Documentos de Ingeniería</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Planos (.dwg), memorias de cálculo (.xlsx, .docx) e informes PDF ordenados por obra[cite: 16].</p>
+            </div>
+
+            <!-- Tablas de Documentos por cada Proyecto -->
+            <div class="space-y-6">
+                {% for proyecto in proyectos %}
+                <div class="bg-white border border-[#DEE1DC] rounded-md overflow-hidden">
+                    <div class="bg-[#F6F6F3] px-5 py-3 border-b border-[#DEE1DC] flex justify-between items-center">
+                        <span class="font-bold text-xs uppercase tracking-wider text-[#1B222C]">{{ proyecto.nombre }}</span>
+                        <span class="font-mono text-xs text-[#5B6470]">EXP #{{ proyecto.id }}</span>
+                    </div>
+
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-white text-[#5B6470] font-mono border-b border-[#DEE1DC]">
+                                <th class="px-5 py-3 font-semibold">Nombre del Documento</th>
+                                <th class="px-5 py-3 font-semibold">Formato</th>
+                                <th class="px-5 py-3 font-semibold text-right">Descarga</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#DEE1DC] text-[#1B222C]">
+                            {% for doc in proyecto.documentos.all %}
+                            <tr class="hover:bg-[#F6F6F3]/50 transition">
+                                <td class="px-5 py-3 font-medium flex items-center gap-2">
+                                    <span>📄</span> {{ doc.nombre_archivo }}
+                                </td>
+                                <td class="px-5 py-3 font-mono text-[#5B6470]">Archivo</td>
+                                <td class="px-5 py-3 text-right">
+                                    <a href="{{ doc.archivo.url }}" download class="text-[#2F6690] font-bold border border-[#DEE1DC] px-2.5 py-1 rounded bg-white hover:border-[#2F6690] transition">
+                                        Descargar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="px-5 py-4 text-center text-[#5B6470] italic">No hay archivos cargados en esta carpeta de obra.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% empty %}
+                <p class="text-xs text-[#5B6470] italic">Sin proyectos para consultar documentación.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Formulario Real para que el Cliente Suba Documentos -->
+            <div class="bg-white border border-[#DEE1DC] rounded-md p-5 space-y-4">
+                <div>
+                    <h3 class="font-bold text-sm text-[#1B222C]">Adjuntar Antecedentes al Proyecto</h3>
+                    <p class="text-xs text-[#5B6470] mt-0.5">Suba recepciones municipales, solicitudes de modificación o memorias adicionales[cite: 16].</p>
+                </div>
+
+                <form method="POST" action="" enctype="multipart/form-data" class="space-y-4">
                     {% csrf_token %}
-                    <div>
+                    <div class="border-2 border-dashed border-[#DEE1DC] bg-[#F6F6F3] p-5 rounded-md">
                         {{ form.archivo }}
                         {% if form.archivo.errors %}
-                            <div class="text-red-600 text-xs font-bold mt-1">
-                                {{ form.archivo.errors.0 }}
-                            </div>
+                            <p class="text-[#D32F2F] text-xs font-semibold mt-2">{{ form.archivo.errors.0 }}</p>
                         {% endif %}
                     </div>
-                    <button type="submit" class="w-full bg-[#0d1117] text-white font-bold py-2 rounded text-sm hover:bg-gray-800 transition">
-                        Enviar a Sinergi
+                    <button type="submit" class="btn-rojo">
+                        Enviar Documento a Sinergi
                     </button>
                 </form>
             </div>
-            </ul>
-        </div>
+        </section>
 
-        <!-- Módulo de Soporte -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-[#d32f2f]">
-            <h3 class="text-lg font-bold mb-2 text-gray-800">Canal de Solicitudes</h3>
-            <p class="text-sm text-gray-600 mb-5">¿Tienes dudas sobre el avance o la documentación? Escríbenos.</p>
-            <button class="w-full btn-rojo">Abrir Chat</button>
-        </div>
+        <!-- PESTAÑA 4: SOLICITUDES & CHAT -->
+        <section id="c-solicitudes" class="c-pane hidden space-y-6">
+            <div class="border-b border-[#DEE1DC] pb-4">
+                <h1 class="text-xl font-bold text-[#1B222C]">Canal de Solicitudes</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Comunicación técnica directa con la contraparte de ingeniería en terreno[cite: 16].</p>
+            </div>
 
-    </div>
+            <div class="bg-white border border-[#DEE1DC] rounded-md grid md:grid-cols-12 min-h-[460px] overflow-hidden">
+                <!-- Lista de Proyectos / Temas -->
+                <div class="md:col-span-5 border-r border-[#DEE1DC] divide-y divide-[#DEE1DC] bg-[#F6F6F3]/50">
+                    {% for proyecto in proyectos %}
+                    <div class="p-4 cursor-pointer hover:bg-white transition {% if forloop.first %}bg-white font-semibold{% endif %}">
+                        <span class="font-mono text-[10px] text-[#5B6470]">SNG-{{ proyecto.id }}</span>
+                        <h4 class="text-xs font-bold text-[#1B222C] truncate mt-0.5">{{ proyecto.nombre }}</h4>
+                        <p class="text-[11px] text-[#5B6470] truncate mt-1">Canal de coordinación abierto</p>
+                    </div>
+                    {% empty %}
+                    <div class="p-4 text-xs text-[#5B6470] italic">Sin proyectos asociados.</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Ventana de Mensajes -->
+                <div class="md:col-span-7 flex flex-col justify-between p-5 bg-white">
+                    <div class="space-y-3 overflow-y-auto max-h-[340px]">
+                        <div class="bg-[#F6F6F3] border border-[#DEE1DC] p-3.5 rounded-md max-w-[85%] text-xs leading-relaxed">
+                            <span class="font-mono text-[10px] text-[#5B6470] block mb-1">MESA TÉCNICA SINERGI</span>
+                            Bienvenido. Puede registrar observaciones, solicitar visitas a terreno o resolver dudas sobre las entregas en este canal[cite: 16].
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-[#DEE1DC] flex gap-2">
+                        <input type="text" placeholder="Escribir mensaje a Sinergi..." class="flex-1 text-xs border border-[#DEE1DC] rounded px-3 py-2 outline-none focus:border-[#2F6690]">
+                        <button type="button" class="btn-rojo text-xs py-2 px-4">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESTAÑA 5: INICIAR PROYECTO (Destacada) -->
+        <section id="c-creador" class="c-pane hidden space-y-6">
+            <div class="border-b-2 border-[#D32F2F] pb-4">
+                <span class="font-mono text-xs uppercase tracking-wider text-[#D32F2F] font-bold">Apertura Formal</span>
+                <h1 class="text-2xl font-bold text-[#1B222C] mt-1">Iniciar Nuevo Requerimiento de Proyecto</h1>
+                <p class="text-xs text-[#5B6470] mt-1">Especifique el alcance de la faena o inspección. Operaciones evaluará los antecedentes para formalizar la apertura[cite: 1, 18].</p>
+            </div>
+
+            <form method="POST" action="" class="bg-white border border-[#DEE1DC] p-6 rounded-md space-y-5 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Nombre del Proyecto / Faena</label>
+                    <input type="text" placeholder="Ej: Remodelación Eléctrica y Climatización Edificio Corporativo" class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C]">
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Especialidad de Ingeniería</label>
+                        <select class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C] bg-white">
+                            <option>Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)</option>
+                            <option>Protección Contra Incendios (PCI - NFPA 13, 20 & 72)</option>
+                            <option>Climatización y Ventilación Mecánica (HVAC)</option>
+                            <option>Sanitaria, Agua Potable y Alcantarillado</option>
+                            <option>Seguridad Electrónica y CCTV</option>
+                            <option>Technical Due Diligence Multidisciplinario</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Fecha Tentativa de Faena</label>
+                        <input type="date" class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-[#1B222C] uppercase tracking-wider font-mono mb-1.5">Memoria Breve o Descripción del Requerimiento</label>
+                    <textarea rows="4" placeholder="Comuna, metros cuadrados aproximados, equipamiento existente..." class="w-full text-xs p-3 border border-[#DEE1DC] rounded outline-none focus:border-[#1B222C]"></textarea>
+                </div>
+
+                <div class="pt-3">
+                    <button type="button" class="btn-rojo w-full py-3.5 text-xs tracking-wider uppercase font-bold shadow-md">
+                        Registrar Ficha de Proyecto para Revisión de Operaciones
+                    </button>
+                </div>
+            </form>
+        </section>
+
+    </main>
 </div>
+
+<!-- Control de Pestañas con Persistencia -->
+<script>
+function selectTab(paneId, btn) {
+    document.querySelectorAll('.c-pane').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.c-tab').forEach(el => {
+        if (!el.classList.contains('bg-[#D32F2F]')) {
+            el.classList.remove('bg-black/5', 'text-[#1B222C]', 'border-[#2F6690]', 'font-semibold');
+            el.classList.add('text-[#5B6470]', 'border-transparent');
+        }
+    });
+
+    const activePane = document.getElementById(paneId);
+    if (activePane) activePane.classList.remove('hidden');
+
+    if (!btn.classList.contains('bg-[#D32F2F]')) {
+        btn.classList.add('bg-black/5', 'text-[#1B222C]', 'border-[#2F6690]', 'font-semibold');
+        btn.classList.remove('text-[#5B6470]', 'border-transparent');
+    }
+}
+
+function toggleProjectDetail(detailId) {
+    const detail = document.getElementById(detailId);
+    if (detail) detail.classList.toggle('hidden');
+}
+</script>
 {% endblock %}

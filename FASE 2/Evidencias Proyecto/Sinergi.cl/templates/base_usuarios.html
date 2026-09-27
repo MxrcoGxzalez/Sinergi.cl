@@ -1,39 +1,63 @@
-<!-- templates/base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinergi - Plataforma Web</title>
-    
-    <!-- Conectamos Tailwind CSS (Vía CDN para rápido desarrollo) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Conectamos tu archivo CSS separado -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body class="min-h-screen flex flex-col">
+    <title>{% block title %}Sinergi — Plataforma de Proyectos{% endblock %}</title>
 
-    <!-- Barra de navegación que se repetirá en todas las páginas -->
-    <header class="bg-[#0d1117] text-white p-4 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">SINERGI<span class="text-[#d32f2f]">.</span></h1>
-            <nav>
-                <a href="#" class="hover:text-[#d32f2f] mx-2">Inicio</a>
-                <a href="{% url 'login' %}" class="hover:text-[#d32f2f] mx-2">Login</a>
-            </nav>
+    <!-- Tipografías técnicas: IBM Plex Sans + IBM Plex Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- CSS del panel de usuarios -->
+    <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#F6F6F3] text-[#1B222C] min-h-screen flex flex-col">
+
+    <!-- BARRA SUPERIOR GLOBAL -->
+    <header class="bg-[#0d1117] text-white border-b border-white/10 sticky top-0 z-50">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg width="22" height="22" viewBox="0 0 26 26" fill="none" class="shrink-0" aria-hidden="true">
+                    <rect x="1" y="1" width="24" height="24" rx="3" stroke="#EDEFF1" stroke-width="1.6"/>
+                    <path d="M6 18L11 8L15 15L20 8" stroke="#D32F2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-bold tracking-tight text-base">SINERGI<span class="text-[#D32F2F]">.</span></span>
+                <span class="hidden sm:inline-block text-[11px] font-mono uppercase tracking-widest text-white/50 pl-2 border-l border-white/20">Engineering & Consultancy</span>
+            </div>
+
+            <!-- Acciones rápidas de sesión -->
+            <div class="flex items-center gap-4 text-xs">
+                {% if user.is_authenticated %}
+                    <span class="text-white/60 font-mono hidden md:inline-block">Sesión: <strong class="text-white">{{ user.username }}</strong></span>
+                    <a href="{% url 'logout' %}" class="font-bold text-[#D32F2F] hover:text-red-400 transition">Cerrar Sesión →</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="font-bold text-white hover:text-white/80">Acceso a Clientes</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <!-- AQUÍ SE INYECTARÁ EL CÓDIGO DE LAS OTRAS PÁGINAS -->
-    <main class="flex-grow max-w-7xl mx-auto w-full p-6">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="flex-grow max-w-[1400px] mx-auto w-full p-4 sm:p-6 lg:p-8">
         {% block content %}
         {% endblock %}
-    </main>
+    </div>
 
-    <footer class="bg-[#0d1117] text-gray-400 text-center p-4 text-sm mt-auto">
-        &copy; 2026 Sinergi SpA. Plataforma de Ingeniería.
+    <!-- FOOTER TÉCNICO -->
+    <footer class="bg-white border-t border-[#DEE1DC] py-4 text-center text-xs text-[#5B6470] mt-auto">
+        <div class="max-w-[1400px] mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span class="font-mono text-[11px]">© 2006 - 2026 Sinergi SpA — Sistema de Gestión y Technical Due Diligence</span>
+            <span class="text-gray-400 text-[11px]">Santiago de Chile</span>
+        </div>
     </footer>
+
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
