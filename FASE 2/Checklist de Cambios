@@ -1,0 +1,29 @@
+LISTO - mover el login al boton del base_paginas.html
+- cambiar los html malos, por los vijso por la animaciones
+
+- 
+
+- funciones completas de cliente
+    - el cliente puede crear proyectos
+    - el ciiente puede mandar documentos para aprovarlos
+    - estado de los documentos(por aprovar, aprovado, y asi)
+
+- funciones completas de empleado
+    - poder crear tipo checklist de puntos sobre el avance del proyecto
+    - poder graficos o diagramas del avanace del proyecto
+
+- funciones completas de administrador
+    - poder hacer todo lo que hacen los cliente y empleados
+
+
+
+- autentificacion 2FA 
+
+- implementar mas seguridad por si acaso
+    - implementar antivirus para los archivos
+
+- rediseñar de nuevo las paginas de usuario
+
+- chat bot cliente
+- chat bot web
+ 
