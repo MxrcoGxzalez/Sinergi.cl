@@ -1,0 +1,28 @@
+{% with av=proyecto.porcentaje_avance %}
+<div class="relative pl-6 border-l-2 border-slate-200 space-y-6">
+  <div class="hito done">
+    <div class="hito-dot"></div>
+    <span class="hito-badge"></span>
+    <h4 class="text-sm font-semibold text-slate-900 mt-1">1. Levantamiento y antecedentes técnicos</h4>
+    <p class="text-xs text-slate-500 mt-0.5">Aprobado y registrado</p>
+  </div>
+  <div class="hito {% if av >= 40 %}done{% else %}active{% endif %}">
+    <div class="hito-dot"></div>
+    <span class="hito-badge"></span>
+    <h4 class="text-sm font-semibold text-slate-900 mt-1">2. Ingeniería conceptual y básica aprobada</h4>
+    <p class="text-xs text-slate-500 mt-0.5">Planos y memoria en revisión</p>
+  </div>
+  <div class="hito {% if av >= 80 %}done{% elif av >= 40 %}active{% else %}pending{% endif %}">
+    <div class="hito-dot"></div>
+    <span class="hito-badge"></span>
+    <h4 class="text-sm font-semibold text-slate-900 mt-1">3. Inspección técnica y faena en terreno</h4>
+    <p class="text-xs text-slate-500 mt-0.5">En ejecución activa</p>
+  </div>
+  <div class="hito {% if av == 100 %}done{% else %}pending{% endif %}">
+    <div class="hito-dot"></div>
+    <span class="hito-badge"></span>
+    <h4 class="text-sm font-semibold text-slate-900 mt-1">4. Recepción final y entrega de carpetas</h4>
+    <p class="text-xs text-slate-500 mt-0.5">Pendiente de cierre</p>
+  </div>
+</div>
+{% endwith %}

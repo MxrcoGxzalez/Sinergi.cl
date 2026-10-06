@@ -38,12 +38,14 @@ def vista_login(request):
 def dashboard(request):
     # 1. CLIENTE
     if request.user.role == 'CLIENTE':
-        proyectos_del_cliente = Proyecto.objects.filter(cliente=request.user)
-        
+        proyectos_del_cliente = (Proyecto.objects.filter(cliente=request.user)
+                                 .select_related('empleado_encargado').prefetch_related('documentos'))
+
         if request.method == 'POST':
             form = DocumentoClienteForm(request.POST, request.FILES)
             if form.is_valid():
-                proyecto_actual = proyectos_del_cliente.first()
+                proyecto_id = request.POST.get('proyecto_id', '')
+                proyecto_actual = proyectos_del_cliente.filter(id=proyecto_id).first() if proyecto_id.isdigit() else None
                 if proyecto_actual:
                     documento = form.save(commit=False)
                     documento.subido_por = request.user
@@ -54,13 +56,13 @@ def dashboard(request):
                     documento.save()
                     messages.success(request, '¡Documento enviado correctamente a Sinergi!')
                 else:
-                    messages.error(request, 'Error: No tienes un proyecto activo asociado.')
+                    messages.error(request, 'Error: el proyecto seleccionado no está asociado a tu cuenta.')
                 return redirect('dashboard')
         else:
             form = DocumentoClienteForm()
 
         contexto = {'proyectos': proyectos_del_cliente, 'form': form}
-        return render(request, 'cliente_dashboard.html', contexto)
+        return render(request, 'usuario_cliente.html', contexto)
         
     # 2. EMPLEADO
     elif request.user.role == 'EMPLEADO':
@@ -75,24 +77,28 @@ def dashboard(request):
         else:
             form = DocumentoForm(usuario=request.user)
 
-        proyectos_del_empleado = Proyecto.objects.filter(empleado_encargado=request.user)
+        proyectos_del_empleado = (Proyecto.objects.filter(empleado_encargado=request.user)
+                                  .select_related('cliente').prefetch_related('documentos__subido_por'))
         contexto = {'proyectos': proyectos_del_empleado, 'form': form}
-        return render(request, 'empleado_dashboard.html', contexto)
+        return render(request, 'usuario_empresa.html', contexto)
 
     # 3. ADMIN
     elif request.user.role == 'ADMIN':
         total_proyectos = Proyecto.objects.count()
         proyectos_activos = Proyecto.objects.filter(estado='En Curso').count()
         total_clientes = CustomUser.objects.filter(role='CLIENTE').count()
-        proyectos_todos = Proyecto.objects.all().order_by('-fecha_inicio')
-        
+        proyectos_todos = (Proyecto.objects.all().order_by('-fecha_inicio')
+                           .select_related('cliente', 'empleado_encargado').prefetch_related('documentos'))
+        usuarios = CustomUser.objects.exclude(role='ADMIN').order_by('role', 'username')
+
         contexto = {
             'total_proyectos': total_proyectos,
             'proyectos_activos': proyectos_activos,
             'total_clientes': total_clientes,
             'proyectos': proyectos_todos,
+            'usuarios': usuarios,
         }
-        return render(request, 'admin_dashboard.html', contexto)
+        return render(request, 'usuario_admin.html', contexto)
 
 def vista_logout(request):
     logout(request)
@@ -117,7 +123,7 @@ def actualizar_proyecto(request, proyecto_id):
 
 @login_required(login_url='login')
 def eliminar_documento(request, doc_id):
-    if request.user.role == 'EMPLEADO':
+    if request.method == 'POST' and request.user.role == 'EMPLEADO':
         documento = get_object_or_404(Documento, id=doc_id, proyecto__empleado_encargado=request.user)
         documento.archivo.delete() 
         documento.delete()

@@ -27,3 +27,108 @@ LISTO - mover el login al boton del base_paginas.html
 - chat bot cliente
 - chat bot web
  
+CHECKLIST Y SEGUIMIENTO DE DESARROLLO — PLATAFORMA SINERGI.CL
+
+Leyenda:
+[X] = Tarea completada
+[ ] = Tarea pendiente
+
+FRONTEND, VISTAS Y DISEÑO (TEMPLATES Y UI)
+
+[X] Mover el login al boton del base_paginas.html
+[ ] Cambiar los HTML con problemas por las versiones anteriores para recuperar las animaciones
+[ ] Rediseñar y estandarizar las paginas del portal de usuario/cliente con Tailwind CSS
+[ ] Rediseñar interfaz del panel interno (empleado / administracion)
+[ ] Maquetar vistas publicas: Home institucional, areas de especializacion, contacto y noticias
+[ ] Implementar visualizacion y filtrado rapido por categoria en el portafolio publico
+[ ] Interfaz de visualizacion de hitos tipo diagrama/linea de tiempo para el cliente
+[ ] Constructor visual interactivo de hitos/etapas para el empleado
+[ ] Integrar widgets flotantes para los chatbots (sitio publico y portal cliente)
+[ ] Vista de escaneo de codigo QR y confirmacion de 6 digitos para configuracion inicial de 2FA
+[ ] Formulario de segundo paso de login para ingresar el codigo TOTP
+[ ] Formulario para que el cliente configure su propia contraseña mediante enlace de activacion
+[ ] Dashboard con tarjetas y graficos de metricas operativas simples 
+
+BACKEND, BASE DE DATOS Y GESTION DE USUARIOS
+
+[ ] Modelo de Usuario personalizado y perfiles por rol en PostgreSQL (Cliente, Empleado, Admin)
+[ ] Regla transversal: deshabilitar y bloquear cualquier tipo de autoregistro en el sistema
+[ ] Formulario y logica en backend para que el Administrador cree y elimine cuentas
+[ ] Desactivacion logica de cuentas (soft delete) y reactivacion sin perder historial
+[ ] Generacion de enlaces tokenizados de activacion unicos, de un solo uso y con vencimiento
+[ ] Tarea en segundo plano para envio de correos de activacion via Brevo SMTP (Celery + Redis)
+[ ] Reenvio de token de activacion desde el panel si el enlace original expiro
+[ ] Cierre automatico de sesion por inactividad tras 30 minutos (timeout de sesion)
+
+MODULO DE PROYECTOS (PORTAL CLIENTE)
+
+[ ] Modelo y tabla en PostgreSQL para Proyectos y asociacion estricta a su Cliente
+[ ] Formulario para que el cliente cree tarjetas de proyecto (nombre, tipo, descripcion)
+[ ] Estado inicial automatico del proyecto: En verificacion
+[ ] Aislamiento multiproyecto por cliente (visualizacion independiente de cada obra)
+[ ] Endpoint y polling JS (~2-3 seg) para refrescar el avance de hitos en pantalla
+[ ] Canal de comunicacion / chat bidireccional cliente-empresa por proyecto
+[ ] Endpoint y polling JS (~1-3 seg) para actualizar los mensajes del canal de solicitudes
+[ ] Notificacion por correo al cliente ante cambios de estado o hitos completados
+[ ] Descarga de documentacion en formato original y/o PDF generado
+[ ] Descarga masiva de planos y documentos en archivo comprimido .zip mediante Celery
+
+MODULO DE PROYECTOS (PANEL EMPLEADO Y EMPRESA)
+
+[ ] Bandeja de entrada de proyectos pendientes de verificacion
+[ ] Acciones de revision: Aprobar proyecto, Rechazar definitivo o Solicitar correccion con motivo obligatorio
+[ ] Creacion y ordenamiento del desglose de hitos/etapas para proyectos aprobados
+[ ] Actualizacion de estados del hito (Pendiente, En ejecucion, Completado)
+[ ] Notificacion automatica por correo al cliente unicamente cuando se completa un hito
+[ ] Accion para marcar proyectos como Finalizado con selector opcional para publicarlo en el portafolio
+[ ] Interfaz de respuesta y atencion a las solicitudes/mensajes del cliente
+
+MODULO DE ADMINISTRACION
+
+[ ] Permiso de superusuario/admin para ejecutar todas las funciones de cliente y empleado
+[ ] Registro manual de proyectos que lleguen por canales externos/tradicionales
+[ ] Panel de recepcion de Leads desde el formulario de contacto publico
+[ ] Funcion de un clic para crear cuenta de cliente directamente desde un Lead
+[ ] Dashboard con calculo de metricas operativas (proyectos por estado, tiempos promedio, clientes activos)
+[ ] Filtro dinamico de metricas del dashboard por rango de fechas
+[ ] Panel para ocultar o publicar articulos del feed de noticias ingeridos por Celery Beat
+[ ] Proceso o script de migracion para proyectos historicos y su documentacion asociada
+
+GESTION DOCUMENTAL Y PIPELINE DE ANTIVIRUS
+
+[ ] Configuracion del almacenamiento local persistente en /media/ (volumen compartido de Docker)
+[ ] Capa 1: Validacion sincrona de limite de tamaño maximo por archivo
+[ ] Capa 2: Lista negra sincrona de extensiones peligrosas (.exe, .sh, .bat, etc.)
+[ ] Capa 3: Inspeccion de encabezado MIME real con python-magic para impedir extensiones falsas
+[ ] Estados del documento en BD: En escaneo, Disponible o Infectado
+[ ] Contenedor Docker de ClamAV con demonio clamd en puerto interno 3310
+[ ] Capa 4: Tarea asincrona de escaneo antivirus via Celery hacia ClamAV
+[ ] Borrado automatico del disco /media/ y alerta si el archivo resulta infectado
+[ ] Control de permisos para bloquear la descarga de archivos que no esten en estado Disponible
+
+SEGURIDAD Y CONTROL DE ACCESO
+
+[ ] Integracion de django-otp para 2FA basado en TOTP
+[ ] Regla de obligatoriedad de 2FA solo para Administrador y Empleado (Cliente exento)
+[ ] Generacion de codigos QR mediante biblioteca qrcode en backend
+[ ] Integracion de django-axes para bloquear ataques de fuerza bruta en login y codigo 2FA
+[ ] Mensajes de error genericos en credenciales erroneas para evitar enumeracion de usuarios
+[ ] Configuracion de variables de entorno seguras con django-environ y archivo .env
+[ ] Configuracion de HTTPS forzado mediante proxy inverso (Nginx o Caddy)
+
+INTELIGENCIA ARTIFICIAL (CHATBOTS)
+
+[X] Conexion a API externa de LLM (OpenAI, Gemini o similar)
+[ ] Chatbot 1 (Publico): prompt y contexto limitado a datos informativos de la empresa
+[ ] Chatbot 2 (Portal Cliente): prompt contextualizado dinamicamente con los proyectos del cliente activo
+[ ] Regla critica de seguridad: aislamiento estricto que impida al chatbot entregar datos de otros clientes
+[ ] Capacidad del chatbot cliente para comparar avance entre proyectos propios
+
+
+INFRAESTRUCTURA, AUTOMATIZACION Y CONDICIONALES
+
+[ ] Configuracion final de servicios en docker-compose.yml (web, db, redis, celery-worker, celery-beat, clamav)
+[ ] Configuracion de tareas periodicas en Celery Beat para ingesta RSS de noticias tecnicas
+[ ] Enlace a Instagram y enlace al LinkedIn del dueño en el footer
+[ ] (Condicional) Soporte para cambio de idioma a ingles en el sitio publico
+[ ] (Condicional) Modulo independiente de inventario de equipos/herramientas (fuera del MVP)

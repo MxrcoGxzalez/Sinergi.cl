@@ -32,3 +32,76 @@ body {
 .btn-rojo:hover {
     background-color: #b71c1c;
 }
+
+/* ==========================================================================
+   Paneles de usuario (usuario_admin / usuario_cliente / usuario_empresa)
+   Selectores dobles para ganarle a las utilidades que inyecta Tailwind CDN.
+   ========================================================================== */
+.nav-btn.tab-active {
+    background-color: #EBF3FA;
+    color: #1D5B8A;
+    font-weight: 600;
+    border-left: 3px solid #1D5B8A;
+}
+
+/* Tarjeta de proyecto seleccionada */
+.p-card.p-card-selected {
+    border: 2px solid #1D5B8A;
+}
+
+/* Canal de chat seleccionado */
+.chat-ch.chat-ch-selected {
+    border-left: 4px solid #1D5B8A;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Filtro de proyectos activo */
+.p-filter.p-filter-active {
+    background-color: #0f172a;
+    color: #ffffff;
+}
+
+/* Badge de estado del proyecto */
+.estado {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #f1f5f9;
+    color: #334155;
+}
+.estado[data-estado="En Curso"]   { background-color: #d1fae5; color: #065f46; }
+.estado[data-estado="Pausado"]    { background-color: #fef3c7; color: #92400e; }
+.estado[data-estado="Finalizado"] { background-color: #e0f2fe; color: #075985; }
+
+/* Línea de hitos (derivada del porcentaje de avance) */
+.hito {
+    position: relative;
+}
+.hito-dot {
+    position: absolute;
+    left: -31px;
+    top: 2px;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    background-color: #cbd5e1;
+}
+.hito-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+}
+.hito.done .hito-dot      { background-color: #059669; border: 2px solid #ffffff; }
+.hito.done .hito-badge    { color: #047857; background-color: #ecfdf5; }
+.hito.done .hito-badge::after    { content: "Completado"; }
+.hito.active .hito-dot    { background-color: #1D5B8A; box-shadow: 0 0 0 4px #e0f2fe; }
+.hito.active .hito-badge  { color: #1D5B8A; background-color: #f0f9ff; }
+.hito.active .hito-badge::after  { content: "En ejecución"; }
+.hito.pending             { opacity: 0.6; }
+.hito.pending .hito-badge { color: #64748b; background-color: #f1f5f9; }
+.hito.pending .hito-badge::after { content: "Pendiente"; }

@@ -1,0 +1,538 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinergi — Portal de Clientes</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sinergi: {
+              red: '#C52222',
+              'red-hover': '#A71D1D',
+              dark: '#11151B',
+              sidebar: '#1B222C',
+              blue: '#1D5B8A',
+              'blue-light': '#EBF3FA',
+              bg: '#F4F6F8'
+            }
+          },
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fuentes Corporativas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+</head>
+<body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== HEADER SUPERIOR ==================== -->
+  <header class="bg-sinergi-dark text-slate-200 h-14 px-6 flex justify-between items-center border-b border-white/10 sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <svg class="w-6 h-6 text-sinergi-red" viewBox="0 0 26 26" fill="none">
+        <rect x="1" y="1" width="24" height="24" rx="4" stroke="#EDEFF1" stroke-width="1.8"/>
+        <path d="M6 18L11 8L15 15L20 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <span class="font-bold text-base tracking-wider text-white">SINERGI</span>
+        <span class="hidden sm:inline-block text-[10px] text-slate-400 tracking-widest uppercase ml-2 border-l border-slate-700 pl-2">Engineering & Consultancy</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-slate-300">
+      <span class="hidden md:inline">Sesión: <strong class="text-white">{{ user.username }}</strong>{% if user.empresa_cliente %} ({{ user.empresa_cliente }}){% endif %}</span>
+      <a href="{% url 'logout' %}" class="text-sinergi-red hover:underline font-medium">Cerrar Sesión &rarr;</a>
+    </div>
+  </header>
+
+  <div class="flex-1 flex flex-col md:flex-row">
+    <!-- ==================== SIDEBAR LATERAL ==================== -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-6">
+
+      <!-- Ficha de Usuario en Sidebar -->
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+        <div class="w-10 h-10 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
+          {{ user.first_name|default:user.username|slice:":2"|upper }}
+        </div>
+        <div class="overflow-hidden">
+          <div class="font-semibold text-slate-900 text-sm leading-tight truncate">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-xs text-slate-500 truncate">{{ user.empresa_cliente|default:"Cliente Sinergi" }}</div>
+          <span class="inline-block bg-sky-100 text-sky-800 text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 tracking-wider uppercase font-mono">Portal Cliente</span>
+        </div>
+      </div>
+
+      <!-- Menú Lateral -->
+      <nav class="flex flex-col gap-1 text-sm font-medium">
+        <button onclick="switchTab('perfil', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          1. Mi Perfil
+        </button>
+
+        <button onclick="switchTab('proyectos', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          2. Mis Proyectos
+        </button>
+
+        <button onclick="switchTab('documentos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          3. Documentos por Proyecto
+        </button>
+
+        <button id="nav-chat" onclick="switchTab('chat', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          4. Solicitudes & Chat
+        </button>
+
+        <button onclick="switchTab('nuevo-proyecto', this)" class="nav-btn mt-2 w-full bg-sinergi-red hover:bg-sinergi-red-hover text-white font-semibold py-2.5 px-3 rounded flex items-center justify-center gap-2 text-xs shadow-sm transition-colors uppercase tracking-wider">
+          <span class="text-base font-bold">+</span> 5. Iniciar Nuevo Proyecto
+        </button>
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-slate-200 text-[11px] text-slate-500 space-y-1">
+        <p class="font-semibold text-slate-700">Sinergi Client Portal</p>
+        <p>Atención: Lun a Vie 08:30 - 18:00</p>
+      </div>
+    </aside>
+
+    <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+    <main class="flex-1 p-6 md:p-8 max-w-6xl">
+
+      {% include '_mensajes.html' %}
+
+      <!-- ======================================================== -->
+      <!-- VISTA 1: MI PERFIL                                       -->
+      <!-- ======================================================== -->
+      <section id="view-perfil" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Perfil de Cliente</h1>
+          <p class="text-sm text-slate-500 mt-1">Datos corporativos registrados por la administración técnica de Sinergi.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Tarjeta Datos de Cuenta -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <span>Datos de la Cuenta</span>
+              <span class="font-mono text-xs text-slate-400">ID: CLI-{{ user.id|stringformat:"04d" }}</span>
+            </h3>
+
+            <div class="space-y-3">
+              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+                <span class="text-slate-500">Empresa:</span>
+                <span class="font-semibold text-slate-900 text-base">{{ user.empresa_cliente|default:"—" }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+                <span class="text-slate-500">Contacto Técnico:</span>
+                <span class="font-medium text-slate-800">{{ user.get_full_name|default:user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+                <span class="text-slate-500">Correo Registrado:</span>
+                <span class="font-mono text-slate-800 text-xs sm:text-sm">{{ user.email|default:"Sin correo asignado" }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+                <span class="text-slate-500">Usuario:</span>
+                <span class="font-mono text-slate-800">{{ user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+                <span class="text-slate-500">Rol asignado:</span>
+                <span class="font-mono bg-sky-50 text-sky-800 font-semibold px-2.5 py-1 rounded text-xs border border-sky-200">{{ user.get_role_display }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 text-sm">
+                <span class="text-slate-500">Fecha de Alta:</span>
+                <span class="font-mono text-slate-700">{{ user.date_joined|date:"d M Y" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta Proyectos Asociados y Privacidad -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+              Proyectos Vinculados a su Cuenta
+            </h3>
+
+            <div class="space-y-3">
+              {% for proyecto in proyectos %}
+              <div class="flex justify-between items-center p-3 bg-slate-50 rounded-md border border-slate-200">
+                <div>
+                  <div class="font-mono text-xs text-slate-500">SNG-{{ proyecto.id }}</div>
+                  <div class="font-semibold text-slate-900 text-sm">{{ proyecto.nombre }}</div>
+                </div>
+                <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+              </div>
+              {% empty %}
+              <p class="text-xs text-slate-500 italic">Sin proyectos vinculados.</p>
+              {% endfor %}
+            </div>
+
+            <div class="p-4 bg-sky-50 border-l-4 border-sinergi-blue rounded text-xs text-slate-700 leading-relaxed mt-4">
+              <strong class="font-semibold text-sinergi-blue block mb-1">Políticas de Registro Sinergi:</strong>
+              Las cuentas son habilitadas de forma exclusiva por la administración. No existe autorregistro público. Sus datos y planos están aislados de otras empresas. Si requiere autorizar nuevos supervisores o modificar correos de notificación, solicítelo mediante el canal de solicitudes.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 2: MIS PROYECTOS                                   -->
+      <!-- ======================================================== -->
+      <section id="view-proyectos" class="tab-content block space-y-6">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Mis Proyectos</h1>
+            <p class="text-sm text-slate-500 mt-1">Selecciona una obra para revisar su cronograma de hitos y desarrollo en terreno.</p>
+          </div>
+          <span class="text-xs font-mono text-slate-500">{{ proyectos|length }} obra(s) vinculada(s)</span>
+        </div>
+
+        {% if proyectos %}
+        <!-- Tarjetas Selectoras de Proyectos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% for proyecto in proyectos %}
+          <div data-id="{{ proyecto.id }}" onclick="selectProjectCard('{{ proyecto.id }}')" class="p-card {% if forloop.first %}p-card-selected{% endif %} bg-white border border-slate-200 rounded-lg p-5 cursor-pointer hover:border-slate-400 shadow-sm transition-all hover:shadow-md">
+            <div class="flex justify-between items-start">
+              <span class="font-mono text-xs text-slate-500">SNG-{{ proyecto.id }}</span>
+              <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mt-2">{{ proyecto.nombre }}</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Fecha inicio: {{ proyecto.fecha_inicio|date:"d M Y" }}</p>
+            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden mt-4">
+              <div class="bg-sinergi-blue h-full" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+            </div>
+            <div class="text-xs font-mono text-right text-slate-500 mt-1.5">{{ proyecto.porcentaje_avance }}% avance</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Detalle por proyecto -->
+        {% for proyecto in proyectos %}
+        <div data-id="{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-6 shadow-sm {% if not forloop.first %}hidden{% endif %}">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-2 mb-6">
+            <div>
+              <span class="font-mono text-xs text-sinergi-blue font-bold">DESGLOSE DE OBRA</span>
+              <h2 class="text-lg font-bold text-slate-900">{{ proyecto.nombre }} (SNG-{{ proyecto.id }})</h2>
+              <p class="text-xs text-slate-500">Supervisor Técnico Sinergi: {{ proyecto.empleado_encargado.get_full_name|default:proyecto.empleado_encargado.username|default:"Por asignar" }}</p>
+            </div>
+            <span class="estado self-start sm:self-auto" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Timeline de Hitos -->
+            <div class="lg:col-span-2 space-y-6">
+              <h3 class="text-sm font-bold uppercase tracking-wider font-mono text-slate-500">Cronograma de Etapas</h3>
+              {% include '_hitos_proyecto.html' %}
+            </div>
+
+            <!-- Ficha Técnica Lateral del Proyecto -->
+            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200 h-fit space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Resumen de la Obra</h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Fecha Inicio:</span><span class="font-mono font-medium">{{ proyecto.fecha_inicio|date:"d M Y" }}</span></div>
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Avance:</span><span class="font-mono font-medium">{{ proyecto.porcentaje_avance }}%</span></div>
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Estado:</span><span class="font-bold">{{ proyecto.estado }}</span></div>
+              </div>
+
+              <div>
+                <h4 class="text-xs font-bold text-slate-900 mb-2">Archivos de la Obra</h4>
+                <ul class="text-xs space-y-2">
+                  {% for doc in proyecto.documentos.all|slice:":3" %}
+                  <li class="flex justify-between items-center gap-2">
+                    <span class="truncate text-slate-600">{{ doc.nombre_archivo }}</span>
+                    <a href="{{ doc.archivo.url }}" download class="text-sinergi-blue font-bold hover:underline shrink-0">Descargar</a>
+                  </li>
+                  {% empty %}
+                  <li class="text-slate-500 italic">Sin documentos emitidos.</li>
+                  {% endfor %}
+                </ul>
+              </div>
+
+              <div class="pt-2">
+                <button onclick="openProjectChat('{{ proyecto.id }}')" class="w-full text-center text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 py-2 rounded font-medium shadow-sm block">
+                  Abrir Chat de este Proyecto &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="bg-white border border-slate-200 rounded-lg p-10 text-center text-slate-500">
+          <p class="font-semibold text-sm">No existen proyectos activos registrados a su nombre.</p>
+          <p class="text-xs mt-1">Utilice la opción "Iniciar Nuevo Proyecto" para ingresar su requerimiento a operaciones.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 3: DOCUMENTOS POR PROYECTO                         -->
+      <!-- ======================================================== -->
+      <section id="view-documentos" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Documentos por Proyecto</h1>
+          <p class="text-sm text-slate-500 mt-1">Descarga o sube archivos organizados por faena técnica.</p>
+        </div>
+
+        {% for proyecto in proyectos %}
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-slate-50 px-5 py-4 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs bg-slate-200 text-slate-700 font-medium px-2 py-0.5 rounded">SNG-{{ proyecto.id }}</span>
+              <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+            </div>
+            <h2 class="text-base font-bold text-slate-900 mt-1">{{ proyecto.nombre }}</h2>
+          </div>
+
+          <div class="p-5 space-y-3">
+            <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
+              {% for doc in proyecto.documentos.all %}
+              <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                <div class="flex items-start gap-3">
+                  <div class="p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-800">{{ doc.nombre_archivo }}</div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">Subido el {{ doc.fecha_subida|date:"d M Y" }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                  <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded">Descargar</a>
+                  <button onclick="openReplaceModal('{{ doc.nombre_archivo|escapejs }}', '{{ proyecto.id }}')" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-medium">Subir nueva versión</button>
+                </div>
+              </div>
+              {% empty %}
+              <div class="p-4 text-center text-xs text-slate-500 italic">No hay archivos cargados en esta carpeta de obra.</div>
+              {% endfor %}
+            </div>
+
+            <!-- Zona de Subida -->
+            <form method="POST" enctype="multipart/form-data" class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 text-center">
+              {% csrf_token %}
+              <input type="hidden" name="proyecto_id" value="{{ proyecto.id }}">
+              <div class="flex flex-col items-center justify-center gap-1">
+                <div class="text-xs font-semibold text-slate-700">Subir archivo a {{ proyecto.nombre }}</div>
+                <p class="text-[11px] text-slate-500">Formatos autorizados: .PDF, .DWG, .DOC(X), .XLS(X), .PNG, .JPG (Máx. 10 MB)</p>
+                <label class="mt-1 cursor-pointer bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-3.5 py-1.5 rounded shadow-sm">
+                  Examinar archivos
+                  <input type="file" name="archivo" class="hidden" onchange="this.form.submit()">
+                </label>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-500 italic">Sin proyectos para consultar documentación.</p>
+        {% endfor %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 4: SOLICITUDES & CHAT                              -->
+      <!-- ======================================================== -->
+      <section id="view-chat" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Solicitudes & Chat Técnico</h1>
+          <p class="text-sm text-slate-500 mt-1">Canal directo por faena con la mesa de ingeniería asignada.</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[500px]">
+          <!-- Lista de canales por proyecto -->
+          <div class="border-r border-slate-200 bg-slate-50 p-3 space-y-2">
+            {% for proyecto in proyectos %}
+            <div data-id="{{ proyecto.id }}" data-nombre="{{ proyecto.nombre }}" onclick="selectChatChannel('{{ proyecto.id }}')" class="chat-ch {% if forloop.first %}chat-ch-selected{% endif %} p-3 bg-white border border-slate-200 rounded hover:border-slate-300 cursor-pointer">
+              <div class="font-mono text-[10px] text-slate-500">SNG-{{ proyecto.id }}</div>
+              <div class="text-xs font-bold text-slate-800 truncate">{{ proyecto.nombre }}</div>
+              <div class="text-[11px] text-slate-500 truncate mt-1">Canal de coordinación abierto</div>
+            </div>
+            {% empty %}
+            <div class="p-3 text-xs text-slate-500 italic">Sin proyectos asociados.</div>
+            {% endfor %}
+          </div>
+
+          <!-- Mensajes y entrada de chat -->
+          <div class="col-span-2 flex flex-col p-4 bg-white">
+            <div class="pb-3 border-b border-slate-200 flex justify-between items-center mb-3">
+              <div>
+                <strong class="text-sm text-slate-900" id="chat-active-title">{{ proyectos.0.nombre|default:"Mesa Técnica Sinergi" }}</strong>
+                <div class="font-mono text-[11px] text-slate-500" id="chat-active-code">{% if proyectos %}Canal SNG-{{ proyectos.0.id }}{% endif %}</div>
+              </div>
+              <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded">Mesa Técnica Conectada</span>
+            </div>
+
+            <div class="flex-1 space-y-3 overflow-y-auto pr-2 max-h-[340px]" id="chat-messages-container">
+              <div class="max-w-[85%] bg-slate-100 p-3 rounded text-xs text-slate-800">
+                <span class="block font-mono text-[10px] text-slate-500 font-semibold mb-1">MESA TÉCNICA SINERGI</span>
+                Bienvenido. Puede registrar observaciones, solicitar visitas a terreno o resolver dudas sobre las entregas en este canal.
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 mt-auto">
+              <div class="flex gap-2">
+                <input type="text" id="chat-text-input" placeholder="Escribir mensaje técnico..." class="flex-1 text-xs border border-slate-300 rounded px-3 py-2 outline-none focus:border-sinergi-blue">
+                <button onclick="sendChatMessage()" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded">Enviar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 5: INICIAR NUEVO PROYECTO                          -->
+      <!-- ======================================================== -->
+      <section id="view-nuevo-proyecto" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Iniciar Nuevo Proyecto</h1>
+          <p class="text-sm text-slate-500 mt-1">Registra una nueva obra o solicitud técnica que pasará directamente a verificación.</p>
+        </div>
+
+        <!-- Simulado: aún no existe modelo de solicitudes de proyecto -->
+        <form class="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl space-y-4" onsubmit="event.preventDefault(); alert('Solicitud registrada. Estado: En Verificación'); switchTab('proyectos', document.querySelectorAll('.nav-btn')[1]);">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la Obra o Faena *</label>
+            <input type="text" required placeholder="Ej: Climatización Centro Logístico" class="w-full text-xs border border-slate-300 rounded p-2.5 focus:border-sinergi-blue outline-none">
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Especialidad de Ingeniería *</label>
+              <select class="w-full text-xs border border-slate-300 rounded p-2.5 bg-white">
+                <option>Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)</option>
+                <option>Protección Contra Incendios (PCI - NFPA 13, 20 & 72)</option>
+                <option>Climatización y Ventilación Mecánica (HVAC)</option>
+                <option>Sanitaria, Agua Potable y Alcantarillado</option>
+                <option>Seguridad Electrónica y CCTV</option>
+                <option>Technical Due Diligence Multidisciplinario</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha Tentativa de Faena</label>
+              <input type="date" class="w-full text-xs border border-slate-300 rounded p-2.5 focus:border-sinergi-blue outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Descripción y Requerimiento *</label>
+            <textarea rows="3" required placeholder="Comuna, metros cuadrados, equipamiento existente, plazos..." class="w-full text-xs border border-slate-300 rounded p-2.5 focus:border-sinergi-blue outline-none"></textarea>
+          </div>
+          <button type="submit" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-5 py-2.5 rounded uppercase tracking-wider shadow-sm">
+            Crear Solicitud de Proyecto &rarr;
+          </button>
+        </form>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: SUBIR NUEVA VERSIÓN DE UN DOCUMENTO               -->
+  <!-- ======================================================== -->
+  <div id="replace-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900">Subir Nueva Versión del Documento</h3>
+          <p class="text-[11px] text-slate-500 font-mono" id="modal-project-code">Proyecto</p>
+        </div>
+        <button onclick="closeReplaceModal()" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+      </div>
+
+      <form method="POST" enctype="multipart/form-data" class="p-5 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="proyecto_id" id="modal-project-id">
+        <div>
+          <label class="block text-xs font-medium text-slate-500">Documento a actualizar:</label>
+          <div class="mt-1 text-xs font-semibold text-slate-800 bg-slate-100 p-2 rounded border border-slate-200 font-mono truncate" id="modal-doc-target"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Seleccionar nuevo archivo *</label>
+          <input type="file" name="archivo" id="modal-file-input" required class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-900 cursor-pointer">
+          <p class="text-[10px] text-slate-400 mt-1">La nueva versión se agrega a la carpeta del proyecto.</p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closeReplaceModal()" class="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded font-medium">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 text-xs bg-sinergi-blue hover:bg-sky-800 text-white font-semibold rounded shadow-sm">
+            Subir Nueva Versión
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== LOGICA JAVASCRIPT ==================== -->
+  <script>
+    function switchTab(targetView, element) {
+      document.querySelectorAll('.tab-content').forEach(view => view.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('tab-active'));
+
+      const activeView = document.getElementById('view-' + targetView);
+      if (activeView) activeView.classList.remove('hidden');
+
+      if (element && !element.classList.contains('bg-sinergi-red')) {
+        element.classList.add('tab-active');
+      }
+    }
+
+    function selectProjectCard(id) {
+      document.querySelectorAll('.p-card').forEach(c => c.classList.toggle('p-card-selected', c.dataset.id === id));
+      document.querySelectorAll('.p-detail').forEach(d => d.classList.toggle('hidden', d.dataset.id !== id));
+    }
+
+    function selectChatChannel(id) {
+      document.querySelectorAll('.chat-ch').forEach(ch => {
+        const activo = ch.dataset.id === id;
+        ch.classList.toggle('chat-ch-selected', activo);
+        if (activo) {
+          document.getElementById('chat-active-title').textContent = ch.dataset.nombre;
+          document.getElementById('chat-active-code').textContent = 'Canal SNG-' + id;
+        }
+      });
+    }
+
+    function openProjectChat(id) {
+      switchTab('chat', document.getElementById('nav-chat'));
+      selectChatChannel(id);
+    }
+
+    // Simulado: el chat aún no persiste mensajes en el servidor
+    function sendChatMessage() {
+      const input = document.getElementById('chat-text-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const container = document.getElementById('chat-messages-container');
+      const msg = document.createElement('div');
+      msg.className = "max-w-[85%] ml-auto bg-sky-50 border border-sky-200 p-3 rounded text-xs text-slate-800 text-right";
+      const autor = document.createElement('span');
+      autor.className = "block font-mono text-[10px] text-slate-500 font-semibold mb-1";
+      autor.textContent = 'TÚ (CLIENTE)';
+      msg.append(autor, text);
+      container.appendChild(msg);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function openReplaceModal(docName, projectId) {
+      document.getElementById('modal-doc-target').textContent = docName;
+      document.getElementById('modal-project-code').textContent = 'Proyecto: SNG-' + projectId;
+      document.getElementById('modal-project-id').value = projectId;
+      document.getElementById('replace-modal').classList.remove('hidden');
+    }
+
+    function closeReplaceModal() {
+      document.getElementById('replace-modal').classList.add('hidden');
+      document.getElementById('modal-file-input').value = '';
+    }
+  </script>
+</body>
+</html>

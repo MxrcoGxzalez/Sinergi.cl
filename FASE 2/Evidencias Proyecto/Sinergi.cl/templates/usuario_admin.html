@@ -1,0 +1,505 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinergi — Panel de Administración</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sinergi: {
+              red: '#C52222',
+              'red-hover': '#A71D1D',
+              dark: '#11151B',
+              sidebar: '#1B222C',
+              blue: '#1D5B8A',
+              'blue-light': '#EBF3FA',
+              bg: '#F4F6F8'
+            }
+          },
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fuentes Corporativas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+</head>
+<body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== HEADER SUPERIOR ==================== -->
+  <header class="bg-sinergi-dark text-slate-200 h-14 px-6 flex justify-between items-center border-b border-white/10 sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <svg class="w-6 h-6 text-sinergi-red" viewBox="0 0 26 26" fill="none">
+        <rect x="1" y="1" width="24" height="24" rx="4" stroke="#EDEFF1" stroke-width="1.8"/>
+        <path d="M6 18L11 8L15 15L20 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <span class="font-bold text-base tracking-wider text-white">SINERGI</span>
+        <span class="hidden sm:inline-block text-[10px] text-slate-400 tracking-widest uppercase ml-2 border-l border-slate-700 pl-2">Panel Maestro de Administración</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-slate-300">
+      <span class="hidden md:inline">Administrador: <strong class="text-white">{{ user.get_full_name|default:user.username }}</strong></span>
+      <a href="{% url 'logout' %}" class="text-sinergi-red hover:underline font-medium">Cerrar Sesión &rarr;</a>
+    </div>
+  </header>
+
+  <div class="flex-1 flex flex-col md:flex-row">
+    <!-- ==================== SIDEBAR LATERAL ==================== -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-6">
+
+      <!-- Ficha del Administrador -->
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+        <div class="w-10 h-10 rounded bg-sinergi-red text-white font-bold flex items-center justify-center text-sm shadow-sm font-mono shrink-0">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <div class="font-semibold text-slate-900 text-sm leading-tight truncate">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-xs text-slate-500">Dirección Sinergi</div>
+          <span class="inline-block bg-red-100 text-sinergi-red text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 tracking-wider uppercase font-mono border border-red-200">Superusuario Web</span>
+        </div>
+      </div>
+
+      <!-- Menú de Navegación del Administrador -->
+      <nav class="flex flex-col gap-1 text-sm font-medium">
+        <button onclick="switchAdminTab('perfil', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          1. Mi Perfil (Admin)
+        </button>
+
+        <button onclick="switchAdminTab('usuarios', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          2. Gestión de Usuarios
+        </button>
+
+        <button onclick="switchAdminTab('solicitudes-proyectos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          3. Solicitudes de Proyectos
+        </button>
+
+        <button onclick="switchAdminTab('supervision-hitos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          4. Supervisión de Proyectos
+        </button>
+
+        <button onclick="switchAdminTab('documentos-admin', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          5. Auditoría Documental
+        </button>
+
+        <button onclick="switchAdminTab('chat-admin', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          6. Solicitudes & Mensajería
+        </button>
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-slate-200 space-y-3">
+        <a href="{% url 'admin:index' %}" target="_blank" class="w-full block text-center border border-slate-300 py-2 rounded text-xs font-mono font-bold text-slate-800 hover:bg-slate-100 transition">
+          Base de Datos (Django Admin)
+        </a>
+        <div class="text-[11px] text-slate-500 space-y-1">
+          <p class="font-semibold text-slate-700">Administración General</p>
+          <p>Facultad total de borrado y aprobación</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+    <main class="flex-1 p-6 md:p-8 max-w-6xl">
+
+      {% include '_mensajes.html' %}
+
+      <!-- ======================================================== -->
+      <!-- VISTA 1: MI PERFIL (ADMINISTRADOR)                       -->
+      <!-- ======================================================== -->
+      <section id="view-perfil" class="tab-content block space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Perfil de Administración</h1>
+          <p class="text-sm text-slate-500 mt-1">Configuración del dueño/administrador de Sinergi con privilegios de gestión total.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <span>Datos del Administrador</span>
+              <span class="font-mono text-xs text-slate-400">ID: ROOT-{{ user.id|stringformat:"03d" }}</span>
+            </h3>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Nombre:</span>
+                <span class="font-semibold text-slate-900">{{ user.get_full_name|default:user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Correo Principal:</span>
+                <span class="font-mono text-slate-800 text-xs sm:text-sm">{{ user.email|default:"Sin correo asignado" }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Usuario:</span>
+                <span class="font-mono text-slate-800">{{ user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Rol en Plataforma:</span>
+                <span class="font-mono bg-red-50 text-sinergi-red font-semibold px-2.5 py-1 rounded text-xs border border-red-200">{{ user.get_role_display }}{% if user.is_superuser %} / Superuser{% endif %}</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-slate-500">Último acceso:</span>
+                <span class="font-mono text-slate-700">{{ user.last_login|date:"d M Y H:i"|default:"—" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+              Privilegios Exclusivos del Administrador
+            </h3>
+
+            <ul class="space-y-2.5 text-xs">
+              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
+                <span class="font-bold text-sm">✓</span>
+                <span>Creación, edición y eliminación de usuarios (Clientes y Empleados)</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
+                <span class="font-bold text-sm">✓</span>
+                <span>Registro de nuevos proyectos y asignación de ingeniero a cargo</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
+                <span class="font-bold text-sm">✓</span>
+                <span>Facultad de borrado absoluto de proyectos y documentación sensible</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
+                <span class="font-bold text-sm">✓</span>
+                <span>Supervisión global del avance y estado de todas las obras</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 2: GESTIÓN DE USUARIOS                             -->
+      <!-- ======================================================== -->
+      <section id="view-usuarios" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
+            <p class="text-sm text-slate-500 mt-1">Crea, edita o elimina cuentas de clientes y empleados.</p>
+          </div>
+          <a href="{% url 'admin:usuarios_customuser_add' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">
+            + Crear Nuevo Usuario
+          </a>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                <th class="p-3.5">Usuario / Nombre</th>
+                <th class="p-3.5">Empresa / Área</th>
+                <th class="p-3.5">Rol</th>
+                <th class="p-3.5">Estado Cuenta</th>
+                <th class="p-3.5 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-xs">
+              {% for u in usuarios %}
+              <tr class="hover:bg-slate-50">
+                <td class="p-3.5">
+                  <div class="font-semibold text-slate-900">{{ u.get_full_name|default:u.username }}</div>
+                  <div class="font-mono text-slate-400 text-[11px]">{{ u.email|default:u.username }}</div>
+                </td>
+                <td class="p-3.5 text-slate-700">{{ u.empresa_cliente|default:"Sinergi" }}</td>
+                <td class="p-3.5">
+                  <span class="{% if u.role == 'CLIENTE' %}bg-sky-100 text-sky-800{% else %}bg-slate-200 text-slate-800{% endif %} font-semibold px-2 py-0.5 rounded font-mono text-[10px]">{{ u.role }}</span>
+                </td>
+                <td class="p-3.5">
+                  {% if u.is_active %}
+                  <span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activo</span>
+                  {% else %}
+                  <span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactivo</span>
+                  {% endif %}
+                </td>
+                <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+                  <a href="{% url 'admin:usuarios_customuser_change' u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+                  <a href="{% url 'admin:usuarios_customuser_delete' u.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="p-6 text-center text-slate-500 italic">No hay clientes ni empleados registrados.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 3: SOLICITUDES DE PROYECTOS                        -->
+      <!-- ======================================================== -->
+      <section id="view-solicitudes-proyectos" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Bandeja de Solicitudes de Proyectos</h1>
+            <p class="text-sm text-slate-500 mt-1">Registra proyectos que ingresan por canales directos o licitaciones y asígnalos a un ingeniero.</p>
+          </div>
+          <a href="{% url 'admin:proyectos_proyecto_add' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">
+            + Registrar Nuevo Proyecto
+          </a>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-xs text-slate-500">
+          No existen solicitudes pendientes de aprobación.
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 4: SUPERVISIÓN DE PROYECTOS (KPIs + MONITOR)       -->
+      <!-- ======================================================== -->
+      <section id="view-supervision-hitos" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Supervisión Maestra de Proyectos</h1>
+          <p class="text-sm text-slate-500 mt-1">Visión general operativa de todas las obras: avance, estado e ingeniero asignado.</p>
+        </div>
+
+        <!-- Indicadores Clave (KPIs) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white border border-slate-200 border-l-4 border-l-slate-900 p-4 rounded-lg shadow-sm">
+            <span class="font-mono text-[10px] uppercase font-bold text-slate-500">Clientes Activos</span>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ total_clientes }}</p>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-sinergi-blue p-4 rounded-lg shadow-sm">
+            <span class="font-mono text-[10px] uppercase font-bold text-sinergi-blue">Obras en Curso</span>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ proyectos_activos }}</p>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-sinergi-red p-4 rounded-lg shadow-sm">
+            <span class="font-mono text-[10px] uppercase font-bold text-sinergi-red">Total Histórico</span>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ total_proyectos }}</p>
+          </div>
+        </div>
+
+        <!-- Tabla General de Proyectos -->
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-900">Visión General Operativa</h2>
+            <span class="font-mono text-[11px] text-slate-500">{{ proyectos|length }} proyecto(s)</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                  <th class="px-5 py-3">Proyecto</th>
+                  <th class="px-5 py-3">Cliente Mandante</th>
+                  <th class="px-5 py-3">Ingeniero Asignado</th>
+                  <th class="px-5 py-3">Estado</th>
+                  <th class="px-5 py-3">Avance</th>
+                  <th class="px-5 py-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-900">
+                {% for proyecto in proyectos %}
+                <tr class="hover:bg-slate-50">
+                  <td class="px-5 py-3.5">
+                    <div class="font-mono text-[10px] text-slate-400">SNG-{{ proyecto.id }}</div>
+                    <div class="font-bold">{{ proyecto.nombre }}</div>
+                  </td>
+                  <td class="px-5 py-3.5">{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}</td>
+                  <td class="px-5 py-3.5 font-mono text-[11px]">
+                    {% if proyecto.empleado_encargado %}{{ proyecto.empleado_encargado.username }}{% else %}<span class="text-sinergi-red italic">Sin asignar</span>{% endif %}
+                  </td>
+                  <td class="px-5 py-3.5"><span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span></td>
+                  <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-20 bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div class="bg-sinergi-red h-full" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+                      </div>
+                      <span class="font-mono text-[11px] font-bold">{{ proyecto.porcentaje_avance }}%</span>
+                    </div>
+                  </td>
+                  <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
+                    <a href="{% url 'admin:proyectos_proyecto_change' proyecto.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+                    <a href="{% url 'admin:proyectos_proyecto_delete' proyecto.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Borrar</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="px-5 py-8 text-center text-slate-500 italic">No hay proyectos registrados en la plataforma.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 5: AUDITORÍA DOCUMENTAL                            -->
+      <!-- ======================================================== -->
+      <section id="view-documentos-admin" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Auditoría y Gestión Documental</h1>
+          <p class="text-sm text-slate-500 mt-1">Inspección de planos y memorias técnicas subidas por clientes y equipo técnico, con potestad de borrado.</p>
+        </div>
+
+        {% for proyecto in proyectos %}
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-slate-50 px-5 py-4 border-b border-slate-200">
+            <span class="font-mono text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded">SNG-{{ proyecto.id }}</span>
+            <h2 class="text-base font-bold text-slate-900 mt-1">{{ proyecto.nombre }}</h2>
+          </div>
+
+          <div class="p-5">
+            <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
+              {% for doc in proyecto.documentos.all %}
+              <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                <div class="flex items-start gap-3">
+                  <div class="p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-800">{{ doc.nombre_archivo }}</div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">{{ doc.fecha_subida|date:"d M Y" }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                  <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded font-medium">Descargar</a>
+                  <a href="{% url 'admin:proyectos_documento_delete' doc.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2.5 py-1.5 rounded font-medium">Purgar / Borrar</a>
+                </div>
+              </div>
+              {% empty %}
+              <div class="p-4 text-xs text-slate-500 italic">Sin documentos registrados.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-500 italic">No hay proyectos registrados en la plataforma.</p>
+        {% endfor %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 6: SOLICITUDES & MENSAJERÍA                        -->
+      <!-- ======================================================== -->
+      <section id="view-chat-admin" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Solicitudes & Mensajería Global</h1>
+          <p class="text-sm text-slate-500 mt-1">Intervención directa en los canales de proyectos con clientes y operadores técnicos.</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[500px]">
+          <!-- Lista de Canales -->
+          <div class="border-r border-slate-200 bg-slate-50 p-3 space-y-2">
+            {% for proyecto in proyectos %}
+            <div data-id="{{ proyecto.id }}" data-nombre="{{ proyecto.nombre }}" data-cliente="{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}" onclick="selectAdminChat('{{ proyecto.id }}')" class="chat-ch {% if forloop.first %}chat-ch-selected{% endif %} p-3 bg-white border border-slate-200 rounded hover:border-slate-300 cursor-pointer">
+              <div class="font-mono text-[10px] text-slate-500">SNG-{{ proyecto.id }}</div>
+              <div class="text-xs font-bold text-slate-800 truncate">{{ proyecto.nombre }}</div>
+              <div class="text-[11px] text-slate-500 truncate mt-1">Operador: {{ proyecto.empleado_encargado.username|default:"Sin asignar" }}</div>
+            </div>
+            {% empty %}
+            <div class="p-3 text-xs text-slate-500 italic">Sin proyectos registrados.</div>
+            {% endfor %}
+          </div>
+
+          <!-- Conversación -->
+          <div class="col-span-2 flex flex-col p-4 bg-white">
+            <div class="pb-3 border-b border-slate-200 flex justify-between items-center mb-3">
+              <div>
+                <strong class="text-sm text-slate-900" id="admin-chat-title">{{ proyectos.0.nombre|default:"Sin canal seleccionado" }}</strong>
+                <div class="font-mono text-[11px] text-slate-500" id="admin-chat-sub">{% if proyectos %}Canal Supervisado (Cliente: {{ proyectos.0.cliente.empresa_cliente|default:proyectos.0.cliente.username }}){% endif %}</div>
+              </div>
+              <span class="text-xs bg-red-100 text-sinergi-red font-semibold px-2.5 py-0.5 rounded">Supervisión Admin</span>
+            </div>
+
+            <div class="flex-1 space-y-3 overflow-y-auto pr-2 max-h-[320px]" id="admin-chat-messages">
+              <div class="max-w-[85%] bg-slate-100 p-3 rounded text-xs text-slate-800">
+                <span class="block font-mono text-[10px] text-slate-500 font-semibold mb-1">SISTEMA</span>
+                No existen alertas no resueltas en los canales de proyectos.
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 mt-auto space-y-2">
+              <div class="flex items-center text-xs text-slate-600">
+                <label class="flex items-center gap-2 cursor-pointer font-medium">
+                  <input type="checkbox" id="admin-chk-email" checked class="w-4 h-4 rounded text-sinergi-red accent-sinergi-red cursor-pointer">
+                  <span>Despachar notificación formal de la Dirección por correo (Brevo)</span>
+                </label>
+              </div>
+
+              <div class="flex gap-2">
+                <input type="text" id="admin-chat-input" placeholder="Escribir resolución o mensaje administrativo..." class="flex-1 text-xs border border-slate-300 rounded px-3 py-2.5 outline-none focus:border-sinergi-red">
+                <button onclick="sendAdminMessage()" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-5 py-2.5 rounded shadow-sm">
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== LOGICA JAVASCRIPT ==================== -->
+  <script>
+    function switchAdminTab(targetView, element) {
+      document.querySelectorAll('.tab-content').forEach(view => view.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('tab-active'));
+
+      const activeView = document.getElementById('view-' + targetView);
+      if (activeView) activeView.classList.remove('hidden');
+
+      if (element) element.classList.add('tab-active');
+    }
+
+    function selectAdminChat(id) {
+      document.querySelectorAll('.chat-ch').forEach(ch => {
+        const activo = ch.dataset.id === id;
+        ch.classList.toggle('chat-ch-selected', activo);
+        if (activo) {
+          document.getElementById('admin-chat-title').textContent = ch.dataset.nombre;
+          document.getElementById('admin-chat-sub').textContent = 'Canal Supervisado (Cliente: ' + ch.dataset.cliente + ')';
+        }
+      });
+    }
+
+    // Simulado: el chat aún no persiste mensajes en el servidor
+    function sendAdminMessage() {
+      const input = document.getElementById('admin-chat-input');
+      const text = input.value.trim();
+      const sendEmail = document.getElementById('admin-chk-email').checked;
+      if (!text) return;
+
+      const container = document.getElementById('admin-chat-messages');
+      const div = document.createElement('div');
+      div.className = "max-w-[85%] ml-auto bg-red-50 border border-red-200 p-3 rounded text-xs text-slate-800 text-right";
+      const autor = document.createElement('span');
+      autor.className = "block font-mono text-[10px] text-sinergi-red font-bold mb-1";
+      autor.textContent = 'DIRECCIÓN GENERAL (ADMIN)';
+      div.append(autor, text);
+      if (sendEmail) {
+        const nota = document.createElement('span');
+        nota.className = "block text-[10px] text-slate-400 mt-1 font-mono";
+        nota.textContent = '✓ Notificación enviada al cliente vía Brevo';
+        div.appendChild(nota);
+      }
+      container.appendChild(div);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+</body>
+</html>

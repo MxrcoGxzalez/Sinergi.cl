@@ -1,0 +1,547 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinergi — Panel de Empresa</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sinergi: {
+              red: '#C52222',
+              'red-hover': '#A71D1D',
+              dark: '#11151B',
+              sidebar: '#1B222C',
+              blue: '#1D5B8A',
+              'blue-light': '#EBF3FA',
+              bg: '#F4F6F8'
+            }
+          },
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fuentes Corporativas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+</head>
+<body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== HEADER SUPERIOR ==================== -->
+  <header class="bg-sinergi-dark text-slate-200 h-14 px-6 flex justify-between items-center border-b border-white/10 sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <svg class="w-6 h-6 text-sinergi-red" viewBox="0 0 26 26" fill="none">
+        <rect x="1" y="1" width="24" height="24" rx="4" stroke="#EDEFF1" stroke-width="1.8"/>
+        <path d="M6 18L11 8L15 15L20 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <span class="font-bold text-base tracking-wider text-white">SINERGI</span>
+        <span class="hidden sm:inline-block text-[10px] text-slate-400 tracking-widest uppercase ml-2 border-l border-slate-700 pl-2">Panel Operativo de Empresa</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-slate-300">
+      <span class="hidden md:inline">Operador: <strong class="text-white">{{ user.get_full_name|default:user.username }}</strong></span>
+      <a href="{% url 'logout' %}" class="text-sinergi-red hover:underline font-medium">Cerrar Sesión &rarr;</a>
+    </div>
+  </header>
+
+  <div class="flex-1 flex flex-col md:flex-row">
+    <!-- ==================== SIDEBAR LATERAL ==================== -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-6">
+
+      <!-- Ficha de Empleado -->
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+        <div class="w-10 h-10 rounded bg-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-sm font-mono shrink-0">
+          {{ user.first_name|default:user.username|slice:":2"|upper }}
+        </div>
+        <div class="overflow-hidden">
+          <div class="font-semibold text-slate-900 text-sm leading-tight truncate">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-xs text-slate-500">Equipo Técnico Sinergi</div>
+          <span class="inline-block bg-slate-100 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 tracking-wider uppercase font-mono border border-slate-200">Rol: Empresa</span>
+        </div>
+      </div>
+
+      <!-- Menú de Navegación -->
+      <nav class="flex flex-col gap-1 text-sm font-medium">
+        <button onclick="switchTab('perfil', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          1. Mi Perfil y Permisos
+        </button>
+
+        <button onclick="switchTab('proyectos', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          2. Proyectos Asignados
+        </button>
+
+        <button id="nav-documentos" onclick="switchTab('documentos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          3. Verificación Documental
+        </button>
+
+        <button onclick="switchTab('chat', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          4. Solicitudes & Clientes
+        </button>
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-slate-200 text-[11px] text-slate-500 space-y-1">
+        <p class="font-semibold text-slate-700">Mesa Técnica Operativa</p>
+        <p>Gestión de avance y control documental</p>
+      </div>
+    </aside>
+
+    <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+    <main class="flex-1 p-6 md:p-8 max-w-6xl">
+
+      {% include '_mensajes.html' %}
+
+      <!-- ======================================================== -->
+      <!-- VISTA 1: MI PERFIL Y PERMISOS                            -->
+      <!-- ======================================================== -->
+      <section id="view-perfil" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Perfil Operativo y Permisos</h1>
+          <p class="text-sm text-slate-500 mt-1">Configuración del operador técnico y delimitación de funciones en la plataforma.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+              <span>Datos del Operador</span>
+              <span class="font-mono text-xs text-slate-400">ID: EMP-{{ user.id|stringformat:"03d" }}</span>
+            </h3>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Nombre Completo:</span>
+                <span class="font-semibold text-slate-900">{{ user.get_full_name|default:user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Correo Corporativo:</span>
+                <span class="font-mono text-slate-800 text-xs sm:text-sm">{{ user.email|default:"Sin correo asignado" }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Usuario:</span>
+                <span class="font-mono text-slate-800">{{ user.username }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                <span class="text-slate-500">Rol en Sistema:</span>
+                <span class="font-mono bg-slate-100 text-slate-800 font-semibold px-2.5 py-1 rounded text-xs border border-slate-200">{{ user.get_role_display }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-slate-500">Fecha de Alta:</span>
+                <span class="font-mono text-slate-700">{{ user.date_joined|date:"d M Y" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+              Matriz de Responsabilidades
+            </h3>
+
+            <ul class="space-y-2.5 text-xs">
+              <li class="flex items-center gap-2.5 text-emerald-800 font-medium bg-emerald-50/60 p-2.5 rounded">
+                <span class="font-bold text-sm">✓</span>
+                <span>Actualizar porcentaje de avance y estado operativo de las obras asignadas</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-emerald-800 font-medium bg-emerald-50/60 p-2.5 rounded">
+                <span class="font-bold text-sm">✓</span>
+                <span>Descargar, revisar y observar antecedentes técnicos de clientes</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-emerald-800 font-medium bg-emerald-50/60 p-2.5 rounded">
+                <span class="font-bold text-sm">✓</span>
+                <span>Publicar y eliminar planos, memorias e informes en la carpeta de cada obra</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-emerald-800 font-medium bg-emerald-50/60 p-2.5 rounded">
+                <span class="font-bold text-sm">✓</span>
+                <span>Atender requerimientos técnicos en el chat de cada proyecto</span>
+              </li>
+              <li class="flex items-center gap-2.5 text-slate-400 bg-slate-50 p-2.5 rounded border border-slate-100">
+                <span class="font-bold text-sm">—</span>
+                <span>Aceptación inicial de proyectos y gestión de usuarios (Exclusivo Administrador)</span>
+              </li>
+            </ul>
+
+            <div class="p-3 bg-slate-100 rounded text-[11px] text-slate-600 leading-relaxed mt-2">
+              <strong>Mesa de Operaciones:</strong> Tu cuenta fue generada y asignada por la administración técnica de Sinergi.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 2: PROYECTOS ASIGNADOS                             -->
+      <!-- ======================================================== -->
+      <section id="view-proyectos" class="tab-content block space-y-6">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Proyectos Asignados</h1>
+            <p class="text-sm text-slate-500 mt-1">Actualiza el avance físico e informa el estado de cada obra al cliente mandante.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="filterProjects('todos', this)" class="p-filter p-filter-active text-xs font-mono px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-medium">TODOS · {{ proyectos|length }}</button>
+            <button onclick="filterProjects('En Curso', this)" class="p-filter text-xs font-mono px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-medium">EN CURSO</button>
+            <button onclick="filterProjects('Pausado', this)" class="p-filter text-xs font-mono px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-medium">PAUSADO</button>
+            <button onclick="filterProjects('Finalizado', this)" class="p-filter text-xs font-mono px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-medium">FINALIZADO</button>
+          </div>
+        </div>
+
+        {% if proyectos %}
+        <!-- Selector de Proyectos en Tarjetas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% for proyecto in proyectos %}
+          <div data-id="{{ proyecto.id }}" data-status="{{ proyecto.estado }}" onclick="selectEmployeeProject('{{ proyecto.id }}')" class="p-card {% if forloop.first %}p-card-selected{% endif %} bg-white border border-slate-200 rounded-lg p-5 cursor-pointer hover:border-slate-400 shadow-sm transition-all hover:shadow-md">
+            <div class="flex justify-between items-start">
+              <span class="font-mono text-xs text-slate-500">SNG-{{ proyecto.id }}</span>
+              <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mt-2">{{ proyecto.nombre }}</h3>
+            <p class="text-xs text-slate-600 font-medium mt-0.5">Cliente: {{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}</p>
+            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden mt-4">
+              <div class="bg-sinergi-blue h-full" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+            </div>
+            <div class="text-xs font-mono text-right text-slate-500 mt-1.5">{{ proyecto.porcentaje_avance }}% avance</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Detalle técnico por proyecto -->
+        {% for proyecto in proyectos %}
+        <div data-id="{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-6 {% if not forloop.first %}hidden{% endif %}">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+            <div>
+              <span class="font-mono text-xs text-sinergi-blue font-bold">CONTROL DE OBRA</span>
+              <h2 class="text-lg font-bold text-slate-900">SNG-{{ proyecto.id }} — {{ proyecto.nombre }}</h2>
+              <p class="text-xs text-slate-500">Operador a cargo: {{ user.get_full_name|default:user.username }} · Empresa: {{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}</p>
+            </div>
+            {% if proyecto.estado != 'Finalizado' %}
+            <form method="POST" action="{% url 'actualizar_proyecto' proyecto.id %}" onsubmit="return confirm('¿Confirmas el cierre del proyecto SNG-{{ proyecto.id }}? Quedará al 100% y en estado Finalizado.')">
+              {% csrf_token %}
+              <input type="hidden" name="avance" value="100">
+              <input type="hidden" name="estado" value="Finalizado">
+              <button type="submit" class="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-3 py-1.5 rounded shadow-sm">
+                Marcar Proyecto como Finalizado
+              </button>
+            </form>
+            {% endif %}
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+              <!-- Actualizar avance y estado -->
+              <form method="POST" action="{% url 'actualizar_proyecto' proyecto.id %}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-slate-50 p-4 rounded-lg border border-slate-200 items-end text-xs">
+                {% csrf_token %}
+                <div class="sm:col-span-4">
+                  <label class="block font-semibold text-slate-700 mb-1 font-mono uppercase text-[10px]">Porcentaje Avance (%)</label>
+                  <input type="number" name="avance" value="{{ proyecto.porcentaje_avance }}" min="0" max="100" class="w-full bg-white p-2 border border-slate-300 rounded outline-none focus:border-sinergi-blue">
+                </div>
+                <div class="sm:col-span-5">
+                  <label class="block font-semibold text-slate-700 mb-1 font-mono uppercase text-[10px]">Estado Operativo</label>
+                  <select name="estado" class="w-full bg-white p-2 border border-slate-300 rounded outline-none focus:border-sinergi-blue">
+                    <option value="En Curso" {% if proyecto.estado == 'En Curso' %}selected{% endif %}>En Curso</option>
+                    <option value="Pausado" {% if proyecto.estado == 'Pausado' %}selected{% endif %}>Pausado</option>
+                    <option value="Finalizado" {% if proyecto.estado == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-3">
+                  <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white p-2 rounded font-semibold transition">
+                    Guardar Estado
+                  </button>
+                </div>
+              </form>
+
+              <div class="space-y-4">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Control de Etapas</h3>
+                {% include '_hitos_proyecto.html' %}
+              </div>
+            </div>
+
+            <!-- Ficha Operativa Lateral -->
+            <div class="bg-slate-50 p-5 rounded-lg border border-slate-200 space-y-4 h-fit">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Ficha Operativa de Obra</h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Cliente:</span><span class="font-semibold">{{ proyecto.cliente.empresa_cliente|default:"—" }}</span></div>
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Contacto:</span><span>{{ proyecto.cliente.get_full_name|default:proyecto.cliente.username }}</span></div>
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Inicio Obra:</span><span class="font-mono">{{ proyecto.fecha_inicio|date:"d M Y" }}</span></div>
+                <div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500">Documentos:</span><span class="font-mono">{{ proyecto.documentos.all|length }}</span></div>
+              </div>
+              <button onclick="switchTab('documentos', document.getElementById('nav-documentos'))" class="w-full text-center text-xs bg-sinergi-blue text-white px-3 py-2 rounded font-semibold">
+                Ir a Documentos &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="bg-white border border-slate-200 rounded-lg p-10 text-center text-slate-500">
+          <p class="font-semibold text-sm">No tiene obras asignadas bajo su responsabilidad en este momento.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 3: VERIFICACIÓN DOCUMENTAL                         -->
+      <!-- ======================================================== -->
+      <section id="view-documentos" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Verificación y Control Documental</h1>
+          <p class="text-sm text-slate-500 mt-1">Descarga y revisa la planimetría de clientes, solicita subsanaciones o publica entregables oficiales.</p>
+        </div>
+
+        {% for proyecto in proyectos %}
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-slate-50 px-5 py-4 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs bg-slate-200 text-slate-700 font-medium px-2 py-0.5 rounded">SNG-{{ proyecto.id }}</span>
+              <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+            </div>
+            <h2 class="text-base font-bold text-slate-900 mt-1">{{ proyecto.nombre }}</h2>
+          </div>
+
+          <div class="p-5 space-y-3">
+            <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
+              {% for doc in proyecto.documentos.all %}
+              <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                <div class="flex items-start gap-3">
+                  <div class="p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-800">{{ doc.nombre_archivo }}</div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">{{ doc.fecha_subida|date:"d M Y" }} · Subido por {{ doc.subido_por.username }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                  <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded font-medium">Ver / Descargar</a>
+                  <button onclick="requestCorrection('{{ doc.nombre_archivo|escapejs }}', 'SNG-{{ proyecto.id }}')" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-medium">Observar</button>
+                  <form method="POST" action="{% url 'eliminar_documento' doc.id %}" onsubmit="return confirm('¿Confirmas la eliminación del documento {{ doc.nombre_archivo|escapejs }}?')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2.5 py-1.5 rounded font-medium">Eliminar</button>
+                  </form>
+                </div>
+              </div>
+              {% empty %}
+              <div class="p-4 text-center text-xs text-slate-500 italic">No se han emitido planos ni memorias a esta obra aún.</div>
+              {% endfor %}
+            </div>
+
+            <!-- Carga de Entregable Oficial -->
+            <form method="POST" enctype="multipart/form-data" class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 space-y-3">
+              {% csrf_token %}
+              <input type="hidden" name="proyecto" value="{{ proyecto.id }}">
+              <div class="text-center">
+                <div class="text-xs font-semibold text-slate-700">Cargar informe de avance, protocolo SEC o plano revisado</div>
+                <p class="text-[11px] text-slate-500">Disponible inmediatamente para el cliente. Formatos: .PDF, .DWG, .DOC(X), .XLS(X), .PNG, .JPG (Máx. 10 MB)</p>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" name="nombre_archivo" required maxlength="150" placeholder="Nombre o rótulo del archivo (ej: Plano Eléctrico V2)" class="flex-1 text-xs border border-slate-300 rounded px-3 py-2 outline-none focus:border-sinergi-blue bg-white">
+                <input type="file" name="archivo" required class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 cursor-pointer">
+                <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-3.5 py-2 rounded shadow-sm">
+                  Subir entregable
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-500 italic">Sin obras asignadas para gestionar documentación.</p>
+        {% endfor %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 4: SOLICITUDES & CLIENTES                          -->
+      <!-- ======================================================== -->
+      <section id="view-chat" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Solicitudes & Clientes</h1>
+          <p class="text-sm text-slate-500 mt-1">Canal técnico directo con las contrapartes de cada faena asignada.</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[500px]">
+          <!-- Lista de Canales -->
+          <div class="border-r border-slate-200 bg-slate-50 p-3 space-y-2">
+            {% for proyecto in proyectos %}
+            <div data-id="{{ proyecto.id }}" data-nombre="{{ proyecto.nombre }}" data-cliente="{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}" onclick="selectEmployeeChat('{{ proyecto.id }}')" class="chat-ch {% if forloop.first %}chat-ch-selected{% endif %} p-3 bg-white border border-slate-200 rounded hover:border-slate-300 cursor-pointer">
+              <div class="font-mono text-[10px] text-slate-500">SNG-{{ proyecto.id }}</div>
+              <div class="text-xs font-bold text-slate-800 truncate">{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }} — {{ proyecto.nombre }}</div>
+            </div>
+            {% empty %}
+            <div class="p-3 text-xs text-slate-500 italic">Sin proyectos asignados.</div>
+            {% endfor %}
+          </div>
+
+          <!-- Conversación Activa -->
+          <div class="col-span-2 flex flex-col p-4 bg-white">
+            <div class="pb-3 border-b border-slate-200 flex justify-between items-center mb-3">
+              <div>
+                <strong class="text-sm text-slate-900" id="emp-chat-title">{{ proyectos.0.nombre|default:"Sin canal seleccionado" }}</strong>
+                <div class="font-mono text-[11px] text-slate-500" id="emp-chat-sub">{% if proyectos %}Cliente: {{ proyectos.0.cliente.empresa_cliente|default:proyectos.0.cliente.username }} (SNG-{{ proyectos.0.id }}){% endif %}</div>
+              </div>
+              <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded">Canal Operativo</span>
+            </div>
+
+            <div class="flex-1 space-y-3 overflow-y-auto pr-2 max-h-[320px]" id="emp-chat-messages">
+              <div class="max-w-[85%] bg-slate-100 p-3 rounded text-xs text-slate-800">
+                <span class="block font-mono text-[10px] text-slate-500 font-semibold mb-1">SISTEMA</span>
+                Seleccione un proyecto para revisar las consultas y requerimientos ingresados por el mandante.
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 mt-auto space-y-2">
+              <div class="flex items-center text-xs text-slate-600">
+                <label class="flex items-center gap-2 cursor-pointer font-medium">
+                  <input type="checkbox" id="emp-chk-send-email" checked class="w-4 h-4 rounded text-sinergi-blue accent-sinergi-blue cursor-pointer">
+                  <span>Despachar notificación por correo al cliente vía Brevo</span>
+                </label>
+              </div>
+
+              <div class="flex gap-2">
+                <input type="text" id="emp-chat-input" placeholder="Escribir instrucción técnica o respuesta al cliente..." class="flex-1 text-xs border border-slate-300 rounded px-3 py-2.5 outline-none focus:border-sinergi-blue">
+                <button onclick="sendEmployeeMessage()" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-5 py-2.5 rounded shadow-sm">
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== MODAL: SOLICITAR CORRECCIÓN TÉCNICA ==================== -->
+  <div id="correction-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900">Solicitar Corrección al Cliente</h3>
+          <p class="text-[11px] text-slate-500 font-mono" id="modal-corr-proj">Proyecto</p>
+        </div>
+        <button onclick="closeCorrectionModal()" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+      </div>
+
+      <!-- Simulado: aún no existe estado de revisión en el modelo Documento -->
+      <form class="p-5 space-y-4" onsubmit="handleCorrectionSubmit(event)">
+        <div>
+          <label class="block text-xs font-medium text-slate-500">Documento observado:</label>
+          <div class="mt-1 text-xs font-semibold text-slate-800 bg-slate-100 p-2 rounded border border-slate-200 font-mono truncate" id="modal-corr-doc"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Motivo técnico de la observación *</label>
+          <textarea id="modal-corr-reason" rows="3" required placeholder="Indique claramente por qué se solicita corregir (firmas faltantes, escala ilegible, memoria desactualizada)..." class="w-full text-xs border border-slate-300 rounded p-2.5 focus:border-sinergi-blue outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center text-xs text-slate-600">
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked class="rounded text-sinergi-blue">
+            <span>Disparar correo de notificación inmediata al cliente (vía Brevo)</span>
+          </label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closeCorrectionModal()" class="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded font-medium">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 text-xs bg-sinergi-red hover:bg-sinergi-red-hover text-white font-semibold rounded shadow-sm">
+            Enviar Observación al Cliente
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== LOGICA JAVASCRIPT ==================== -->
+  <script>
+    function switchTab(targetView, element) {
+      document.querySelectorAll('.tab-content').forEach(view => view.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('tab-active'));
+
+      const activeView = document.getElementById('view-' + targetView);
+      if (activeView) activeView.classList.remove('hidden');
+
+      if (element) element.classList.add('tab-active');
+    }
+
+    function filterProjects(status, btnElement) {
+      document.querySelectorAll('.p-filter').forEach(b => b.classList.toggle('p-filter-active', b === btnElement));
+      document.querySelectorAll('.p-card').forEach(card => {
+        card.hidden = !(status === 'todos' || card.dataset.status === status);
+      });
+    }
+
+    function selectEmployeeProject(id) {
+      document.querySelectorAll('.p-card').forEach(c => c.classList.toggle('p-card-selected', c.dataset.id === id));
+      document.querySelectorAll('.p-detail').forEach(d => d.classList.toggle('hidden', d.dataset.id !== id));
+    }
+
+    // Simulado: la observación aún no se guarda ni envía correo
+    function requestCorrection(docName, projectCode) {
+      document.getElementById('modal-corr-doc').textContent = docName;
+      document.getElementById('modal-corr-proj').textContent = 'Proyecto: ' + projectCode;
+      document.getElementById('correction-modal').classList.remove('hidden');
+    }
+
+    function closeCorrectionModal() {
+      document.getElementById('correction-modal').classList.add('hidden');
+      document.getElementById('modal-corr-reason').value = '';
+    }
+
+    function handleCorrectionSubmit(event) {
+      event.preventDefault();
+      const doc = document.getElementById('modal-corr-doc').textContent;
+      const reason = document.getElementById('modal-corr-reason').value;
+      alert(`Observación registrada para el archivo "${doc}".\nMotivo: ${reason}`);
+      closeCorrectionModal();
+    }
+
+    function selectEmployeeChat(id) {
+      document.querySelectorAll('.chat-ch').forEach(ch => {
+        const activo = ch.dataset.id === id;
+        ch.classList.toggle('chat-ch-selected', activo);
+        if (activo) {
+          document.getElementById('emp-chat-title').textContent = ch.dataset.nombre;
+          document.getElementById('emp-chat-sub').textContent = 'Cliente: ' + ch.dataset.cliente + ' (SNG-' + id + ')';
+        }
+      });
+    }
+
+    // Simulado: el chat aún no persiste mensajes en el servidor
+    function sendEmployeeMessage() {
+      const input = document.getElementById('emp-chat-input');
+      const text = input.value.trim();
+      const sendEmail = document.getElementById('emp-chk-send-email').checked;
+      if (!text) return;
+
+      const container = document.getElementById('emp-chat-messages');
+      const div = document.createElement('div');
+      div.className = "max-w-[85%] ml-auto bg-slate-100 p-3 rounded text-xs text-slate-800 text-right";
+      const autor = document.createElement('span');
+      autor.className = "block font-mono text-[10px] text-slate-500 font-semibold mb-1";
+      autor.textContent = 'TÚ ({{ user.get_full_name|default:user.username|upper|escapejs }} — SINERGI)';
+      div.append(autor, text);
+      if (sendEmail) {
+        const nota = document.createElement('span');
+        nota.className = "block text-[10px] text-slate-400 mt-1 font-mono";
+        nota.textContent = '✓ Notificación enviada al correo del cliente';
+        div.appendChild(nota);
+      }
+      container.appendChild(div);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+</body>
+</html>

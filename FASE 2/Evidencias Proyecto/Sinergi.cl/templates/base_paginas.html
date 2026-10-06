@@ -43,7 +43,8 @@
   </script>
 
   <!-- CSS personalizado compartido -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2">
+  {% block extra_head %}{% endblock %}
 </head>
 
 <body data-page="{% block page_id %}home{% endblock %}" class="bg-paper font-sans text-ink antialiased selection:bg-brick selection:text-white">
@@ -226,7 +227,7 @@
     (() => {
       const page = document.body.dataset.page;
       document.querySelectorAll('[data-page-link]').forEach(link => {
-        if (link.dataset.pageLink === page) {
+        if (link.dataset.pageLink === page && !link.dataset.spy) {
           link.setAttribute('aria-current', 'true');
           link.classList.add('text-brick-light');
         }
