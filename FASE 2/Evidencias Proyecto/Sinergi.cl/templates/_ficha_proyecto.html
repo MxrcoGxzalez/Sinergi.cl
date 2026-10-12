@@ -1,0 +1,16 @@
+<!-- Ficha de la obra: la misma para el portal cliente y el panel del empleado, así ambos ven
+     exactamente los mismos datos del proyecto. Requiere `proyecto`. -->
+<div class="space-y-2 text-xs">
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Empresa:</span><span class="font-semibold text-right">{{ proyecto.empresa|default:"Sin empresa asignada" }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Contacto:</span><span class="text-right">{{ proyecto.cliente.get_full_name|default:proyecto.cliente.username }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Encargado:</span><span class="text-right">{% if proyecto.empleado_encargado %}{{ proyecto.empleado_encargado.get_full_name|default:proyecto.empleado_encargado.username }}{% else %}Por asignar{% endif %}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Estado:</span><span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Avance:</span><span class="font-mono font-bold">{{ proyecto.porcentaje_avance }}%</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Inicio:</span><span class="font-mono">{{ proyecto.fecha_inicio|date:"d M Y" }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Término Est.:</span><span class="font-mono">{{ proyecto.fecha_termino_estimada|date:"d M Y"|default:"—" }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Especialidad:</span><span class="text-right">{{ proyecto.get_especialidad_display|default:"—" }}</span></div>
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Ubicación:</span><span class="text-right">{{ proyecto.ubicacion|default:"—" }}</span></div>
+  {% if proyecto.sucursal %}<div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Sucursal:</span><span class="text-right">{{ proyecto.sucursal }}</span></div>{% endif %}
+  <div class="flex justify-between gap-2 py-1 border-b border-slate-200"><span class="text-slate-500">Documentos:</span><span class="font-mono">{{ proyecto.documentos.all|length }}</span></div>
+</div>
+{% if proyecto.descripcion %}<p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{{ proyecto.descripcion }}</p>{% endif %}

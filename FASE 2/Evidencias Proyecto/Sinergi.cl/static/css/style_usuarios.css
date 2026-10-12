@@ -76,6 +76,18 @@ body {
 .estado[data-estado="Pausado"]    { background-color: #fef3c7; color: #92400e; }
 .estado[data-estado="Finalizado"] { background-color: #e0f2fe; color: #075985; }
 
+/* Proyecto registrado en los últimos 7 días */
+.badge-nuevo {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background-color: #C52222;
+    color: #ffffff;
+}
+
 /* Línea de hitos (derivada del porcentaje de avance) */
 .hito {
     position: relative;
@@ -105,3 +117,250 @@ body {
 .hito.pending             { opacity: 0.6; }
 .hito.pending .hito-badge { color: #64748b; background-color: #f1f5f9; }
 .hito.pending .hito-badge::after { content: "Pendiente"; }
+/* ==================== PETICIONES (chat) ==================== */
+.pet-estado {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background-color: #f1f5f9;
+    color: #475569;
+}
+.pet-estado[data-estado="ABIERTA"]    { background-color: #fef3c7; color: #92400e; }
+.pet-estado[data-estado="EN_PROCESO"] { background-color: #e0f2fe; color: #075985; }
+.pet-estado[data-estado="CERRADA"]    { background-color: #e2e8f0; color: #475569; }
+
+.pet-msg {
+    max-width: 85%;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+}
+.pet-msg-otro     { background-color: #f1f5f9; }
+.pet-msg-propio   { margin-left: auto; background-color: #f0f9ff; border-color: #bae6fd; }
+.pet-msg-interno  { background-color: #fffbeb; border-color: #fcd34d; border-style: dashed; }
+.pet-msg-autor {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #64748b;
+}
+.pet-msg-pie {
+    display: block;
+    margin-top: 0.25rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.625rem;
+    color: #94a3b8;
+    text-align: right;
+}
+.pet-leido { color: #059669; font-weight: 600; }
+
+/* ==================== FASES Y SUBFASES (control de obra) ==================== */
+.etapa-estado {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+.etapa-estado[data-estado="EN_CURSO"]   { background-color: #e0f2fe; color: #075985; }
+.etapa-estado[data-estado="COMPLETADA"] { background-color: #ecfdf5; color: #047857; }
+
+.etapa-btn {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    background-color: #ffffff;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #334155;
+}
+.etapa-btn:hover        { background-color: #f1f5f9; }
+.etapa-btn-ok           { border-color: #6ee7b7; color: #047857; }
+.etapa-btn-ok:hover     { background-color: #ecfdf5; }
+.etapa-btn-peligro      { border-color: #fecaca; color: #dc2626; }
+.etapa-btn-peligro:hover { background-color: #fef2f2; }
+
+.subfase-icono::before {
+    display: inline-block;
+    width: 1rem;
+    font-weight: 700;
+    text-align: center;
+}
+.subfase-pendiente .subfase-icono::before  { content: "○"; color: #94a3b8; }
+.subfase-en_curso .subfase-icono::before   { content: "●"; color: #1D5B8A; }
+.subfase-completada .subfase-icono::before { content: "✓"; color: #059669; }
+.subfase-completada > span:nth-child(2)    { color: #64748b; }
+
+/* Selector Lista / Diagrama del control de obra */
+.vista-btn {
+    padding: 0.25rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    background-color: #ffffff;
+    font-weight: 600;
+    color: #475569;
+}
+.vista-btn-activa { background-color: #1B222C; border-color: #1B222C; color: #ffffff; }
+
+/* ==================== DIAGRAMA DEL PROYECTO ==================== */
+.diagrama-raiz {
+    max-width: 22rem;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    border: 2px solid #1B222C;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    text-align: center;
+}
+.diagrama-conector {
+    width: 2px;
+    height: 1.5rem;
+    margin: 0 auto;
+    background-color: #94a3b8;
+}
+.diagrama-flujo {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    padding: 0.25rem 0.25rem 1rem;
+    list-style: none;
+}
+.diagrama-fase {
+    flex: 0 0 13rem;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-top-width: 4px;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    font-size: 0.75rem;
+}
+.diagrama-fase[data-estado="PENDIENTE"]  { border-top-color: #cbd5e1; }
+.diagrama-fase[data-estado="EN_CURSO"]   { border-top-color: #1D5B8A; box-shadow: 0 0 0 3px #e0f2fe; }
+.diagrama-fase[data-estado="COMPLETADA"] { border-top-color: #059669; }
+.diagrama-flecha {
+    position: relative;
+    flex: 0 0 2rem;
+    height: 2px;
+    margin-top: 2.75rem;
+    background-color: #94a3b8;
+}
+.diagrama-flecha::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border-left: 7px solid #94a3b8;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+.diagrama-barra {
+    height: 0.375rem;
+    margin: 0.375rem 0 0.125rem;
+    border-radius: 9999px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+.diagrama-barra > div { height: 100%; background-color: #1D5B8A; }
+.diagrama-subfases {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #e2e8f0;
+    list-style: none;
+}
+.diagrama-leyenda {
+    display: inline-block;
+    margin: 0.75rem 0.75rem 0 0;
+    font-size: 0.6875rem;
+    color: #64748b;
+}
+
+/* Pantallas angostas: las fases se apilan y las flechas apuntan hacia abajo */
+@media (max-width: 640px) {
+    .diagrama-flujo   { flex-direction: column; align-items: stretch; overflow-x: visible; }
+    .diagrama-fase    { flex: none; }
+    .diagrama-flecha  { flex: none; width: 2px; height: 1.25rem; margin: 0 auto; }
+    .diagrama-flecha::after {
+        right: -4px; top: auto; bottom: -1px;
+        border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid #94a3b8;
+        border-bottom: 0;
+    }
+}
+
+/* Impresión / PDF del diagrama */
+@media print {
+    header, footer, .no-print { display: none !important; }
+    body { background-color: #ffffff !important; }
+    .diagrama-flujo { flex-wrap: wrap; overflow: visible; row-gap: 1rem; }
+    .diagrama-fase  { break-inside: avoid; box-shadow: none !important; }
+}
+
+/* ==================== PORTAL: CONTRASTE FONDO / CONTENIDO ====================
+   El fondo de la página es gris azulado (#E9EDF2); las tarjetas blancas llevan un borde
+   un poco más marcado y una sombra suave para separarse de él. Solo afecta al contenido
+   (main / .portal-contenido), no a los modales. */
+main .bg-white.rounded-lg,
+.portal-contenido .bg-white.rounded-lg {
+    border-color: #d3dae3;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px -6px rgba(15, 23, 42, 0.12);
+}
+
+/* Tarjetas de proyecto seleccionables: leve elevación al pasar el mouse */
+.p-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.p-card:hover { transform: translateY(-2px); }
+
+/* Menú lateral separado del contenido */
+aside.bg-white {
+    box-shadow: 4px 0 14px -10px rgba(15, 23, 42, 0.25);
+}
+.nav-btn { transition: background-color 0.15s ease, color 0.15s ease; text-align: left; }
+
+/* Foco visible y suave en formularios del portal */
+main input:focus, main select:focus, main textarea:focus,
+.portal-contenido input:focus, .portal-contenido select:focus, .portal-contenido textarea:focus {
+    box-shadow: 0 0 0 3px rgba(29, 91, 138, 0.15);
+}
+
+/* Botones y enlaces con transición suave */
+main a, main button, .portal-contenido a, .portal-contenido button {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* ==================== PORTAL: MENÚ LATERAL ANCLADO ====================
+   En escritorio el menú queda fijo a la altura de la pantalla (bajo la barra superior de 4rem)
+   y no se estira con el contenido; si no cabe, hace scroll propio. En móvil sigue arriba. */
+@media (min-width: 768px) {
+    aside.bg-white {
+        width: 17rem;               /* antes 16rem (md:w-64) */
+        flex-shrink: 0;
+        position: sticky;
+        top: 4rem;
+        height: calc(100vh - 4rem);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+}
+
+/* ==================== PORTAL: DETALLES ESTÉTICOS ==================== */
+.portal-header { box-shadow: 0 1px 8px -4px rgba(15, 23, 42, 0.18); }
+
+/* Pestaña activa: barra roja corporativa y fondo azul suave */
+.nav-btn.tab-active { border-left-color: #C52222; }
+.nav-btn.tab-active svg { color: #1D5B8A; }
+.nav-btn:hover svg { color: #1D5B8A; }
+
+/* Títulos de sección un poco más compactos */
+main h1.text-2xl { letter-spacing: -0.01em; }

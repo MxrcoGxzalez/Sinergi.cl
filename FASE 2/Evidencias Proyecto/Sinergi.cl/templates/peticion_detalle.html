@@ -1,0 +1,144 @@
+{% extends 'base_usuarios.html' %}
+
+{% block title %}{{ peticion.codigo }} {{ peticion.asunto }} | Sinergi{% endblock %}
+
+{% block content %}
+<!-- Conversación de una petición. Los mensajes se cargan y actualizan solos cada pocos segundos. -->
+<div class="max-w-3xl mx-auto">
+  <a href="{% url 'dashboard' %}?tab={% if user.role == 'ADMIN' %}chat-admin{% else %}chat{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver a Peticiones</a>
+
+  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mt-2">
+    <div>
+      <span class="font-mono text-xs text-slate-400">{{ peticion.codigo }} · {{ peticion.get_tipo_display }}</span>
+      <h1 class="text-2xl font-bold text-slate-900">{{ peticion.asunto }}</h1>
+      <p class="text-xs text-slate-500 mt-1">
+        {% if peticion.proyecto %}Proyecto {{ peticion.proyecto.codigo }} — {{ peticion.proyecto.nombre }}{% else %}Consulta general{% endif %}
+        {% if not es_cliente %} · Cliente: {{ peticion.cliente.get_full_name|default:peticion.cliente.username }}{% if peticion.cliente.empresa %} ({{ peticion.cliente.empresa }}){% endif %}{% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-2 self-start">
+      <span id="pet-estado" class="pet-estado" data-estado="{{ peticion.estado }}">{{ peticion.get_estado_display }}</span>
+      {% if not es_cliente %}{% include '_estado_peticion.html' with p=peticion %}{% endif %}
+    </div>
+  </div>
+
+  <div class="mt-4">{% include '_mensajes.html' %}</div>
+
+  <div id="pet-mensajes" class="bg-white border border-slate-200 rounded-lg p-4 mt-2 h-[420px] overflow-y-auto space-y-3 shadow-sm">
+    <p id="pet-cargando" class="text-xs text-slate-400 italic">Cargando conversación…</p>
+  </div>
+
+  {% if peticion.estado != 'CERRADA' %}
+  <form id="pet-form" method="POST" action="{% url 'proyectos:peticion' peticion.id %}" class="bg-white border border-slate-200 rounded-lg p-3 mt-3 space-y-2 shadow-sm">
+    {% csrf_token %}
+    <textarea name="texto" rows="2" maxlength="3000" required placeholder="Escribe tu mensaje… (Enter envía, Shift+Enter salto de línea)" class="w-full text-xs border border-slate-300 rounded p-2.5 outline-none focus:border-[#1D5B8A]"></textarea>
+    <div class="flex items-center justify-between gap-2">
+      {% if not es_cliente %}
+      <label class="flex items-center gap-2 text-[11px] text-slate-600 cursor-pointer">
+        <input type="checkbox" name="interno" value="1" class="accent-amber-600"> Nota interna (el cliente no la ve)
+      </label>
+      {% else %}<span></span>{% endif %}
+      <div class="flex items-center gap-2">
+        <span id="pet-error" class="text-[11px] text-red-700 font-semibold"></span>
+        <button type="submit" class="bg-[#C52222] hover:bg-[#A71D1D] text-white text-xs font-semibold px-5 py-2 rounded shadow-sm">Enviar</button>
+      </div>
+    </div>
+  </form>
+  {% if es_cliente %}
+  <form method="POST" action="{% url 'proyectos:estado_peticion' peticion.id %}" class="mt-2 text-right" onsubmit="return confirm('¿Marcar {{ peticion.codigo }} como resuelta y cerrarla?')">
+    {% csrf_token %}
+    <input type="hidden" name="estado" value="CERRADA">
+    <button type="submit" class="text-[11px] text-slate-500 hover:text-slate-800 hover:underline">Marcar como resuelta y cerrar</button>
+  </form>
+  {% endif %}
+  {% else %}
+  <div class="bg-slate-100 border border-slate-200 rounded-lg p-3 mt-3 text-xs text-slate-600 flex items-center justify-between gap-2">
+    <span>Petición cerrada el {{ peticion.fecha_cierre|date:"d M Y H:i" }}.{% if es_cliente %} Si necesitas algo más, abre una nueva petición.{% else %} Cambia el estado para reabrirla.{% endif %}</span>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const urlMensajes = "{% url 'proyectos:mensajes_peticion' peticion.id %}";
+    const caja = document.getElementById('pet-mensajes');
+    const form = document.getElementById('pet-form');
+    const marcas = [];   // "Enviado / Leído" de mis mensajes
+    let ultimoId = 0, primeraCarga = true;
+
+    function pintar(m) {
+      const div = document.createElement('div');
+      div.className = 'pet-msg ' + (m.propio ? 'pet-msg-propio' : 'pet-msg-otro') + (m.interno ? ' pet-msg-interno' : '');
+      const autor = document.createElement('span');
+      autor.className = 'pet-msg-autor';
+      autor.textContent = m.autor + (m.interno ? ' · NOTA INTERNA' : '');
+      const texto = document.createElement('p');
+      texto.className = 'whitespace-pre-line';
+      texto.textContent = m.texto;  // textContent: nunca se interpreta como HTML
+      const pie = document.createElement('span');
+      pie.className = 'pet-msg-pie';
+      pie.textContent = m.fecha_txt;
+      if (m.propio && !m.interno) {
+        const estado = document.createElement('span');
+        estado.dataset.fecha = m.fecha;
+        pie.append(' · ', estado);
+        marcas.push(estado);
+      }
+      div.append(autor, texto, pie);
+      caja.appendChild(div);
+    }
+
+    function marcarLeidos(leidaOtro) {
+      const t = leidaOtro ? Date.parse(leidaOtro) : 0;
+      marcas.forEach(e => {
+        const leido = t >= Date.parse(e.dataset.fecha);
+        e.textContent = leido ? 'Leído ✓' : 'Enviado';
+        e.classList.toggle('pet-leido', leido);
+      });
+    }
+
+    async function cargar() {
+      try {
+        const r = await fetch(`${urlMensajes}?desde=${ultimoId}&visto=${document.hidden ? 0 : 1}`, {headers: {Accept: 'application/json'}});
+        if (!r.ok) return;
+        const datos = await r.json();
+        const alFondo = caja.scrollHeight - caja.scrollTop - caja.clientHeight < 60;
+        if (primeraCarga) document.getElementById('pet-cargando').remove();
+        datos.mensajes.forEach(m => { pintar(m); ultimoId = m.id; });
+        marcarLeidos(datos.leida_otro);
+        const etiqueta = document.getElementById('pet-estado');
+        etiqueta.textContent = datos.estado_display;
+        etiqueta.dataset.estado = datos.estado;
+        if (datos.mensajes.length && (alFondo || primeraCarga)) caja.scrollTop = caja.scrollHeight;
+        primeraCarga = false;
+        if ((datos.estado === 'CERRADA') === !!form) location.reload();  // el otro lado la cerró o la reabrió
+      } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
+    }
+
+    if (form) {
+      const textarea = form.querySelector('textarea');
+      textarea.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+      });
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const error = document.getElementById('pet-error');
+        error.textContent = '';
+        try {
+          const r = await fetch(form.action, {method: 'POST', body: new FormData(form), headers: {Accept: 'application/json'}});
+          const datos = await r.json();
+          if (!datos.ok) { error.textContent = datos.error; return; }
+          form.reset();
+          caja.scrollTop = caja.scrollHeight;
+          cargar();
+        } catch (e) { error.textContent = 'No se pudo enviar. Revisa tu conexión.'; }
+      });
+    }
+
+    cargar();
+    setInterval(cargar, 4000);
+  })();
+</script>
+{% endblock %}

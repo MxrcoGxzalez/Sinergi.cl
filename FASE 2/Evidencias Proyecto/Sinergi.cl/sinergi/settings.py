@@ -35,18 +35,68 @@ DEBUG = env.bool('DEBUG', default=False)
 
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_TIMEZONE = 'America/Santiago'
+
+# Proyectos y solicitudes archivados se eliminan definitivamente tras estos días
+DIAS_ARCHIVO = env.int('DIAS_ARCHIVO', default=60)
+CELERY_BEAT_SCHEDULE = {
+    'purgar-archivados': {'task': 'proyectos.tasks.purgar_archivados', 'schedule': 60 * 60 * 24},
+}
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Checklist de despliegue: https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# (python manage.py check --deploy)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure--$0$!4@z!$fx&68f&_inmp*2e$km#s!h6)ktx8g@mr&q*sss&n'
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+# Ruta de Django Admin (solo superusuario). Cambiarla en producción reduce ataques automatizados.
+ADMIN_URL = env('ADMIN_URL', default='admin/')
 
-ALLOWED_HOSTS = []
+
+# ==================== SEGURIDAD (OWASP Top 10) ====================
+
+# Sesión: expira al cerrar el navegador o tras 8 horas.
+SESSION_COOKIE_AGE = 60 * 60 * 8
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+
+# Cabeceras HTTP
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Solo en producción (DEBUG=False): HTTPS obligatorio, cookies seguras y HSTS.
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # Solo si hay un proxy (nginx) que termina HTTPS y SOBRESCRIBE esta cabecera.
+    if env.bool('BEHIND_PROXY', default=False):
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Archivos subidos: no ejecutables ni legibles por otros usuarios del servidor.
+FILE_UPLOAD_PERMISSIONS = 0o640
+
+# Caché para límites de intentos (login / formulario de contacto).
+# Con REDIS_URL el límite se comparte entre procesos de gunicorn; sin ella es por proceso.
+if env('REDIS_URL', default=''):
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.redis.RedisCache', 'LOCATION': env('REDIS_URL')}}
+
+# Registro de eventos de seguridad (logins fallidos, bloqueos, spam, accesos denegados).
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'simple': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'}},
+    'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'}},
+    'loggers': {
+        'sinergi.seguridad': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+    },
+}
 
 
 # Application definition
@@ -72,7 +122,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'sinergi.seguridad.cabeceras_seguridad',
 ]
+if DEBUG:
+    # Desarrollo: aplica migraciones nuevas aunque el contenedor ya esté corriendo (ver sinergi/desarrollo.py)
+    MIDDLEWARE.insert(0, 'sinergi.desarrollo.migraciones_automaticas')
 
 ROOT_URLCONF = 'sinergi.urls'
 
@@ -111,6 +165,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 10},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -124,9 +179,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'  # mensajes de validación en español
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 

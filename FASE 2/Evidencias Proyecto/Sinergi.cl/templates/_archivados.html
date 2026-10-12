@@ -1,0 +1,53 @@
+<!-- Tabla de archivados. Requiere `tipo` ('proyecto' | 'solicitud'), `items` y `titulo`. -->
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+  <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+    <h2 class="font-bold text-xs uppercase tracking-wider text-slate-900">{{ titulo }}</h2>
+    <span class="font-mono text-[11px] text-slate-500">{{ items|length }}</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+          <th class="px-5 py-3">Código</th>
+          <th class="px-5 py-3">Detalle</th>
+          <th class="px-5 py-3">Archivado</th>
+          <th class="px-5 py-3">Se elimina</th>
+          <th class="px-5 py-3 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for obj in items %}
+        <tr class="align-top">
+          <td class="px-5 py-3 font-mono text-[11px] font-bold">{{ obj.codigo }}</td>
+          <td class="px-5 py-3">
+            {% if tipo == 'proyecto' %}
+              <div class="font-bold text-slate-900">{{ obj.nombre }}</div>
+              <div class="text-[11px] text-slate-500">{{ obj.empresa|default:obj.cliente.username }} · {{ obj.estado }} · {{ obj.porcentaje_avance }}%</div>
+            {% else %}
+              <div class="font-bold text-slate-900">{{ obj.nombre_proyecto|default:obj.empresa }}</div>
+              <div class="text-[11px] text-slate-500">{{ obj.get_origen_display }} · {{ obj.nombre_contacto }} · {{ obj.get_estado_display }}</div>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3 text-[11px] text-slate-500">{{ obj.archivado_en|date:"d M Y H:i" }}<br>{{ obj.archivado_por.username|default:"—" }}</td>
+          <td class="px-5 py-3 text-[11px]"><span class="font-semibold {% if obj.dias_para_eliminar <= 7 %}text-sinergi-red{% else %}text-slate-700{% endif %}">en {{ obj.dias_para_eliminar }} día(s)</span><br><span class="text-slate-400">{{ obj.eliminacion_programada|date:"d M Y" }}</span></td>
+          <td class="px-5 py-3">
+            <div class="flex flex-col sm:flex-row gap-2 justify-end">
+              <form method="POST" action="{% url 'proyectos:archivo' tipo obj.id 'restaurar' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-xs text-white bg-sinergi-blue hover:bg-sky-800 px-3 py-1.5 rounded font-semibold">Restaurar</button>
+              </form>
+              <form method="POST" action="{% url 'proyectos:archivo' tipo obj.id 'eliminar' %}" class="flex gap-1" onsubmit="return confirm('Se eliminará {{ obj.codigo }} de forma permanente{% if tipo == 'proyecto' %} junto con sus documentos y peticiones{% endif %}. ¿Continuar?')">
+                {% csrf_token %}
+                <input type="text" name="confirmacion" required placeholder="{{ obj.codigo }}" class="w-24 text-xs font-mono border border-red-200 rounded px-2 py-1 outline-none focus:border-sinergi-red">
+                <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium whitespace-nowrap">Eliminar definitivo</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="px-5 py-6 text-center text-slate-500 italic">Nada archivado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

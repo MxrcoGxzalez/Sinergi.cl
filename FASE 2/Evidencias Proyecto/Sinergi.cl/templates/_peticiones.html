@@ -1,0 +1,77 @@
+<!-- Bandeja de peticiones (cliente, empleado y admin). Requiere `peticiones` (con `no_leida`). -->
+<div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Peticiones & Chat</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      {% if user.role == 'CLIENTE' %}Consultas, solicitudes y reclamos con el equipo Sinergi. Cada petición guarda toda la conversación.
+      {% elif user.role == 'EMPLEADO' %}Conversaciones con los clientes de las obras a tu cargo.
+      {% else %}Todas las conversaciones entre clientes y el equipo Sinergi.{% endif %}
+    </p>
+  </div>
+  <a href="{% url 'proyectos:nueva_peticion' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">+ Nueva Petición</a>
+</div>
+
+<!-- Una tarjeta por proyecto (la bandeja ya viene agrupada y ordenada por actividad) -->
+{% regroup peticiones by proyecto as grupos %}
+<div class="space-y-5">
+  {% for grupo in grupos %}
+  <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div>
+        {% if grupo.grouper %}
+        <span class="font-mono text-[10px] text-sinergi-blue font-bold">{{ grupo.grouper.codigo }}</span>
+        <h3 class="text-sm font-bold text-slate-900">{{ grupo.grouper.nombre }}</h3>
+        {% else %}
+        <span class="font-mono text-[10px] text-slate-400 font-bold">SIN PROYECTO</span>
+        <h3 class="text-sm font-bold text-slate-900">Consultas generales</h3>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-2 text-[11px] text-slate-500">
+        {% if grupo.grouper %}<span class="estado" data-estado="{{ grupo.grouper.estado }}">{{ grupo.grouper.estado }}</span>{% endif %}
+        <span>{{ grupo.list|length }} petición{{ grupo.list|length|pluralize:"es" }}</span>
+      </div>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for p in grupo.list %}
+      <li class="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-slate-50 {% if p.no_leida %}bg-sky-50/60{% endif %}">
+        <div class="min-w-0">
+          <a href="{% url 'proyectos:peticion' p.id %}" class="text-xs font-bold text-slate-900 hover:text-sinergi-blue hover:underline">{{ p.asunto }}</a>
+          {% if p.no_leida %}<span class="badge-nuevo ml-1">NUEVO MENSAJE</span>{% endif %}
+          <div class="font-mono text-[10px] text-slate-400">
+            {{ p.codigo }} · {{ p.get_tipo_display }}{% if user.role != 'CLIENTE' %} · {{ p.cliente.empresa|default:p.cliente.username }}{% endif %} · {{ p.ultima_actividad|date:"d M Y H:i" }}
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          {% if user.role == 'CLIENTE' %}
+          <span class="pet-estado" data-estado="{{ p.estado }}">{{ p.get_estado_display }}</span>
+          {% else %}
+          {% include '_estado_peticion.html' with volver='bandeja' %}
+          {% endif %}
+          <a href="{% url 'proyectos:peticion' p.id %}" class="text-[11px] text-sinergi-blue font-semibold hover:underline">Abrir chat &rarr;</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% empty %}
+  <div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-xs text-slate-500 italic shadow-sm">No hay peticiones registradas.</div>
+  {% endfor %}
+</div>
+
+<script>
+  // Aviso de mensajes nuevos en el menú sin recargar el panel
+  (function () {
+    const badge = document.getElementById('badge-peticiones');
+    if (!badge) return;
+    setInterval(async () => {
+      if (document.hidden) return;
+      try {
+        const r = await fetch("{% url 'proyectos:peticiones_no_leidas' %}", {headers: {Accept: 'application/json'}});
+        if (!r.ok) return;
+        const n = (await r.json()).no_leidas;
+        badge.textContent = n;
+        badge.style.display = n ? '' : 'none';
+      } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
+    }, 30000);
+  })();
+</script>

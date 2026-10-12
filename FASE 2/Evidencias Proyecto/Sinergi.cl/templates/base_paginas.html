@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS: sus utilidades permanecen en el HTML -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -45,6 +45,13 @@
   <!-- CSS personalizado compartido -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2">
   {% block extra_head %}{% endblock %}
+  <link rel="icon" type="image/png" href="{% static 'loader.png' %}">
+  <style>
+    /* Logo de la empresa sobre placa blanca (el texto del logo es gris oscuro).
+       El script de cada página alterna size-10/size-8 al hacer scroll: solo cambia la altura. */
+    .logo-placa { display: inline-flex; background: #fff; border-radius: 6px; padding: 5px 10px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+    #logo-icon { width: auto !important; }
+  </style>
 </head>
 
 <body data-page="{% block page_id %}home{% endblock %}" class="bg-paper font-sans text-ink antialiased selection:bg-brick selection:text-white">
@@ -53,13 +60,8 @@
   <header id="site-header" class="fixed inset-x-0 top-0 z-50 transition-all duration-500 bg-[#101417]/40 backdrop-blur-md border-b border-white/10">
     <div id="header-container" class="mx-auto flex h-24 max-w-shell items-center justify-between px-6 transition-all duration-500 sm:px-10 lg:px-12">
       <a href="{% url 'inicio' %}" class="flex items-center gap-3.5 text-white group" aria-label="Sinergi, inicio">
-        <svg id="logo-icon" viewBox="0 0 32 32" class="size-10 transition-transform duration-500 group-hover:scale-105" aria-hidden="true">
-          <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
-          <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".92"/>
-        </svg>
-        <span class="leading-none">
-          <span class="block font-display text-xl font-extrabold tracking-tight">SINERGI</span>
-          <span class="mt-1 block text-[10px] font-medium uppercase tracking-[.18em] text-white/60">Engineering & Consultancy</span>
+        <span class="logo-placa">
+          <img id="logo-icon" src="{% static 'sinergi-logo.png' %}" alt="Sinergi Engineering & Consultancy" width="154" height="40" class="size-10 transition-all duration-500 group-hover:scale-105">
         </span>
       </a>
 
@@ -115,11 +117,7 @@
         <!-- Marca y redes -->
         <div class="md:col-span-5">
           <div class="flex items-center gap-3">
-            <svg viewBox="0 0 32 32" class="size-8" aria-hidden="true">
-              <rect x="1.5" y="1.5" width="20" height="20" rx="3.5" fill="#F1F3F2"/>
-              <rect x="10.5" y="10.5" width="20" height="20" rx="3.5" fill="#9C4B44" fill-opacity=".9"/>
-            </svg>
-            <span class="font-display text-xl font-extrabold tracking-[.01em]">SINERGI</span>
+            <span class="logo-placa"><img src="{% static 'sinergi-logo.png' %}" alt="Sinergi Engineering & Consultancy" width="154" height="40" class="h-10 w-auto"></span>
           </div>
           <p class="mt-5 max-w-sm text-sm leading-relaxed text-white/65">
             Ingeniería y consultoría de especialidades técnicas para clientes públicos y privados. Desde 2006, en Santiago de Chile.
@@ -239,7 +237,7 @@
   const modalMessages = document.querySelector('#modal-messages');
 
   // Si hubo error al iniciar sesión, abrir el modal automáticamente en la página actual
-  if ((urlParams.has('login_error') || modalMessages) && pDlg) {
+  if ((urlParams.has('login') || urlParams.has('login_error') || modalMessages) && pDlg) {
     pDlg.showModal();
   }
   })();

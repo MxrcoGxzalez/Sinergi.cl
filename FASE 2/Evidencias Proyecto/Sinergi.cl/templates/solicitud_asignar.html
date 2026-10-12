@@ -1,0 +1,41 @@
+{% extends 'base_usuarios.html' %}
+
+{% block title %}Asignar Cliente SOL-{{ solicitud.id }} | Sinergi{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <a href="{% url 'dashboard' %}?tab=solicitudes-proyectos" class="text-xs text-slate-500 hover:underline">&larr; Volver a Solicitudes</a>
+  <h1 class="text-2xl font-bold text-slate-900 mt-2">Asignar Cliente a SOL-{{ solicitud.id }}</h1>
+  <p class="text-sm text-slate-500 mt-1">Crea una cuenta de cliente con los datos de la solicitud o vincúlala a un cliente que ya existe.</p>
+
+  <!-- Resumen de la solicitud -->
+  <div class="bg-white border border-slate-200 rounded-lg p-5 mt-6 shadow-sm grid sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+    <div><span class="text-slate-500">Contacto:</span> <strong>{{ solicitud.nombre_contacto }}</strong></div>
+    <div><span class="text-slate-500">Empresa:</span> <strong>{{ solicitud.empresa }}</strong></div>
+    <div><span class="text-slate-500">Correo:</span> <span class="font-mono">{{ solicitud.email }}</span></div>
+    <div><span class="text-slate-500">Teléfono:</span> <span class="font-mono">{{ solicitud.telefono|default:"—" }}</span></div>
+    <div class="sm:col-span-2"><span class="text-slate-500">Especialidad:</span> {{ solicitud.get_especialidad_display|default:"—" }}</div>
+    <p class="sm:col-span-2 text-slate-700 whitespace-pre-line pt-2 border-t border-slate-100">{{ solicitud.descripcion }}</p>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6 mt-6 items-start">
+    <!-- Opción A: cuenta nueva -->
+    <form method="POST" class="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-sm">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="nuevo">
+      <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">A. Crear cuenta de cliente nueva</h2>
+      {% include '_campos_form.html' with form=form_nuevo %}
+      <button type="submit" class="w-full px-5 py-2 text-xs bg-[#C52222] hover:bg-[#A71D1D] text-white font-semibold rounded shadow-sm uppercase tracking-wider">Crear Cliente y Aprobar</button>
+    </form>
+
+    <!-- Opción B: cliente existente -->
+    <form method="POST" class="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-sm">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="existente">
+      <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">B. Vincular a cliente existente</h2>
+      {% include '_campos_form.html' with form=form_existente %}
+      <button type="submit" class="w-full px-5 py-2 text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded shadow-sm uppercase tracking-wider">Vincular y Aprobar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1 @@
+<form method="POST" action="{% url 'proyectos:etapa' tipo obj_id accion %}" class="inline"{% if confirmar %} onsubmit="return confirm('{{ confirmar|escapejs }}')"{% endif %}>{% csrf_token %}<button type="submit" class="{{ clase|default:'etapa-btn' }}"{% if titulo %} title="{{ titulo }}"{% endif %}>{{ texto }}</button></form>

@@ -1,6 +1,17 @@
+import logging
+
 from django.shortcuts import render, redirect
-from django.contrib import messages
-# from .models import Lead  <-- Descomentar cuando definas el modelo Lead
+from django.urls import reverse
+
+from proyectos.forms import SolicitudPublicaForm
+from proyectos.models import ESPECIALIDADES
+from sinergi.seguridad import ip_cliente, registrar, superado
+
+log = logging.getLogger('sinergi.seguridad')
+
+# Límite de solicitudes por IP (antispam / anti-abuso del formulario público)
+MAX_SOLICITUDES_HORA = 3
+MAX_SOLICITUDES_DIA = 10
 
 def inicio(request):
     return render(request, 'pagina_inicio.html')
@@ -12,7 +23,39 @@ def servicios(request):
     return render(request, 'pagina_servicios.html')
 
 def contacto(request):
-    return render(request, 'pagina_contacto.html')
+    """Formulario público: el visitante (aún sin cuenta) envía una propuesta de proyecto.
+    Queda como solicitud PENDIENTE en el panel del admin. Ver capas antispam en SolicitudPublicaForm."""
+    form = SolicitudPublicaForm(request.POST or None, initial={'ts': SolicitudPublicaForm.marca_tiempo()})
+    bloqueado = False
+
+    if request.method == 'POST':
+        ip = ip_cliente(request)
+        clave_hora, clave_dia = f'contacto:h:{ip}', f'contacto:d:{ip}'
+        if superado(clave_hora, MAX_SOLICITUDES_HORA) or superado(clave_dia, MAX_SOLICITUDES_DIA):
+            bloqueado = True
+            log.warning('Contacto: límite de envíos superado ip=%s', ip)
+        elif form.is_valid():
+            registrar(clave_hora, 60 * 60)
+            registrar(clave_dia, 60 * 60 * 24)
+            if form.es_bot:
+                log.warning('Contacto: honeypot activado ip=%s', ip)
+            else:
+                form.save()
+            return redirect(f"{reverse('contacto')}?enviado=1#lead-contact-form")
+        else:
+            log.info('Contacto: envío rechazado ip=%s campos=%s', ip, list(form.errors))
+
+    if form.is_bound:
+        # Nueva marca de tiempo para el reintento (la anterior pudo expirar)
+        form.data = form.data.copy()
+        form.data['ts'] = SolicitudPublicaForm.marca_tiempo()
+
+    return render(request, 'pagina_contacto.html', {
+        'form': form,
+        'enviado': 'enviado' in request.GET,
+        'bloqueado': bloqueado,
+        'especialidades': ESPECIALIDADES,
+    }, status=429 if bloqueado else 200)
 
 def proyectos(request):
     return render(request, 'pagina_proyectos.html')

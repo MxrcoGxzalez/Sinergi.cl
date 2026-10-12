@@ -1,7 +1,8 @@
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    # Aplica migraciones pendientes antes de levantar (evita errores 500 por columnas faltantes)
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:

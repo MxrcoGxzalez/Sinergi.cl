@@ -7,7 +7,7 @@
   <title>Sinergi — Panel de Administración</title>
 
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -20,7 +20,7 @@
               sidebar: '#1B222C',
               blue: '#1D5B8A',
               'blue-light': '#EBF3FA',
-              bg: '#F4F6F8'
+              bg: '#E9EDF2'
             }
           },
           fontFamily: {
@@ -37,27 +37,12 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+  <link rel="icon" type="image/png" href="{% static 'loader.png' %}">
 </head>
 <body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
   <!-- ==================== HEADER SUPERIOR ==================== -->
-  <header class="bg-sinergi-dark text-slate-200 h-14 px-6 flex justify-between items-center border-b border-white/10 sticky top-0 z-30">
-    <div class="flex items-center gap-3">
-      <svg class="w-6 h-6 text-sinergi-red" viewBox="0 0 26 26" fill="none">
-        <rect x="1" y="1" width="24" height="24" rx="4" stroke="#EDEFF1" stroke-width="1.8"/>
-        <path d="M6 18L11 8L15 15L20 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div>
-        <span class="font-bold text-base tracking-wider text-white">SINERGI</span>
-        <span class="hidden sm:inline-block text-[10px] text-slate-400 tracking-widest uppercase ml-2 border-l border-slate-700 pl-2">Panel Maestro de Administración</span>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-4 text-xs text-slate-300">
-      <span class="hidden md:inline">Administrador: <strong class="text-white">{{ user.get_full_name|default:user.username }}</strong></span>
-      <a href="{% url 'logout' %}" class="text-sinergi-red hover:underline font-medium">Cerrar Sesión &rarr;</a>
-    </div>
-  </header>
+  {% include '_header_portal.html' with etiqueta='Panel de Administración' %}
 
   <div class="flex-1 flex flex-col md:flex-row">
     <!-- ==================== SIDEBAR LATERAL ==================== -->
@@ -71,7 +56,7 @@
         <div class="overflow-hidden">
           <div class="font-semibold text-slate-900 text-sm leading-tight truncate">{{ user.get_full_name|default:user.username }}</div>
           <div class="text-xs text-slate-500">Dirección Sinergi</div>
-          <span class="inline-block bg-red-100 text-sinergi-red text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 tracking-wider uppercase font-mono border border-red-200">Superusuario Web</span>
+          <span class="inline-block bg-red-100 text-sinergi-red text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 tracking-wider uppercase font-mono border border-red-200">{% if user.is_superuser %}Superusuario Django{% else %}Administrador Web{% endif %}</span>
         </div>
       </div>
 
@@ -90,6 +75,7 @@
         <button onclick="switchAdminTab('solicitudes-proyectos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           3. Solicitudes de Proyectos
+          {% if solicitudes_pendientes %}<span class="ml-auto badge-nuevo">{{ solicitudes_pendientes|length }}</span>{% endif %}
         </button>
 
         <button onclick="switchAdminTab('supervision-hitos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
@@ -104,17 +90,37 @@
 
         <button onclick="switchAdminTab('chat-admin', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          6. Solicitudes & Mensajería
+          6. Peticiones & Chat
+          <span id="badge-peticiones" class="ml-auto badge-nuevo" {% if not peticiones_no_leidas %}style="display:none"{% endif %}>{{ peticiones_no_leidas }}</span>
+        </button>
+
+        <button onclick="switchAdminTab('empresas', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+          7. Empresas
+        </button>
+
+        <button onclick="switchAdminTab('archivados', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+          8. Archivados
+          {% if proyectos_archivados or solicitudes_archivadas %}<span class="ml-auto text-[10px] font-mono text-slate-500">{{ proyectos_archivados|length|add:solicitudes_archivadas.count }}</span>{% endif %}
+        </button>
+
+        <button onclick="switchAdminTab('actividad', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          9. Registro de Actividad
         </button>
       </nav>
 
       <div class="mt-auto pt-4 border-t border-slate-200 space-y-3">
+        {% if user.is_superuser %}
+        <!-- Django Admin: exclusivo del superusuario -->
         <a href="{% url 'admin:index' %}" target="_blank" class="w-full block text-center border border-slate-300 py-2 rounded text-xs font-mono font-bold text-slate-800 hover:bg-slate-100 transition">
           Base de Datos (Django Admin)
         </a>
+        {% endif %}
         <div class="text-[11px] text-slate-500 space-y-1">
           <p class="font-semibold text-slate-700">Administración General</p>
-          <p>Facultad total de borrado y aprobación</p>
+          <p>Aprobación, archivado y auditoría</p>
         </div>
       </div>
     </aside>
@@ -155,38 +161,13 @@
               </div>
               <div class="flex justify-between items-center py-2 border-b border-slate-100">
                 <span class="text-slate-500">Rol en Plataforma:</span>
-                <span class="font-mono bg-red-50 text-sinergi-red font-semibold px-2.5 py-1 rounded text-xs border border-red-200">{{ user.get_role_display }}{% if user.is_superuser %} / Superuser{% endif %}</span>
+                <span class="font-mono bg-red-50 text-sinergi-red font-semibold px-2.5 py-1 rounded text-xs border border-red-200">{{ user.get_role_display }}{% if user.is_superuser %} / Superusuario Django{% else %} Web{% endif %}</span>
               </div>
               <div class="flex justify-between items-center py-2">
                 <span class="text-slate-500">Último acceso:</span>
                 <span class="font-mono text-slate-700">{{ user.last_login|date:"d M Y H:i"|default:"—" }}</span>
               </div>
             </div>
-          </div>
-
-          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
-            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
-              Privilegios Exclusivos del Administrador
-            </h3>
-
-            <ul class="space-y-2.5 text-xs">
-              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
-                <span class="font-bold text-sm">✓</span>
-                <span>Creación, edición y eliminación de usuarios (Clientes y Empleados)</span>
-              </li>
-              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
-                <span class="font-bold text-sm">✓</span>
-                <span>Registro de nuevos proyectos y asignación de ingeniero a cargo</span>
-              </li>
-              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
-                <span class="font-bold text-sm">✓</span>
-                <span>Facultad de borrado absoluto de proyectos y documentación sensible</span>
-              </li>
-              <li class="flex items-center gap-2.5 text-sinergi-red font-semibold bg-red-50/60 p-2.5 rounded border border-red-100">
-                <span class="font-bold text-sm">✓</span>
-                <span>Supervisión global del avance y estado de todas las obras</span>
-              </li>
-            </ul>
           </div>
         </div>
       </section>
@@ -198,9 +179,9 @@
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 class="text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
-            <p class="text-sm text-slate-500 mt-1">Crea, edita o elimina cuentas de clientes y empleados.</p>
+            <p class="text-sm text-slate-500 mt-1">Crea, edita o elimina cuentas de clientes, empleados y administradores de la página.</p>
           </div>
-          <a href="{% url 'admin:usuarios_customuser_add' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">
+          <a href="{% url 'crear_usuario' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">
             + Crear Nuevo Usuario
           </a>
         </div>
@@ -223,9 +204,9 @@
                   <div class="font-semibold text-slate-900">{{ u.get_full_name|default:u.username }}</div>
                   <div class="font-mono text-slate-400 text-[11px]">{{ u.email|default:u.username }}</div>
                 </td>
-                <td class="p-3.5 text-slate-700">{{ u.empresa_cliente|default:"Sinergi" }}</td>
+                <td class="p-3.5 text-slate-700">{{ u.empresa|default:"Sinergi" }}</td>
                 <td class="p-3.5">
-                  <span class="{% if u.role == 'CLIENTE' %}bg-sky-100 text-sky-800{% else %}bg-slate-200 text-slate-800{% endif %} font-semibold px-2 py-0.5 rounded font-mono text-[10px]">{{ u.role }}</span>
+                  <span class="{% if u.role == 'CLIENTE' %}bg-sky-100 text-sky-800{% elif u.role == 'ADMIN' %}bg-red-100 text-sinergi-red{% else %}bg-slate-200 text-slate-800{% endif %} font-semibold px-2 py-0.5 rounded font-mono text-[10px]">{{ u.role }}</span>
                 </td>
                 <td class="p-3.5">
                   {% if u.is_active %}
@@ -235,13 +216,16 @@
                   {% endif %}
                 </td>
                 <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
-                  <a href="{% url 'admin:usuarios_customuser_change' u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
-                  <a href="{% url 'admin:usuarios_customuser_delete' u.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</a>
+                  <a href="{% url 'editar_usuario' u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+                  <form method="POST" action="{% url 'eliminar_usuario' u.id %}" class="inline" onsubmit="return confirm('¿Eliminar la cuenta {{ u.username|escapejs }}? Esta acción no se puede deshacer.')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</button>
+                  </form>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="p-6 text-center text-slate-500 italic">No hay clientes ni empleados registrados.</td>
+                <td colspan="5" class="p-6 text-center text-slate-500 italic">No hay otros usuarios registrados.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -253,18 +237,102 @@
       <!-- VISTA 3: SOLICITUDES DE PROYECTOS                        -->
       <!-- ======================================================== -->
       <section id="view-solicitudes-proyectos" class="tab-content hidden space-y-6">
-        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 class="text-2xl font-bold text-slate-900">Bandeja de Solicitudes de Proyectos</h1>
-            <p class="text-sm text-slate-500 mt-1">Registra proyectos que ingresan por canales directos o licitaciones y asígnalos a un ingeniero.</p>
-          </div>
-          <a href="{% url 'admin:proyectos_proyecto_add' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">
-            + Registrar Nuevo Proyecto
-          </a>
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Bandeja de Solicitudes de Proyectos</h1>
+          <p class="text-sm text-slate-500 mt-1"><strong>Contacto web:</strong> sin cuenta, asigna un usuario cliente para aprobarla y luego registra el proyecto. <strong>Portal cliente:</strong> el cliente ya tiene cuenta, registra el proyecto directamente.</p>
         </div>
 
+        <!-- Pendientes -->
+        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-900">Pendientes de revisión · {{ solicitudes_pendientes|length }}</h2>
+        {% for sol in solicitudes_pendientes %}
+        <div class="bg-white border border-slate-200 border-l-4 border-l-sinergi-red rounded-lg shadow-sm p-5 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+            <div>
+              <span class="font-mono text-[10px] text-slate-400">{{ sol.codigo }} · {{ sol.fecha_creacion|date:"d M Y H:i" }}</span>
+              <span class="ml-1 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded {% if sol.origen == 'PORTAL' %}bg-sky-100 text-sky-800{% else %}bg-slate-100 text-slate-600{% endif %}">{{ sol.get_origen_display|upper }}</span>
+              <h3 class="font-bold text-slate-900">{% if sol.nombre_proyecto %}{{ sol.nombre_proyecto }} · {% endif %}{{ sol.empresa }}</h3>
+              <p class="text-xs text-slate-600">{{ sol.nombre_contacto }} · <a href="mailto:{{ sol.email }}" class="font-mono text-sinergi-blue hover:underline">{{ sol.email }}</a>{% if sol.telefono %} · <span class="font-mono">{{ sol.telefono }}</span>{% endif %}</p>
+              {% if sol.especialidad %}<p class="text-[11px] text-slate-500 mt-0.5">{{ sol.get_especialidad_display }}</p>{% endif %}
+              {% if sol.ubicacion or sol.sucursal or sol.fecha_tentativa %}<p class="text-[11px] text-slate-500">{% if sol.ubicacion %}Ubicación: {{ sol.ubicacion }} · {% endif %}{% if sol.sucursal %}Sucursal: {{ sol.sucursal }} · {% endif %}{% if sol.fecha_tentativa %}Inicio tentativo: {{ sol.fecha_tentativa|date:"d M Y" }}{% endif %}</p>{% endif %}
+            </div>
+            <span class="self-start bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded text-[11px]">{{ sol.get_estado_display }}</span>
+          </div>
+          <p class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-3 whitespace-pre-line">{{ sol.descripcion }}</p>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
+            {% if sol.origen == 'PORTAL' %}
+            <a href="{% url 'proyectos:crear' %}?solicitud={{ sol.id }}" class="text-center bg-sinergi-blue hover:bg-sky-800 text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Crear Proyecto (cliente {{ sol.cliente.username }})</a>
+            {% else %}
+            <a href="{% url 'proyectos:asignar_solicitud' sol.id %}" class="text-center bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Asignar Cliente y Aprobar</a>
+            {% endif %}
+            <form method="POST" action="{% url 'proyectos:rechazar_solicitud' sol.id %}" class="flex gap-2 flex-1" onsubmit="return confirm('¿Rechazar la solicitud SOL-{{ sol.id }}?')">
+              {% csrf_token %}
+              <input type="text" name="nota" maxlength="1000" placeholder="Motivo del rechazo (opcional)" class="flex-1 text-xs border border-slate-300 rounded px-3 py-2 outline-none focus:border-sinergi-red">
+              <button type="submit" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-3 py-2 rounded font-medium">Rechazar</button>
+            </form>
+            <form method="POST" action="{% url 'proyectos:archivo' 'solicitud' sol.id 'archivar' %}" onsubmit="return confirm('¿Archivar {{ sol.codigo }}? Podrás restaurarla durante {{ dias_archivo }} días.')">
+              {% csrf_token %}
+              <button type="submit" class="w-full text-xs text-slate-600 hover:bg-slate-100 border border-slate-300 px-3 py-2 rounded font-medium">Archivar</button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
         <div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-xs text-slate-500">
           No existen solicitudes pendientes de aprobación.
+        </div>
+        {% endfor %}
+
+        <!-- Historial -->
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-900">Historial de Solicitudes Revisadas</h2>
+            <span class="font-mono text-[11px] text-slate-500">{{ solicitudes_revisadas|length }} solicitud(es)</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                  <th class="px-5 py-3">Solicitud</th>
+                  <th class="px-5 py-3">Estado</th>
+                  <th class="px-5 py-3">Cliente Asignado</th>
+                  <th class="px-5 py-3">Proyecto</th>
+                  <th class="px-5 py-3">Revisión</th>
+                  <th class="px-5 py-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-900">
+                {% for sol in solicitudes_revisadas %}
+                <tr class="hover:bg-slate-50 align-top">
+                  <td class="px-5 py-3.5">
+                    <div class="font-mono text-[10px] text-slate-400">{{ sol.codigo }} · {{ sol.get_origen_display }} · {{ sol.fecha_creacion|date:"d M Y" }}</div>
+                    <div class="font-bold">{{ sol.empresa }}</div>
+                    <div class="text-[11px] text-slate-500">{{ sol.nombre_contacto }} · {{ sol.email }}</div>
+                  </td>
+                  <td class="px-5 py-3.5">
+                    <span class="{% if sol.estado == 'APROBADA' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-200 text-slate-700{% endif %} font-semibold px-2 py-0.5 rounded">{{ sol.get_estado_display }}</span>
+                    {% if sol.nota_admin %}<div class="text-[11px] text-slate-500 mt-1 max-w-[220px]">{{ sol.nota_admin }}</div>{% endif %}
+                  </td>
+                  <td class="px-5 py-3.5 font-mono text-[11px]">{{ sol.cliente.username|default:"—" }}</td>
+                  <td class="px-5 py-3.5">
+                    {% if sol.proyecto %}
+                      <span class="font-mono text-[11px]">SNG-{{ sol.proyecto.id }}</span> {{ sol.proyecto.nombre }}
+                    {% elif sol.estado == 'APROBADA' and sol.cliente %}
+                      <a href="{% url 'proyectos:crear' %}?solicitud={{ sol.id }}" class="text-xs text-white bg-sinergi-blue hover:bg-sky-800 px-2 py-1 rounded font-semibold whitespace-nowrap">+ Registrar Proyecto</a>
+                    {% else %}—{% endif %}
+                  </td>
+                  <td class="px-5 py-3.5 text-[11px] text-slate-500">{{ sol.revisada_por.username|default:"—" }}<br>{{ sol.fecha_revision|date:"d M Y H:i" }}</td>
+                  <td class="px-5 py-3.5 text-right">
+                    <form method="POST" action="{% url 'proyectos:archivo' 'solicitud' sol.id 'archivar' %}" class="inline" onsubmit="return confirm('¿Archivar {{ sol.codigo }}?')">
+                      {% csrf_token %}
+                      <button type="submit" class="text-xs text-slate-600 hover:bg-slate-100 border border-slate-300 px-2 py-1 rounded font-medium">Archivar</button>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500 italic">Aún no hay solicitudes revisadas.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -272,9 +340,14 @@
       <!-- VISTA 4: SUPERVISIÓN DE PROYECTOS (KPIs + MONITOR)       -->
       <!-- ======================================================== -->
       <section id="view-supervision-hitos" class="tab-content hidden space-y-6">
-        <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Supervisión Maestra de Proyectos</h1>
-          <p class="text-sm text-slate-500 mt-1">Visión general operativa de todas las obras: avance, estado e ingeniero asignado.</p>
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Supervisión Maestra de Proyectos</h1>
+            <p class="text-sm text-slate-500 mt-1">Registra, edita y archiva obras. Entra al <strong>Control de Obra</strong> de cada proyecto para gestionar fases, subfases, avance y documentos, igual que el ingeniero a cargo.</p>
+          </div>
+          <a href="{% url 'proyectos:crear' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">
+            + Registrar Nuevo Proyecto
+          </a>
         </div>
 
         <!-- Indicadores Clave (KPIs) -->
@@ -316,10 +389,11 @@
                 {% for proyecto in proyectos %}
                 <tr class="hover:bg-slate-50">
                   <td class="px-5 py-3.5">
-                    <div class="font-mono text-[10px] text-slate-400">SNG-{{ proyecto.id }}</div>
-                    <div class="font-bold">{{ proyecto.nombre }}</div>
+                    <div class="font-mono text-[10px] text-slate-400">SNG-{{ proyecto.id }}{% if proyecto.es_nuevo %} <span class="badge-nuevo">NUEVO</span>{% endif %}</div>
+                    <a href="{% url 'proyectos:control' proyecto.id %}" class="font-bold hover:text-sinergi-blue hover:underline">{{ proyecto.nombre }}</a>
+                    {% if proyecto.especialidad %}<div class="text-[10px] text-slate-500">{{ proyecto.get_especialidad_display }}</div>{% endif %}
                   </td>
-                  <td class="px-5 py-3.5">{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}</td>
+                  <td class="px-5 py-3.5">{{ proyecto.empresa|default:proyecto.cliente.username }}{% if proyecto.sucursal %}<div class="text-[10px] text-slate-500">{{ proyecto.sucursal }}</div>{% endif %}</td>
                   <td class="px-5 py-3.5 font-mono text-[11px]">
                     {% if proyecto.empleado_encargado %}{{ proyecto.empleado_encargado.username }}{% else %}<span class="text-sinergi-red italic">Sin asignar</span>{% endif %}
                   </td>
@@ -333,8 +407,12 @@
                     </div>
                   </td>
                   <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
-                    <a href="{% url 'admin:proyectos_proyecto_change' proyecto.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
-                    <a href="{% url 'admin:proyectos_proyecto_delete' proyecto.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Borrar</a>
+                    <a href="{% url 'proyectos:control' proyecto.id %}" class="text-xs text-white bg-sinergi-blue hover:bg-sky-800 px-2 py-1 rounded font-semibold">Control de Obra</a>
+                    <a href="{% url 'proyectos:editar' proyecto.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+                    <form method="POST" action="{% url 'proyectos:archivo' 'proyecto' proyecto.id 'archivar' %}" class="inline" onsubmit="return confirm('¿Archivar {{ proyecto.codigo }}? Dejará de verse en los paneles y se eliminará en {{ dias_archivo }} días si no se restaura.')">
+                      {% csrf_token %}
+                      <button type="submit" class="text-xs text-slate-600 hover:bg-slate-100 border border-slate-300 px-2 py-1 rounded font-medium">Archivar</button>
+                    </form>
                   </td>
                 </tr>
                 {% empty %}
@@ -361,7 +439,7 @@
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
           <div class="bg-slate-50 px-5 py-4 border-b border-slate-200">
             <span class="font-mono text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded">SNG-{{ proyecto.id }}</span>
-            <h2 class="text-base font-bold text-slate-900 mt-1">{{ proyecto.nombre }}</h2>
+            <h2 class="text-base font-bold text-slate-900 mt-1"><a href="{% url 'proyectos:control' proyecto.id %}" class="hover:underline">{{ proyecto.nombre }}</a></h2>
           </div>
 
           <div class="p-5">
@@ -377,7 +455,11 @@
                 </div>
                 <div class="flex items-center gap-2 self-end sm:self-center">
                   <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded font-medium">Descargar</a>
-                  <a href="{% url 'admin:proyectos_documento_delete' doc.id %}" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2.5 py-1.5 rounded font-medium">Purgar / Borrar</a>
+                  <button onclick="requestCorrection('{{ doc.nombre_archivo|escapejs }}', '{{ proyecto.id }}', '{{ doc.id }}')" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-medium">Observar</button>
+                  <form method="POST" action="{% url 'eliminar_documento' doc.id %}" onsubmit="return confirm('¿Eliminar el documento {{ doc.nombre_archivo|escapejs }}?')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2.5 py-1.5 rounded font-medium">Purgar / Borrar</button>
+                  </form>
                 </div>
               </div>
               {% empty %}
@@ -392,61 +474,101 @@
       </section>
 
       <!-- ======================================================== -->
-      <!-- VISTA 6: SOLICITUDES & MENSAJERÍA                        -->
+      <!-- VISTA 6: PETICIONES & CHAT                               -->
       <!-- ======================================================== -->
       <section id="view-chat-admin" class="tab-content hidden space-y-6">
+        {% include '_peticiones.html' %}
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 7: EMPRESAS                                        -->
+      <!-- ======================================================== -->
+      <section id="view-empresas" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Empresas Mandantes</h1>
+            <p class="text-sm text-slate-500 mt-1">Registro de las empresas cliente. No se eliminan: se desactivan para conservar el historial de sus proyectos.</p>
+          </div>
+          <a href="{% url 'crear_empresa' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">+ Registrar Empresa</a>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                <th class="px-4 py-3">Razón Social</th>
+                <th class="px-4 py-3">RUT</th>
+                <th class="px-4 py-3">Contacto</th>
+                <th class="px-4 py-3">Clientes</th>
+                <th class="px-4 py-3">Proyectos</th>
+                <th class="px-4 py-3">Estado</th>
+                <th class="px-4 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for e in empresas %}
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3"><div class="font-bold text-slate-900">{{ e.razon_social }}</div>{% if e.giro %}<div class="text-[10px] text-slate-500">{{ e.giro }}</div>{% endif %}</td>
+                <td class="px-4 py-3 font-mono text-[11px]">{{ e.rut|default:"—" }}</td>
+                <td class="px-4 py-3 text-[11px] text-slate-600">{{ e.email|default:"" }}{% if e.telefono %}<div class="font-mono">{{ e.telefono }}</div>{% endif %}</td>
+                <td class="px-4 py-3 font-mono">{{ e.n_clientes }}</td>
+                <td class="px-4 py-3 font-mono">{{ e.n_proyectos }}</td>
+                <td class="px-4 py-3">{% if e.activa %}<span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activa</span>{% else %}<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactiva</span>{% endif %}</td>
+                <td class="px-4 py-3 text-right"><a href="{% url 'editar_empresa' e.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 italic">No hay empresas registradas.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 8: ARCHIVADOS                                      -->
+      <!-- ======================================================== -->
+      <section id="view-archivados" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Solicitudes & Mensajería Global</h1>
-          <p class="text-sm text-slate-500 mt-1">Intervención directa en los canales de proyectos con clientes y operadores técnicos.</p>
+          <h1 class="text-2xl font-bold text-slate-900">Archivados</h1>
+          <p class="text-sm text-slate-500 mt-1">Proyectos y solicitudes archivados. Se pueden restaurar; si no, se eliminan automáticamente a los {{ dias_archivo }} días. La eliminación definitiva manual exige escribir el código.</p>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[500px]">
-          <!-- Lista de Canales -->
-          <div class="border-r border-slate-200 bg-slate-50 p-3 space-y-2">
-            {% for proyecto in proyectos %}
-            <div data-id="{{ proyecto.id }}" data-nombre="{{ proyecto.nombre }}" data-cliente="{{ proyecto.cliente.empresa_cliente|default:proyecto.cliente.username }}" onclick="selectAdminChat('{{ proyecto.id }}')" class="chat-ch {% if forloop.first %}chat-ch-selected{% endif %} p-3 bg-white border border-slate-200 rounded hover:border-slate-300 cursor-pointer">
-              <div class="font-mono text-[10px] text-slate-500">SNG-{{ proyecto.id }}</div>
-              <div class="text-xs font-bold text-slate-800 truncate">{{ proyecto.nombre }}</div>
-              <div class="text-[11px] text-slate-500 truncate mt-1">Operador: {{ proyecto.empleado_encargado.username|default:"Sin asignar" }}</div>
-            </div>
-            {% empty %}
-            <div class="p-3 text-xs text-slate-500 italic">Sin proyectos registrados.</div>
-            {% endfor %}
-          </div>
+        {% with tipo='proyecto' items=proyectos_archivados titulo='Proyectos archivados' %}{% include '_archivados.html' %}{% endwith %}
+        {% with tipo='solicitud' items=solicitudes_archivadas titulo='Solicitudes archivadas' %}{% include '_archivados.html' %}{% endwith %}
+      </section>
 
-          <!-- Conversación -->
-          <div class="col-span-2 flex flex-col p-4 bg-white">
-            <div class="pb-3 border-b border-slate-200 flex justify-between items-center mb-3">
-              <div>
-                <strong class="text-sm text-slate-900" id="admin-chat-title">{{ proyectos.0.nombre|default:"Sin canal seleccionado" }}</strong>
-                <div class="font-mono text-[11px] text-slate-500" id="admin-chat-sub">{% if proyectos %}Canal Supervisado (Cliente: {{ proyectos.0.cliente.empresa_cliente|default:proyectos.0.cliente.username }}){% endif %}</div>
-              </div>
-              <span class="text-xs bg-red-100 text-sinergi-red font-semibold px-2.5 py-0.5 rounded">Supervisión Admin</span>
-            </div>
-
-            <div class="flex-1 space-y-3 overflow-y-auto pr-2 max-h-[320px]" id="admin-chat-messages">
-              <div class="max-w-[85%] bg-slate-100 p-3 rounded text-xs text-slate-800">
-                <span class="block font-mono text-[10px] text-slate-500 font-semibold mb-1">SISTEMA</span>
-                No existen alertas no resueltas en los canales de proyectos.
-              </div>
-            </div>
-
-            <div class="pt-3 border-t border-slate-200 mt-auto space-y-2">
-              <div class="flex items-center text-xs text-slate-600">
-                <label class="flex items-center gap-2 cursor-pointer font-medium">
-                  <input type="checkbox" id="admin-chk-email" checked class="w-4 h-4 rounded text-sinergi-red accent-sinergi-red cursor-pointer">
-                  <span>Despachar notificación formal de la Dirección por correo (Brevo)</span>
-                </label>
-              </div>
-
-              <div class="flex gap-2">
-                <input type="text" id="admin-chat-input" placeholder="Escribir resolución o mensaje administrativo..." class="flex-1 text-xs border border-slate-300 rounded px-3 py-2.5 outline-none focus:border-sinergi-red">
-                <button onclick="sendAdminMessage()" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-5 py-2.5 rounded shadow-sm">
-                  Enviar
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- ======================================================== -->
+      <!-- VISTA 9: REGISTRO DE ACTIVIDAD                           -->
+      <!-- ======================================================== -->
+      <section id="view-actividad" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-2xl font-bold text-slate-900">Registro de Actividad</h1>
+          <p class="text-sm text-slate-500 mt-1">Quién hizo qué y cuándo (últimos 150 eventos). Se conserva aunque el proyecto, la solicitud o el usuario se eliminen.</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                <th class="px-4 py-3">Fecha</th>
+                <th class="px-4 py-3">Usuario</th>
+                <th class="px-4 py-3">Acción</th>
+                <th class="px-4 py-3">Objeto</th>
+                <th class="px-4 py-3">Detalle</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for r in actividad %}
+              <tr>
+                <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">{{ r.fecha|date:"d M Y H:i" }}</td>
+                <td class="px-4 py-2.5 font-mono text-[11px]">{{ r.usuario_nombre }}</td>
+                <td class="px-4 py-2.5"><span class="bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded">{{ r.get_accion_display }}</span></td>
+                <td class="px-4 py-2.5 font-medium text-slate-900">{{ r.objeto }}</td>
+                <td class="px-4 py-2.5 text-slate-500">{{ r.detalle|truncatechars:120 }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 italic">Sin actividad registrada.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -454,6 +576,8 @@
   </div>
 
   <!-- ==================== LOGICA JAVASCRIPT ==================== -->
+  {% include '_modal_observar.html' %}
+
   <script>
     function switchAdminTab(targetView, element) {
       document.querySelectorAll('.tab-content').forEach(view => view.classList.add('hidden'));
@@ -465,41 +589,9 @@
       if (element) element.classList.add('tab-active');
     }
 
-    function selectAdminChat(id) {
-      document.querySelectorAll('.chat-ch').forEach(ch => {
-        const activo = ch.dataset.id === id;
-        ch.classList.toggle('chat-ch-selected', activo);
-        if (activo) {
-          document.getElementById('admin-chat-title').textContent = ch.dataset.nombre;
-          document.getElementById('admin-chat-sub').textContent = 'Canal Supervisado (Cliente: ' + ch.dataset.cliente + ')';
-        }
-      });
-    }
+    const tabInicial = new URLSearchParams(location.search).get('tab');
+    if (tabInicial) switchAdminTab(tabInicial, document.querySelector(`.nav-btn[onclick*="'${CSS.escape(tabInicial)}'"]`));
 
-    // Simulado: el chat aún no persiste mensajes en el servidor
-    function sendAdminMessage() {
-      const input = document.getElementById('admin-chat-input');
-      const text = input.value.trim();
-      const sendEmail = document.getElementById('admin-chk-email').checked;
-      if (!text) return;
-
-      const container = document.getElementById('admin-chat-messages');
-      const div = document.createElement('div');
-      div.className = "max-w-[85%] ml-auto bg-red-50 border border-red-200 p-3 rounded text-xs text-slate-800 text-right";
-      const autor = document.createElement('span');
-      autor.className = "block font-mono text-[10px] text-sinergi-red font-bold mb-1";
-      autor.textContent = 'DIRECCIÓN GENERAL (ADMIN)';
-      div.append(autor, text);
-      if (sendEmail) {
-        const nota = document.createElement('span');
-        nota.className = "block text-[10px] text-slate-400 mt-1 font-mono";
-        nota.textContent = '✓ Notificación enviada al cliente vía Brevo';
-        div.appendChild(nota);
-      }
-      container.appendChild(div);
-      input.value = '';
-      container.scrollTop = container.scrollHeight;
-    }
   </script>
 </body>
 </html>

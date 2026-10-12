@@ -1,0 +1,15 @@
+<!-- Bitácora de avance de un proyecto (últimas 5 actualizaciones). Requiere `proyecto`. -->
+<div>
+  <h4 class="text-xs font-bold text-slate-900 mb-2">Bitácora de Avance</h4>
+  <ul class="text-xs space-y-2">
+    {% for a in proyecto.actualizaciones.all|slice:":5" %}
+    <li class="border-l-2 border-sinergi-blue pl-2">
+      <div class="font-mono text-[10px] text-slate-400">{{ a.fecha|date:"d M Y H:i" }}</div>
+      <div><strong>{{ a.porcentaje }}%</strong> · {{ a.estado }}</div>
+      {% if a.comentario %}<div class="text-slate-600 whitespace-pre-line">{{ a.comentario }}</div>{% endif %}
+    </li>
+    {% empty %}
+    <li class="text-slate-500 italic">Sin actualizaciones registradas.</li>
+    {% endfor %}
+  </ul>
+</div>

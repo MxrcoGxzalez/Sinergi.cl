@@ -1,28 +1,36 @@
-{% with av=proyecto.porcentaje_avance %}
+<!-- Fases de la obra (solo lectura). Requiere `proyecto` con fases__subfases precargadas. -->
+{% with fases=proyecto.fases.all %}
+{% if fases %}
 <div class="relative pl-6 border-l-2 border-slate-200 space-y-6">
-  <div class="hito done">
+  {% for fase in fases %}
+  <div class="hito {% if fase.estado == 'COMPLETADA' %}done{% elif fase.estado == 'EN_CURSO' %}active{% else %}pending{% endif %}">
     <div class="hito-dot"></div>
     <span class="hito-badge"></span>
-    <h4 class="text-sm font-semibold text-slate-900 mt-1">1. Levantamiento y antecedentes técnicos</h4>
-    <p class="text-xs text-slate-500 mt-0.5">Aprobado y registrado</p>
+    <span class="ml-1 font-mono text-[10px] text-slate-500">{{ fase.avance }}%</span>
+    <h4 class="text-sm font-semibold text-slate-900 mt-1">{{ forloop.counter }}. {{ fase.nombre }}</h4>
+    {% if fase.fecha_inicio or fase.fecha_termino %}
+    <p class="font-mono text-[11px] text-slate-400">{{ fase.fecha_inicio|date:"d M Y"|default:"—" }} → {{ fase.fecha_termino|date:"d M Y"|default:"—" }}</p>
+    {% endif %}
+    {% if fase.descripcion %}<p class="text-xs text-slate-500 mt-0.5 whitespace-pre-line">{{ fase.descripcion }}</p>{% endif %}
+    {% with subfases=fase.subfases.all %}{% if subfases %}
+    <ul class="mt-2 space-y-1">
+      {% for sub in subfases %}
+      <li class="subfase subfase-{{ sub.estado|lower }} text-xs">
+        <span class="subfase-icono"></span>
+        <span>{{ sub.nombre }}</span>
+        {% if sub.estado == 'COMPLETADA' %}<span class="font-mono text-[10px] text-slate-400">· completada {{ sub.completada_en|date:"d M Y" }}</span>
+        {% elif sub.fecha_limite %}<span class="font-mono text-[10px] text-slate-400">· límite {{ sub.fecha_limite|date:"d M Y" }}</span>{% endif %}
+        {% if sub.descripcion %}<div class="pl-5 text-[11px] text-slate-500 whitespace-pre-line">{{ sub.descripcion }}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}{% endwith %}
   </div>
-  <div class="hito {% if av >= 40 %}done{% else %}active{% endif %}">
-    <div class="hito-dot"></div>
-    <span class="hito-badge"></span>
-    <h4 class="text-sm font-semibold text-slate-900 mt-1">2. Ingeniería conceptual y básica aprobada</h4>
-    <p class="text-xs text-slate-500 mt-0.5">Planos y memoria en revisión</p>
-  </div>
-  <div class="hito {% if av >= 80 %}done{% elif av >= 40 %}active{% else %}pending{% endif %}">
-    <div class="hito-dot"></div>
-    <span class="hito-badge"></span>
-    <h4 class="text-sm font-semibold text-slate-900 mt-1">3. Inspección técnica y faena en terreno</h4>
-    <p class="text-xs text-slate-500 mt-0.5">En ejecución activa</p>
-  </div>
-  <div class="hito {% if av == 100 %}done{% else %}pending{% endif %}">
-    <div class="hito-dot"></div>
-    <span class="hito-badge"></span>
-    <h4 class="text-sm font-semibold text-slate-900 mt-1">4. Recepción final y entrega de carpetas</h4>
-    <p class="text-xs text-slate-500 mt-0.5">Pendiente de cierre</p>
-  </div>
+  {% endfor %}
 </div>
+{% else %}
+<div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-5 text-center text-xs text-slate-500">
+  Las fases de esta obra aún no han sido definidas por el equipo Sinergi.
+</div>
+{% endif %}
 {% endwith %}

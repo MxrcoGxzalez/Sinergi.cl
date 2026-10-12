@@ -1,0 +1,157 @@
+{% extends 'base_usuarios.html' %}
+
+{% block title %}Control de Obra {{ proyecto.codigo }} | Sinergi{% endblock %}
+
+{% block content %}
+<!-- Control de obra: lo usan el empleado a cargo y el admin. El cliente ve el resultado en su portal. -->
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <div>
+    <a href="{% url 'dashboard' %}?tab={% if user.role == 'ADMIN' %}supervision-hitos{% else %}proyectos{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver al panel</a>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mt-2 pb-4 border-b border-slate-200">
+      <div>
+        <span class="font-mono text-xs text-[#1D5B8A] font-bold">CONTROL DE OBRA · {{ proyecto.codigo }}</span>
+        {% if proyecto.es_nuevo %}<span class="badge-nuevo">NUEVO</span>{% endif %}
+        <h1 class="text-2xl font-bold text-slate-900">{{ proyecto.nombre }}</h1>
+        <p class="text-xs text-slate-500 mt-1">
+          Empresa: <strong>{{ proyecto.empresa|default:"—" }}</strong>{% if proyecto.sucursal %} · Sucursal: {{ proyecto.sucursal }}{% endif %}
+          · Contacto: {{ proyecto.cliente.get_full_name|default:proyecto.cliente.username }}
+          · Encargado: {% if proyecto.empleado_encargado %}{{ proyecto.empleado_encargado.get_full_name|default:proyecto.empleado_encargado.username }}{% else %}<span class="text-[#C52222]">sin asignar</span>{% endif %}
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span class="estado self-center" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
+        <a href="{% url 'proyectos:editar' proyecto.id %}" class="text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold px-3 py-1.5 rounded shadow-sm">Editar Datos del Proyecto</a>
+        <a href="{% url 'proyectos:diagrama' proyecto.id %}" target="_blank" rel="noopener" class="text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold px-3 py-1.5 rounded shadow-sm">Abrir Diagrama (imprimible)</a>
+      </div>
+    </div>
+  </div>
+
+  {% include '_mensajes.html' %}
+
+  <!-- Avance general -->
+  <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+    <div class="flex justify-between items-end mb-2">
+      <span class="font-mono text-[11px] uppercase font-bold text-slate-500">Avance general · calculado automáticamente desde las fases y subfases</span>
+      <span class="font-mono text-2xl font-black text-slate-900">{{ proyecto.porcentaje_avance }}%</span>
+    </div>
+    <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+      <div class="bg-[#1D5B8A] h-full" style="width: {{ proyecto.porcentaje_avance }}%;"></div>
+    </div>
+  </div>
+
+  <!-- ==================== FASES Y SUBFASES ==================== -->
+  <section class="bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Fases y Subfases</h2>
+            <p class="text-[11px] text-slate-500">{{ fases|length }} fase(s). Es lo que ve el cliente. Al completar fases y subfases, el avance se actualiza solo.</p>
+          </div>
+          <div class="flex items-center gap-1 text-xs" role="tablist">
+            <button type="button" data-vista="lista" class="vista-btn vista-btn-activa">Lista</button>
+            <button type="button" data-vista="diagrama" class="vista-btn">Diagrama</button>
+          </div>
+        </div>
+
+        <div id="vista-diagrama" class="p-5 hidden">
+          {% include '_diagrama_fases.html' %}
+        </div>
+
+        <div id="vista-lista" class="p-5 space-y-4">
+          {% if not fases %}
+          <div class="bg-slate-50 border border-dashed border-slate-300 rounded p-4 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span>Este proyecto aún no tiene fases (avance 0%). Agrégalas abajo o carga las 4 fases estándar como punto de partida.</span>
+            <form method="POST" action="{% url 'proyectos:fases_estandar' proyecto.id %}">
+              {% csrf_token %}
+              <button type="submit" class="whitespace-nowrap bg-[#1D5B8A] hover:bg-sky-800 text-white font-semibold px-3 py-2 rounded">Cargar 4 fases estándar</button>
+            </form>
+          </div>
+          {% endif %}
+
+          {% for fase in fases %}
+          {% with subfases=fase.subfases.all %}
+          <div class="border border-slate-200 rounded-lg overflow-hidden">
+            <div class="bg-slate-50 px-4 py-3 flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono text-[10px] font-bold text-slate-500">FASE {{ forloop.counter }}</span>
+                  <span class="etapa-estado" data-estado="{{ fase.estado }}">{{ fase.get_estado_display }}</span>
+                  <span class="font-mono text-[11px] font-bold text-slate-700">{{ fase.avance }}%</span>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm mt-1">{{ fase.nombre }}</h3>
+                {% if fase.fecha_inicio or fase.fecha_termino %}<p class="font-mono text-[10px] text-slate-400">{{ fase.fecha_inicio|date:"d M Y"|default:"—" }} → {{ fase.fecha_termino|date:"d M Y"|default:"—" }}</p>{% endif %}
+                {% if fase.descripcion %}<p class="text-[11px] text-slate-500 whitespace-pre-line mt-1">{{ fase.descripcion }}</p>{% endif %}
+              </div>
+              <div class="flex items-center gap-1 flex-wrap justify-end">
+                {% if not subfases %}
+                  {% if fase.estado != 'EN_CURSO' and fase.estado != 'COMPLETADA' %}{% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='EN_CURSO' texto='Iniciar' %}{% endif %}
+                  {% if fase.estado != 'COMPLETADA' %}{% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='COMPLETADA' texto='✓ Completar' clase='etapa-btn etapa-btn-ok' %}
+                  {% else %}{% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='EN_CURSO' texto='Reabrir' %}{% endif %}
+                {% endif %}
+                <a href="{% url 'proyectos:fase_editar' proyecto.id fase.id %}" class="etapa-btn">Editar</a>
+                {% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='eliminar' texto='Eliminar' clase='etapa-btn etapa-btn-peligro' confirmar='¿Eliminar la fase y todas sus subfases? El avance del proyecto se recalculará.' %}
+              </div>
+            </div>
+
+            <ul class="divide-y divide-slate-100">
+              {% for sub in subfases %}
+              <li class="px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="subfase subfase-{{ sub.estado|lower }} text-xs">
+                  <span class="subfase-icono"></span>
+                  <span class="font-medium text-slate-800">{{ sub.nombre }}</span>
+                  {% if sub.estado == 'COMPLETADA' %}<span class="font-mono text-[10px] text-slate-400">· completada {{ sub.completada_en|date:"d M Y" }}</span>
+                  {% elif sub.fecha_limite %}<span class="font-mono text-[10px] text-slate-400">· límite {{ sub.fecha_limite|date:"d M Y" }}</span>{% endif %}
+                  {% if sub.descripcion %}<div class="pl-5 text-[11px] text-slate-500 whitespace-pre-line">{{ sub.descripcion }}</div>{% endif %}
+                </div>
+                <div class="flex items-center gap-1 flex-wrap justify-end">
+                  {% if sub.estado == 'PENDIENTE' %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='EN_CURSO' texto='Iniciar' %}{% endif %}
+                  {% if sub.estado != 'COMPLETADA' %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='COMPLETADA' texto='✓ Completar' clase='etapa-btn etapa-btn-ok' %}
+                  {% else %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='EN_CURSO' texto='Reabrir' %}{% endif %}
+                  <a href="{% url 'proyectos:subfase_editar' fase.id sub.id %}" class="etapa-btn">Editar</a>
+                  {% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='eliminar' texto='×' titulo='Eliminar' clase='etapa-btn etapa-btn-peligro' confirmar='¿Eliminar esta subfase?' %}
+                </div>
+              </li>
+              {% endfor %}
+              <li class="px-4 py-2">
+                <a href="{% url 'proyectos:subfase_nueva' fase.id %}" class="text-xs font-semibold text-[#1D5B8A] hover:underline">+ Agregar subfase</a>
+              </li>
+            </ul>
+          </div>
+          {% endwith %}
+          {% endfor %}
+
+          <!-- Alta rápida de fase -->
+          <form method="POST" action="{% url 'proyectos:fase_nueva' proyecto.id %}" class="bg-slate-50 border border-slate-200 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-end text-xs">
+            {% csrf_token %}
+            <input type="hidden" name="estado" value="PENDIENTE">
+            <div class="sm:col-span-5">
+              <label class="block font-semibold text-slate-700 mb-1">Nueva fase *</label>
+              <input type="text" name="nombre" required maxlength="150" placeholder="Ej: Pruebas y puesta en marcha" class="w-full bg-white p-2 border border-slate-300 rounded outline-none focus:border-[#1D5B8A]">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block font-semibold text-slate-700 mb-1">Inicio</label>
+              <input type="date" name="fecha_inicio" class="w-full bg-white p-2 border border-slate-300 rounded outline-none focus:border-[#1D5B8A]">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block font-semibold text-slate-700 mb-1">Término</label>
+              <input type="date" name="fecha_termino" class="w-full bg-white p-2 border border-slate-300 rounded outline-none focus:border-[#1D5B8A]">
+            </div>
+            <div class="sm:col-span-1">
+              <button type="submit" class="w-full bg-[#C52222] hover:bg-[#A71D1D] text-white font-bold p-2 rounded" title="Agregar fase">+</button>
+            </div>
+          </form>
+        </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Alterna entre la lista editable y el diagrama
+  document.querySelectorAll('.vista-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.vista-btn').forEach(b => b.classList.toggle('vista-btn-activa', b === btn));
+    document.getElementById('vista-lista').classList.toggle('hidden', btn.dataset.vista !== 'lista');
+    document.getElementById('vista-diagrama').classList.toggle('hidden', btn.dataset.vista !== 'diagrama');
+  }));
+</script>
+{% endblock %}

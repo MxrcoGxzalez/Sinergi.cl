@@ -1,0 +1,9 @@
+<!-- Selector de estado de una petición (solo personal Sinergi). Requiere `p`; `volver` opcional ('bandeja'). -->
+<form method="POST" action="{% url 'proyectos:estado_peticion' p.id %}" class="inline">
+  {% csrf_token %}
+  {% if volver %}<input type="hidden" name="volver" value="{{ volver }}">{% endif %}
+  <select name="estado" aria-label="Estado de {{ p.codigo }}" onchange="this.form.submit()" class="text-[11px] border border-slate-300 rounded px-1.5 py-1 bg-white cursor-pointer">
+    {% for valor, nombre in p.ESTADOS %}<option value="{{ valor }}" {% if valor == p.estado %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+  </select>
+  <noscript><button type="submit" class="text-[11px] underline">Guardar</button></noscript>
+</form>

@@ -1,0 +1,30 @@
+{% extends 'base_usuarios.html' %}
+
+{% block title %}Diagrama {{ proyecto.codigo }} | Sinergi{% endblock %}
+
+{% block content %}
+<!-- Diagrama del proyecto: foto del estado actual de fases y subfases, imprimible o guardable como PDF -->
+<div class="max-w-6xl mx-auto space-y-4">
+  <div class="no-print flex flex-wrap justify-between items-center gap-2">
+    {% if user.role == 'CLIENTE' %}
+    <a href="{% url 'dashboard' %}" class="text-xs text-slate-500 hover:underline">&larr; Volver a Mis Proyectos</a>
+    {% else %}
+    <a href="{% url 'proyectos:control' proyecto.id %}" class="text-xs text-slate-500 hover:underline">&larr; Volver al Control de Obra</a>
+    {% endif %}
+    <button type="button" onclick="window.print()" class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2 rounded shadow-sm">Imprimir / Guardar PDF</button>
+  </div>
+
+  <div class="pb-3 border-b border-slate-200">
+    <h1 class="text-2xl font-bold text-slate-900">Diagrama del Proyecto</h1>
+    <p class="text-xs text-slate-500 mt-1">
+      {{ proyecto.codigo }} — {{ proyecto.nombre }}
+      {% if proyecto.empleado_encargado %} · Encargado: {{ proyecto.empleado_encargado.get_full_name|default:proyecto.empleado_encargado.username }}{% endif %}
+      · Estado al {{ generado|date:"d M Y, H:i" }}
+    </p>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+    {% include '_diagrama_fases.html' %}
+  </div>
+</div>
+{% endblock %}

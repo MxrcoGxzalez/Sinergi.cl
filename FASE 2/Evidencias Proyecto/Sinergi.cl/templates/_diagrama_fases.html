@@ -1,0 +1,43 @@
+<!-- Diagrama de fases y subfases (foto del estado actual). Requiere `proyecto` y `fases` (con subfases precargadas). -->
+<div class="diagrama">
+  <div class="diagrama-raiz">
+    <span class="font-mono text-[10px] text-slate-500">{{ proyecto.codigo }}{% if proyecto.empresa %} · {{ proyecto.empresa }}{% endif %}</span>
+    <strong class="block text-sm text-slate-900">{{ proyecto.nombre }}</strong>
+    <div class="diagrama-barra"><div style="width: {{ proyecto.porcentaje_avance }}%;"></div></div>
+    <span class="font-mono text-[11px] text-slate-600"><strong>{{ proyecto.porcentaje_avance }}%</strong> · {{ proyecto.estado }}</span>
+  </div>
+
+  {% if fases %}
+  <div class="diagrama-conector" aria-hidden="true"></div>
+  <ol class="diagrama-flujo">
+    {% for fase in fases %}
+    {% if not forloop.first %}<li class="diagrama-flecha" aria-hidden="true"></li>{% endif %}
+    <li class="diagrama-fase" data-estado="{{ fase.estado }}">
+      <div class="flex justify-between items-center gap-2">
+        <span class="font-mono text-[10px] font-bold text-slate-500">FASE {{ forloop.counter }}</span>
+        <span class="etapa-estado" data-estado="{{ fase.estado }}">{{ fase.get_estado_display }}</span>
+      </div>
+      <strong class="block text-slate-900 mt-1">{{ fase.nombre }}</strong>
+      {% if fase.fecha_inicio or fase.fecha_termino %}
+      <span class="block font-mono text-[10px] text-slate-400">{{ fase.fecha_inicio|date:"d M Y"|default:"—" }} → {{ fase.fecha_termino|date:"d M Y"|default:"—" }}</span>
+      {% endif %}
+      <div class="diagrama-barra"><div style="width: {{ fase.avance }}%;"></div></div>
+      <span class="font-mono text-[10px] text-slate-500">{{ fase.avance }}%</span>
+      {% with subfases=fase.subfases.all %}{% if subfases %}
+      <ul class="diagrama-subfases">
+        {% for sub in subfases %}
+        <li class="subfase subfase-{{ sub.estado|lower }}"><span class="subfase-icono"></span>{{ sub.nombre }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}{% endwith %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="text-center text-xs text-slate-500 italic mt-4">Las fases de esta obra aún no han sido definidas.</p>
+  {% endif %}
+
+  <div class="diagrama-leyenda subfase-pendiente"><span class="subfase-icono"></span>Pendiente</div>
+  <div class="diagrama-leyenda subfase-en_curso"><span class="subfase-icono"></span>En curso</div>
+  <div class="diagrama-leyenda subfase-completada"><span class="subfase-icono"></span>Completada</div>
+</div>

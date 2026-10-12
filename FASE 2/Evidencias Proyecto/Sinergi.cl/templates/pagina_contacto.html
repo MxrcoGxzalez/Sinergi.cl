@@ -157,7 +157,12 @@
 
             <!-- Columna Derecha: Formulario de Requerimiento (Captura de Lead) -->
             <div class="lg:col-span-7 reveal">
-              <form id="lead-contact-form" novalidate class="rounded-[2.5rem] border border-ink/15 bg-white p-7 sm:p-12 shadow-xl shadow-ink/5">
+              <form id="lead-contact-form" method="POST" action="{% url 'contacto' %}#lead-contact-form" novalidate class="rounded-[2.5rem] border border-ink/15 bg-white p-7 sm:p-12 shadow-xl shadow-ink/5">
+                {% csrf_token %}
+                <!-- Honeypot antispam: oculto para personas -->
+                <input type="text" name="sitio_web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+                <!-- Trampa de tiempo firmada: detecta envíos automáticos instantáneos -->
+                <input type="hidden" name="ts" value="{{ form.ts.value }}">
                 <div class="grid gap-6 sm:grid-cols-2">
                   <div>
                     <label for="c-name" class="block font-mono text-[10px] uppercase tracking-wider text-ink/60 font-bold mb-2">
@@ -165,9 +170,11 @@
                     </label>
                     <input
                       id="c-name"
-                      name="name"
+                      name="nombre_contacto"
                       type="text"
                       required
+                      maxlength="150"
+                      value="{{ form.nombre_contacto.value|default:'' }}"
                       placeholder="Roberto Salas"
                       class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
                     >
@@ -179,9 +186,11 @@
                     </label>
                     <input
                       id="c-company"
-                      name="company"
+                      name="empresa"
                       type="text"
                       required
+                      maxlength="150"
+                      value="{{ form.empresa.value|default:'' }}"
                       placeholder="Logística & Bodegas SpA"
                       class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
                     >
@@ -196,6 +205,7 @@
                       name="email"
                       type="email"
                       required
+                      value="{{ form.email.value|default:'' }}"
                       placeholder="rsalas@empresa.cl"
                       class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
                     >
@@ -207,8 +217,10 @@
                     </label>
                     <input
                       id="c-phone"
-                      name="phone"
+                      name="telefono"
                       type="tel"
+                      maxlength="30"
+                      value="{{ form.telefono.value|default:'' }}"
                       placeholder="+56 9 1234 5678"
                       class="w-full rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
                     >
@@ -223,16 +235,13 @@
                   <div class="relative">
                     <select
                       id="c-specialty"
-                      name="specialty"
+                      name="especialidad"
                       class="w-full appearance-none rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition pr-10"
                     >
-                      <option value="01. Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)">01. Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)</option>
-                      <option value="02. Protección Contra Incendios (PCI - NFPA 13, 20 & 72)">02. Protección Contra Incendios (PCI - NFPA 13, 20 & 72)</option>
-                      <option value="03. Climatización y Ventilación Mecánica (HVAC)">03. Climatización y Ventilación Mecánica (HVAC)</option>
-                      <option value="04. Seguridad Electrónica (CCTV, Intrusión & Control de Acceso)">04. Seguridad Electrónica (CCTV, Intrusión & Control de Acceso)</option>
-                      <option value="05. Sanitaria, Agua Potable y Alcantarillado">05. Sanitaria, Agua Potable y Alcantarillado</option>
-                      <option value="06. Technical Due Diligence de Especialidades">06. Technical Due Diligence de Especialidades</option>
-                      <option value="07. Coordinación Multidisciplinaria Completa">07. Coordinación Multidisciplinaria Completa</option>
+                      <option value="">Seleccione una especialidad</option>
+                      {% for valor, etiqueta in especialidades %}
+                      <option value="{{ valor }}" {% if form.especialidad.value == valor %}selected{% endif %}>{{ forloop.counter|stringformat:"02d" }}. {{ etiqueta }}</option>
+                      {% endfor %}
                     </select>
                     <svg class="size-4 pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="m6 9 6 6 6-6"/>
@@ -247,16 +256,32 @@
                   </label>
                   <textarea
                     id="c-message"
-                    name="message"
+                    name="descripcion"
                     rows="5"
                     required
+                    maxlength="3000"
                     placeholder="Indique la comuna, metros cuadrados aproximados y requerimiento técnico..."
                     class="w-full resize-y rounded-xl border border-ink/20 bg-paper/40 px-4 py-3.5 text-sm text-ink placeholder:text-ink/35 focus:border-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brick/20 transition"
-                  ></textarea>
+                  >{{ form.descripcion.value|default:'' }}</textarea>
                 </div>
 
                 <!-- Estado de validación -->
+                {% if enviado %}
+                <div id="c-status" class="mt-6 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-xs font-semibold block">
+                  Solicitud recibida. El equipo de Sinergi revisará los antecedentes y se contactará a la brevedad.
+                </div>
+                {% elif bloqueado %}
+                <div id="c-status" class="mt-6 rounded-xl bg-brick/10 border border-brick/30 text-brick-dark px-4 py-3 text-xs font-semibold block">
+                  Se alcanzó el límite de solicitudes desde su conexión. Intente más tarde o escríbanos directamente por correo.
+                </div>
+                {% elif form.errors %}
+                <div id="c-status" class="mt-6 rounded-xl bg-brick/10 border border-brick/30 text-brick-dark px-4 py-3 text-xs font-semibold block">
+                  {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                  {% for field in form %}{% for error in field.errors %}<p>{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}
+                </div>
+                {% else %}
                 <div id="c-status" class="hidden mt-6 rounded-xl px-4 py-3 text-xs font-semibold"></div>
+                {% endif %}
 
                 <!-- Footer del formulario -->
                 <div class="mt-8 pt-6 border-t border-ink/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
@@ -341,21 +366,20 @@
       const statusMsg = $('#c-status');
 
       contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
         const name = $('#c-name');
         const company = $('#c-company');
         const email = $('#c-email');
         const message = $('#c-message');
 
         if (!name.value.trim() || !company.value.trim() || !email.value.trim() || !message.value.trim()) {
+          e.preventDefault();
           statusMsg.textContent = 'Por favor complete todos los campos obligatorios (*).';
           statusMsg.className = 'mt-6 rounded-xl bg-brick/10 border border-brick/30 text-brick-dark px-4 py-3 text-xs font-semibold block';
           return;
         }
 
-        statusMsg.textContent = 'Requerimiento registrado como lead. El equipo técnico revisará los antecedentes y se contactará a la brevedad.';
-        statusMsg.className = 'mt-6 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-xs font-semibold block';
-        contactForm.reset();
+        statusMsg.textContent = 'Enviando solicitud...';
+        statusMsg.className = 'mt-6 rounded-xl bg-paper border border-ink/15 text-ink px-4 py-3 text-xs font-semibold block';
       });
     })();
     </script>
