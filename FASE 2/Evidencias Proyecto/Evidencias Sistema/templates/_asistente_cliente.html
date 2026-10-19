@@ -1,0 +1,154 @@
+{# Burbuja del asistente IA del Portal de Clientes. Habla solo con /api/chat/cliente/ (la clave de Groq queda en el servidor). #}
+<div id="asis" class="fixed bottom-5 right-5 z-40 font-sans" data-url="{% url 'asistente:chat_cliente' %}" data-csrf="{{ csrf_token }}">
+  <section id="asis-panel" role="dialog" aria-modal="false" aria-labelledby="asis-titulo" hidden
+    class="asis-panel absolute bottom-20 right-0 w-[min(390px,calc(100vw-2.5rem))] h-[min(600px,calc(100vh-8rem))] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/25">
+    <header class="flex items-center justify-between gap-3 bg-sinergi-dark px-4 py-3 text-white">
+      <div class="flex items-center gap-3">
+        <span class="relative flex h-9 w-9 items-center justify-center rounded-full bg-sinergi-red/90 font-mono text-xs font-bold">IA
+          <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sinergi-dark bg-emerald-400"></span>
+        </span>
+        <div>
+          <h2 id="asis-titulo" class="text-sm font-semibold leading-tight">Asistente Sinergi</h2>
+          <p class="text-[11px] text-slate-400">Consulta sobre tus proyectos</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button type="button" data-asis-reiniciar title="Nueva conversación" aria-label="Nueva conversación" class="rounded p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" data-asis-cerrar aria-label="Cerrar asistente" class="rounded p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="asis-mensajes" class="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4" aria-live="polite"></div>
+
+    <div id="asis-sugerencias" class="flex flex-wrap gap-1.5 border-t border-slate-100 bg-slate-50 px-4 pb-3 pt-2">
+      <button type="button" class="asis-sug">¿En qué estado está mi proyecto?</button>
+      <button type="button" class="asis-sug">¿Qué documentos tengo cargados?</button>
+      <button type="button" class="asis-sug">¿Quién es mi encargado?</button>
+      <button type="button" class="asis-sug">¿Cómo envío un documento?</button>
+    </div>
+
+    <form id="asis-form" class="flex items-end gap-2 border-t border-slate-200 bg-white p-3">
+      <label for="asis-texto" class="sr-only">Escribe tu pregunta</label>
+      <textarea id="asis-texto" rows="1" maxlength="800" placeholder="Escribe tu pregunta…"
+        class="max-h-28 min-h-[38px] flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sinergi-blue focus:ring-2 focus:ring-sinergi-blue/15"></textarea>
+      <button type="submit" id="asis-enviar" aria-label="Enviar"
+        class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg bg-sinergi-red text-white transition hover:bg-sinergi-red-hover disabled:cursor-not-allowed disabled:opacity-40">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </form>
+    <p class="bg-white px-4 pb-2 text-center text-[10px] text-slate-400">Respuestas generadas con IA. Confirma los datos importantes con tu encargado.</p>
+  </section>
+
+  <button type="button" id="asis-boton" aria-controls="asis-panel" aria-expanded="false" aria-label="Abrir asistente Sinergi"
+    class="group relative flex h-14 w-14 items-center justify-center rounded-full bg-sinergi-red text-white shadow-lg shadow-sinergi-red/30 transition hover:-translate-y-0.5 hover:bg-sinergi-red-hover focus:outline-none focus-visible:ring-4 focus-visible:ring-sinergi-red/30">
+    <svg class="asis-ico-abrir h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" stroke-linejoin="round"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-linecap="round" stroke-width="2.6"/></svg>
+    <svg class="asis-ico-cerrar hidden h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+    <span class="pointer-events-none absolute right-16 whitespace-nowrap rounded bg-sinergi-dark px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition group-hover:opacity-100">Asistente de proyectos</span>
+  </button>
+</div>
+
+<style>
+  #asis-sugerencias[hidden] { display: none !important; }
+  .asis-panel[hidden] { display: none !important; }
+  #asis-boton[aria-expanded="true"] > span { display: none; }
+  .asis-panel { transform-origin: bottom right; transition: opacity .18s ease, transform .18s ease; }
+  .asis-panel.asis-oculto { opacity: 0; transform: translateY(8px) scale(.96); }
+  .asis-sug { border: 1px solid #CBD5E1; background: #fff; border-radius: 9999px; padding: .3rem .7rem; font-size: 11px; color: #334155; transition: border-color .15s, background .15s; }
+  .asis-sug:hover { border-color: #1D5B8A; background: #EBF3FA; color: #1D5B8A; }
+  .asis-msg { max-width: 85%; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; line-height: 1.5; padding: .55rem .8rem; border-radius: .75rem; }
+  .asis-bot { background: #fff; border: 1px solid #E2E8F0; color: #1B222C; border-bottom-left-radius: .2rem; }
+  .asis-yo { margin-left: auto; background: #1D5B8A; color: #fff; border-bottom-right-radius: .2rem; }
+  .asis-error { background: #FFFBEB; border: 1px solid #FCD34D; color: #92400E; }
+  .asis-puntos span { display: inline-block; width: 6px; height: 6px; margin: 0 1.5px; border-radius: 50%; background: #94A3B8; animation: asis-rebote 1.2s infinite ease-in-out; }
+  .asis-puntos span:nth-child(2) { animation-delay: .15s; } .asis-puntos span:nth-child(3) { animation-delay: .3s; }
+  @keyframes asis-rebote { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-4px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .asis-panel { transition: none; } .asis-puntos span { animation: none; } }
+</style>
+
+<script>
+  (() => {
+    const raiz = document.getElementById('asis');
+    if (!raiz) return;
+    const url = raiz.dataset.url, csrf = raiz.dataset.csrf;
+    const boton = document.getElementById('asis-boton');
+    const panel = document.getElementById('asis-panel');
+    const lista = document.getElementById('asis-mensajes');
+    const form = document.getElementById('asis-form');
+    const texto = document.getElementById('asis-texto');
+    const enviar = document.getElementById('asis-enviar');
+    const sugerencias = document.getElementById('asis-sugerencias');
+    const BIENVENIDA = 'Hola, soy el asistente de Sinergi. Puedo contarte el estado y avance de tus proyectos, qué documentos tienes cargados y cómo trabajamos. ¿En qué te ayudo?';
+    let ocupado = false;
+
+    const burbuja = (contenido, clase) => {
+      const d = document.createElement('div');
+      d.className = 'asis-msg ' + clase;
+      d.textContent = contenido;            // textContent: nunca se interpreta HTML
+      lista.appendChild(d);
+      lista.scrollTop = lista.scrollHeight;
+      return d;
+    };
+    const iniciar = () => { lista.innerHTML = ''; burbuja(BIENVENIDA, 'asis-bot'); sugerencias.hidden = false; };
+
+    const abrir = (si) => {
+      boton.setAttribute('aria-expanded', String(si));
+      boton.querySelector('.asis-ico-abrir').classList.toggle('hidden', si);
+      boton.querySelector('.asis-ico-cerrar').classList.toggle('hidden', !si);
+      if (si) {
+        if (!lista.children.length) iniciar();
+        panel.hidden = false;
+        panel.classList.add('asis-oculto');
+        requestAnimationFrame(() => panel.classList.remove('asis-oculto'));
+        texto.focus({ preventScroll: true });
+      } else {
+        panel.classList.add('asis-oculto');
+        setTimeout(() => { panel.hidden = true; }, 180);
+      }
+    };
+
+    const preguntar = async (mensaje) => {
+      mensaje = mensaje.trim();
+      if (!mensaje || ocupado) return;
+      ocupado = true; enviar.disabled = true; sugerencias.hidden = true;
+      burbuja(mensaje, 'asis-yo');
+      texto.value = ''; texto.style.height = '';
+      const espera = burbuja('', 'asis-bot asis-puntos');
+      espera.innerHTML = '<span></span><span></span><span></span>';
+      espera.setAttribute('aria-label', 'El asistente está escribiendo');
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+          body: JSON.stringify({ mensaje }),
+        });
+        const datos = await r.json().catch(() => ({}));
+        espera.remove();
+        if (r.ok) burbuja(datos.respuesta, 'asis-bot');
+        else burbuja(datos.detail || 'No pude responder en este momento. Intenta nuevamente.', 'asis-bot asis-error');
+      } catch (e) {
+        espera.remove();
+        burbuja('Sin conexión con el servidor. Revisa tu internet e intenta nuevamente.', 'asis-bot asis-error');
+      } finally {
+        ocupado = false; enviar.disabled = false; texto.focus();
+      }
+    };
+
+    boton.addEventListener('click', () => abrir(panel.hidden));
+    panel.querySelector('[data-asis-cerrar]').addEventListener('click', () => { abrir(false); boton.focus(); });
+    panel.querySelector('[data-asis-reiniciar]').addEventListener('click', async () => {
+      if (ocupado) return;
+      await fetch(url, { method: 'DELETE', credentials: 'same-origin', headers: { 'X-CSRFToken': csrf } }).catch(() => {});
+      iniciar(); texto.focus();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { abrir(false); boton.focus(); } });
+    form.addEventListener('submit', (e) => { e.preventDefault(); preguntar(texto.value); });
+    texto.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); preguntar(texto.value); } });
+    texto.addEventListener('input', () => { texto.style.height = 'auto'; texto.style.height = Math.min(texto.scrollHeight, 112) + 'px'; });
+    sugerencias.querySelectorAll('.asis-sug').forEach((b) => b.addEventListener('click', () => preguntar(b.textContent)));
+  })();
+</script>
