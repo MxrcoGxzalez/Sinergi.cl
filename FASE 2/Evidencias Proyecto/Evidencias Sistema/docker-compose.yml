@@ -37,5 +37,29 @@ services:
     env_file: .env
     depends_on: [redis, db]
 
+  # Antivirus de los documentos subidos (proyectos/antivirus.py). Al arrancar descarga las firmas
+  # de virus (unos minutos la primera vez); mientras no responde, las subidas se rechazan.
+  clamav:
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav_firmas:/var/lib/clamav
+    restart: unless-stopped
+
+  # Respaldos automáticos: diario, semanal y semanal anterior (BD + documentos) en ./respaldos/
+  # Ver scripts/respaldo.sh. Misma imagen que la BD, así pg_dump coincide con la versión del servidor.
+  respaldos:
+    image: postgres:16
+    command: sh /scripts/respaldo.sh
+    environment:
+      TZ: America/Santiago
+    env_file: .env
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./media:/media:ro
+      - ./respaldos:/respaldos
+    depends_on: [db]
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  clamav_firmas:

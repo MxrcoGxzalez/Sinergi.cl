@@ -6,11 +6,13 @@ import time
 from django.core import signing
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import override_settings
+
+from sinergi.pruebas import TestCase
 from django.urls import reverse
 
 from proyectos.models import Documento, Proyecto, SolicitudProyecto
-from usuarios.models import CustomUser, Empresa
+from usuarios.models import Cliente, CustomUser, Empresa
 
 CLAVE = 'Clave-segura-123'
 
@@ -60,7 +62,7 @@ class AutenticacionTests(TestCase):
 
     def setUp(self):
         cache.clear()
-        CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', empresa=empresa('ACME'))
+        Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
 
     def test_bloqueo_por_fuerza_bruta(self):
         for _ in range(5):
@@ -102,8 +104,8 @@ class DocumentosTests(TestCase):
 
     def setUp(self):
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
-        self.dueno = CustomUser.objects.create_user('dueno', role='CLIENTE', empresa=empresa('A'))
-        self.otro = CustomUser.objects.create_user('otro', role='CLIENTE', empresa=empresa('B'))
+        self.dueno = Cliente.objects.create_user('dueno', empresa=empresa('A'))
+        self.otro = Cliente.objects.create_user('otro', empresa=empresa('B'))
         self.proyecto = Proyecto.objects.create(nombre='Obra', cliente=self.dueno, empleado_encargado=self.emp)
         self.doc = Documento.objects.create(proyecto=self.proyecto, nombre_archivo='Plano', subido_por=self.emp,
                                             archivo=SimpleUploadedFile('Plano Final.pdf', b'%PDF-1.4 contenido'))
@@ -176,7 +178,7 @@ class PaginasPorRolTests(TestCase):
         from proyectos.models import Peticion
         admin = CustomUser.objects.create_user('jefa', role='ADMIN')
         emp = CustomUser.objects.create_user('ing', role='EMPLEADO')
-        cli = CustomUser.objects.create_user('cli', role='CLIENTE', empresa=empresa('ACME'))
+        cli = Cliente.objects.create_user('cli', empresa=empresa('ACME'))
         p = Proyecto.objects.create(nombre='Obra', cliente=cli, empleado_encargado=emp, sucursal='Norte')
         p.registrar_avance(emp, 'Inicio')
         fase = p.fases.create(nombre='Ingeniería', orden=1)
@@ -185,7 +187,8 @@ class PaginasPorRolTests(TestCase):
         Proyecto.objects.create(nombre='Vieja', cliente=cli).archivar(admin)
 
         paginas = {
-            admin: ['dashboard', 'crear_usuario', 'crear_empresa', 'proyectos:crear', 'proyectos:nueva_peticion',
+            admin: ['dashboard', ('crear_usuario', 'cliente'), ('crear_usuario', 'personal'), 'crear_empresa',
+                    ('editar_usuario', 'cliente', cli.id), ('editar_usuario', 'personal', emp.id), 'proyectos:crear', 'proyectos:nueva_peticion',
                     ('editar_empresa', cli.empresa.id), ('proyectos:peticion', pet.id), ('proyectos:control', p.id),
                     ('proyectos:fase_nueva', p.id), ('proyectos:subfase_nueva', fase.id)],
             emp: ['dashboard', 'proyectos:crear', 'proyectos:nueva_peticion', ('proyectos:peticion', pet.id),
@@ -199,3 +202,24 @@ class PaginasPorRolTests(TestCase):
             for url in urls:
                 nombre, args = (url, []) if isinstance(url, str) else (url[0], list(url[1:]))
                 self.assertEqual(self.client.get(reverse(nombre, args=args)).status_code, 200, (usuario.username, nombre))
+
+
+class SeguridadApiYProxyTests(TestCase):
+    def test_api_no_acepta_http_basic(self):
+        """Con HTTP Basic se podrían probar contraseñas sin el bloqueo del login: solo vale la sesión."""
+        import base64
+        Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        credenciales = base64.b64encode(f'cli:{CLAVE}'.encode()).decode()
+        r = self.client.post(reverse('asistente:chat_cliente'), {'mensaje': 'hola'},
+                             HTTP_AUTHORIZATION=f'Basic {credenciales}')
+        self.assertEqual(r.status_code, 403)
+
+    def test_ip_real_detras_del_proxy(self):
+        from django.test import RequestFactory
+        from sinergi.seguridad import ip_cliente
+        # El cliente inventa una IP en X-Forwarded-For; Caddy agrega la real al final
+        req = RequestFactory().get('/', REMOTE_ADDR='172.18.0.9', HTTP_X_FORWARDED_FOR='1.2.3.4, 200.1.1.7')
+        with override_settings(BEHIND_PROXY=True):
+            self.assertEqual(ip_cliente(req), '200.1.1.7')
+        with override_settings(BEHIND_PROXY=False):
+            self.assertEqual(ip_cliente(req), '172.18.0.9')  # sin proxy la cabecera no se cree

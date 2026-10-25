@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashWidget, UserChangeForm
 from django.utils.translation import gettext
 from .forms import EmpresaForm
-from .models import CustomUser, Empresa
+from .models import Cliente, CustomUser, Empresa
 
 # Django Admin es exclusivo del superusuario. El admin de la empresa (role ADMIN)
 # administra desde su panel web y no tiene acceso aquí aunque tenga is_staff.
@@ -27,10 +27,23 @@ class CustomUserAdmin(UserAdmin):
     model = CustomUser
     form = CustomUserChangeForm
     fieldsets = UserAdmin.fieldsets + (
-        ('Información Sinergi', {'fields': ('role', 'empresa')}),
+        ('Información Sinergi', {'fields': ('role',)}),
     )
-    list_display = ['username', 'email', 'role', 'empresa', 'is_superuser']
+    list_display = ['username', 'email', 'role', 'is_superuser']
     list_filter = UserAdmin.list_filter + ('role',)
+
+class ClienteAdmin(UserAdmin):
+    """Clientes (tabla propia). Mismo manejo de contraseña que el personal: hash Argon2id."""
+    form = CustomUserChangeForm
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Datos del cliente', {'fields': ('first_name', 'last_name', 'email', 'empresa')}),
+        ('Estado', {'fields': ('is_active', 'last_login', 'date_joined')}),
+    )
+    add_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'empresa', 'password1', 'password2')}),)
+    list_display = ['username', 'email', 'empresa', 'is_active']
+    list_filter = ('is_active', 'empresa')
+    filter_horizontal = ()
 
 class EmpresaAdmin(admin.ModelAdmin):
     form = EmpresaForm
@@ -39,4 +52,5 @@ class EmpresaAdmin(admin.ModelAdmin):
     search_fields = ('razon_social', 'rut')
 
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Cliente, ClienteAdmin)
 admin.site.register(Empresa, EmpresaAdmin)

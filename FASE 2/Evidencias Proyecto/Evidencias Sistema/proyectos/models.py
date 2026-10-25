@@ -6,6 +6,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from .antivirus import validar_sin_virus
+
 ESPECIALIDADES = [
     ('ELECTRICA', 'Ingeniería Eléctrica y Corrientes Débiles (SEC TE1)'),
     ('PCI', 'Protección Contra Incendios (PCI - NFPA 13, 20 & 72)'),
@@ -93,12 +95,11 @@ class SolicitudProyecto(Archivable):
 
     estado = models.CharField(max_length=10, choices=ESTADOS, default=PENDIENTE)
     cliente = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        'usuarios.Cliente',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='solicitudes',
-        limit_choices_to={'role': 'CLIENTE'},
         verbose_name="Cliente asignado"
     )
     revisada_por = models.ForeignKey(
@@ -152,10 +153,9 @@ class Proyecto(Archivable):
 
     # PROTECT: borrar un cliente con proyectos no debe arrastrar las obras ni sus documentos.
     cliente = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        'usuarios.Cliente',
         on_delete=models.PROTECT,
         related_name='proyectos_cliente',
-        limit_choices_to={'role': 'CLIENTE'}
     )
 
     # Registro de la empresa mandante. Se toma del cliente al crear el proyecto y no cambia
@@ -382,7 +382,7 @@ def ruta_documento(instance, filename):
 class Documento(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='documentos')
     nombre_archivo = models.CharField(max_length=150, verbose_name="Nombre/Descripción")
-    archivo = models.FileField(upload_to=ruta_documento)
+    archivo = models.FileField(upload_to=ruta_documento, validators=[validar_sin_virus])
     fecha_subida = models.DateTimeField(auto_now_add=True)
     # SET_NULL: borrar al usuario no debe borrar los documentos que subió
     subido_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
@@ -408,17 +408,18 @@ class Peticion(models.Model):
     ABIERTA, EN_PROCESO, CERRADA = 'ABIERTA', 'EN_PROCESO', 'CERRADA'
     ESTADOS = [(ABIERTA, 'Abierta'), (EN_PROCESO, 'En proceso'), (CERRADA, 'Cerrada')]
 
-    cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='peticiones',
-                                limit_choices_to={'role': 'CLIENTE'})
+    cliente = models.ForeignKey('usuarios.Cliente', on_delete=models.PROTECT, related_name='peticiones')
     # CASCADE: solo se borra junto con el proyecto (al eliminarlo definitivamente)
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, null=True, blank=True, related_name='peticiones')
     asunto = models.CharField(max_length=150)
     tipo = models.CharField(max_length=10, choices=TIPOS, default='CONSULTA')
     estado = models.CharField(max_length=10, choices=ESTADOS, default=ABIERTA)
+    # Personal que la abrió; vacío si la abrió el propio cliente
     creada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     ultima_actividad = models.DateTimeField(default=timezone.now, db_index=True)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
+    # Personal que la cerró; vacío si la cerró el cliente (queda en RegistroActividad)
     cerrada_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     # Marca "leído": cuándo vio la conversación por última vez cada lado
     leida_cliente_en = models.DateTimeField(null=True, blank=True)
@@ -445,8 +446,9 @@ class Peticion(models.Model):
 class MensajePeticion(models.Model):
     """Mensaje de una petición. No se editan ni se borran: son el registro de lo conversado."""
     peticion = models.ForeignKey(Peticion, on_delete=models.CASCADE, related_name='mensajes')
+    # Personal que lo escribió. Si de_cliente, el autor es el cliente de la petición (peticion.cliente)
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
-    de_cliente = models.BooleanField(default=False, editable=False)  # sobrevive aunque se borre el autor
+    de_cliente = models.BooleanField(default=False, editable=False)
     texto = models.TextField(max_length=3000)
     interno = models.BooleanField(default=False, verbose_name="Nota interna (el cliente no la ve)")
     fecha = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -471,7 +473,9 @@ class RegistroActividad(models.Model):
     ]
 
     fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+    # Quién actuó: personal (usuario) o cliente (cliente); el nombre queda en texto por si se borra la cuenta
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    cliente = models.ForeignKey('usuarios.Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     usuario_nombre = models.CharField(max_length=150, blank=True)
     accion = models.CharField(max_length=10, choices=ACCIONES)
     objeto = models.CharField(max_length=255)
@@ -486,8 +490,10 @@ class RegistroActividad(models.Model):
     @classmethod
     def anotar(cls, accion, objeto, detalle='', request=None):
         usuario = request.user if request and request.user.is_authenticated else None
+        es_cliente = usuario is not None and usuario.role == 'CLIENTE'
         return cls.objects.create(
-            usuario=usuario, usuario_nombre=usuario.username if usuario else 'sistema',
+            usuario=None if es_cliente else usuario, cliente=usuario if es_cliente else None,
+            usuario_nombre=usuario.username if usuario else 'sistema',
             accion=accion, objeto=str(objeto)[:255], detalle=detalle,
             ip=request.META.get('REMOTE_ADDR') or None if request else None,
         )

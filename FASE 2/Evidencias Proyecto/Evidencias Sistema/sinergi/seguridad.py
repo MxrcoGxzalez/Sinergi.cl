@@ -1,6 +1,7 @@
 """Utilidades de seguridad compartidas: límite de intentos, IP del cliente y cabeceras HTTP."""
 import logging
 
+from django.conf import settings
 from django.core.cache import cache
 
 log = logging.getLogger('sinergi.seguridad')
@@ -32,8 +33,14 @@ def cabeceras_seguridad(get_response):
 
 
 def ip_cliente(request):
-    # ponytail: REMOTE_ADDR directo; detrás de un proxy (nginx) todas las IPs serán la del proxy.
-    # En ese caso, leer X-Forwarded-For SOLO si el proxy lo sobrescribe (no confiar en el del cliente).
+    """IP real del visitante (límites de intentos y registro de actividad).
+    Detrás del proxy HTTPS (Caddy, BEHIND_PROXY=true) REMOTE_ADDR es siempre la del proxy, así que se
+    usa la ÚLTIMA IP de X-Forwarded-For: la agrega el propio proxy. Las anteriores las puede inventar
+    el cliente y nunca se usan."""
+    if settings.BEHIND_PROXY:
+        reenviada = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[-1].strip()
+        if reenviada:
+            return reenviada
     return request.META.get('REMOTE_ADDR', 'desconocida')
 
 

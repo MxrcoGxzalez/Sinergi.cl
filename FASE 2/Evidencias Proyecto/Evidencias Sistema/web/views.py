@@ -6,6 +6,7 @@ from django.urls import reverse
 from proyectos.forms import SolicitudPublicaForm
 from proyectos.models import ESPECIALIDADES, Proyecto
 from sinergi.seguridad import ip_cliente, registrar, superado
+from . import noticias
 
 log = logging.getLogger('sinergi.seguridad')
 
@@ -25,7 +26,7 @@ PUNTOS_ESPECIALIDAD = {
 
 def inicio(request):
     total = PROYECTOS_HISTORICOS + Proyecto.portafolio_publico().count()
-    return render(request, 'pagina_inicio.html', {'total_proyectos': total})
+    return render(request, 'pagina_inicio.html', {'total_proyectos': total, 'noticias': noticias.recientes()})
 
 def nosotros(request):
     return render(request, 'pagina_nosotros.html')

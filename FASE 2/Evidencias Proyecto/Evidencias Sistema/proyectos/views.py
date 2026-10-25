@@ -14,7 +14,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_POST
 
 from usuarios.forms import ClienteExistenteForm, ClienteNuevoForm
-from usuarios.models import CustomUser, Empresa
+from usuarios.models import Cliente, Empresa
 from .forms import (DocumentoForm, FaseForm, PeticionForm, PortafolioForm, ProyectoForm, SolicitudPortalForm,
                     SubfaseForm)
 from .models import Documento, Fase, Peticion, Proyecto, RegistroActividad, SolicitudProyecto, Subfase
@@ -34,6 +34,12 @@ def _proyectos_editables(usuario):
     if usuario.role == 'EMPLEADO':
         return Proyecto.objects.activos().filter(empleado_encargado=usuario)
     raise PermissionDenied
+
+
+def _personal(usuario):
+    """Las columnas de autoría (creada_por, autor, cerrada_por...) apuntan a la tabla del personal.
+    Si actúa un cliente queda vacía: el cliente ya está en la petición (peticion.cliente)."""
+    return None if usuario.role == 'CLIENTE' else usuario
 
 
 def _volver_panel(usuario):
@@ -205,7 +211,7 @@ def asignar_cliente_solicitud(request, solicitud_id):
         'email': solicitud.email, 'empresa': empresa, 'nueva_empresa': '' if empresa else solicitud.empresa,
     })
     form_existente = ClienteExistenteForm(request.POST if accion == 'existente' else None, initial={
-        'cliente': CustomUser.objects.filter(role='CLIENTE', email__iexact=solicitud.email).first(),
+        'cliente': Cliente.objects.filter(email__iexact=solicitud.email).first(),
     })
 
     cliente = None
@@ -287,7 +293,7 @@ def nueva_peticion(request):
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             peticion = form.save(commit=False)
-            peticion.creada_por = request.user
+            peticion.creada_por = _personal(request.user)
             peticion.save()
             texto = form.cleaned_data['mensaje']
             # Observación de un documento: el nombre sale de la BD y solo si es de la misma obra
@@ -295,7 +301,7 @@ def nueva_peticion(request):
                 id=request.POST.get('documento') if request.POST.get('documento', '').isdigit() else None).first()
             if documento:
                 texto = f'Documento observado: {documento.nombre_archivo}\n\n{texto}'
-            peticion.mensajes.create(autor=request.user, de_cliente=request.user.role == 'CLIENTE', texto=texto)
+            peticion.mensajes.create(autor=_personal(request.user), de_cliente=request.user.role == 'CLIENTE', texto=texto)
             peticion.marcar_leida(request.user)
             RegistroActividad.anotar('CREAR', f'{peticion.codigo} {peticion.asunto}', request=request)
         messages.success(request, f'Petición {peticion.codigo} enviada.')
@@ -322,7 +328,7 @@ def detalle_peticion(request, peticion_id):
             error = 'Escribe un mensaje.'
         else:
             error = None
-            peticion.mensajes.create(autor=request.user, de_cliente=es_cliente, texto=texto,
+            peticion.mensajes.create(autor=_personal(request.user), de_cliente=es_cliente, texto=texto,
                                      interno=not es_cliente and request.POST.get('interno') == '1')
             if not es_cliente and peticion.estado == Peticion.ABIERTA:
                 peticion.estado = Peticion.EN_PROCESO
@@ -343,7 +349,7 @@ def detalle_peticion(request, peticion_id):
 @require_GET
 def mensajes_peticion(request, peticion_id):
     """JSON para la actualización automática: mensajes nuevos desde `desde` y marca de leído."""
-    peticion = get_object_or_404(peticiones_visibles(request.user), id=peticion_id)
+    peticion = get_object_or_404(peticiones_visibles(request.user).select_related('cliente'), id=peticion_id)
     es_cliente = request.user.role == 'CLIENTE'
     if request.GET.get('visto') == '1':
         peticion.marcar_leida(request.user)
@@ -354,9 +360,10 @@ def mensajes_peticion(request, peticion_id):
         mensajes = mensajes.filter(interno=False)
 
     def autor(m):
-        if not m.autor:
+        cuenta = peticion.cliente if m.de_cliente else m.autor
+        if not cuenta:
             return 'Usuario eliminado'
-        nombre = m.autor.get_full_name() or m.autor.username
+        nombre = cuenta.get_full_name() or cuenta.username
         return nombre if m.de_cliente else f'{nombre} · Sinergi'
 
     leida_otro = peticion.leida_sinergi_en if es_cliente else peticion.leida_cliente_en
@@ -383,7 +390,7 @@ def estado_peticion(request, peticion_id):
         raise Http404
     peticion.estado = nuevo
     if nuevo == Peticion.CERRADA:
-        peticion.fecha_cierre, peticion.cerrada_por = timezone.now(), request.user
+        peticion.fecha_cierre, peticion.cerrada_por = timezone.now(), _personal(request.user)
     else:
         peticion.fecha_cierre, peticion.cerrada_por = None, None
     peticion.ultima_actividad = timezone.now()

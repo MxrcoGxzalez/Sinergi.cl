@@ -475,35 +475,55 @@
           <div class="reveal">
             <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Actualidad</span>
             <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Noticias y normativa</h2>
-            <p class="mt-2 text-ink/70">Artículos técnicos, novedades de la industria y cambios normativos aplicados.</p>
+            <p class="mt-2 text-ink/70">Leyes recientes que afectan a los proyectos y novedades de la SEC, desde las fuentes oficiales.</p>
           </div>
-          <div class="reveal">
-            <a href="#noticias" class="text-sm font-semibold underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Ver más artículos →</a>
+          <div class="reveal flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+            <a href="https://www.bcn.cl/leychile" target="_blank" rel="noopener noreferrer" class="underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Ley Chile →</a>
+            <a href="https://www.sec.cl/" target="_blank" rel="noopener noreferrer" class="underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Sitio SEC →</a>
           </div>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-3 mt-4">
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Technical Due Diligence</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Qué verificar en una inspección técnica antes de adquirir o arrendar un edificio</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Criterios de evaluación en vida útil de equipamiento y cumplimiento de normativas locales e internacionales.</p>
-            <a href="#noticias" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
+        {% if noticias %}
+        <!-- Se actualizan cada 6 horas (web/noticias.py). Se muestran 3 y el resto con "Ver más". -->
+        <div id="noticias-lista" class="grid gap-6 lg:grid-cols-3 mt-4">
+          {% for n in noticias %}
+          <article class="noticia reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg flex flex-col{% if forloop.counter > 3 %} hidden{% endif %}">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full {% if n.fuente == 'SEC' %}bg-amber-50 text-amber-800{% else %}bg-paper text-ink/70{% endif %} px-3 py-1 font-semibold">{{ n.etiqueta }}</span>
+              <time datetime="{{ n.fecha|date:'Y-m-d' }}" class="text-ink/50">{{ n.fecha|date:"d M Y" }}</time>
+            </div>
+            <h3 class="mt-5 font-display text-lg font-bold leading-snug">{{ n.titulo }}</h3>
+            <a href="{{ n.url }}" target="_blank" rel="noopener noreferrer" class="mt-auto pt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">
+              {% if n.fuente == 'SEC' %}Leer en sec.cl{% else %}Ver norma en Ley Chile{% endif %} →<span class="sr-only"> (se abre en otra pestaña)</span>
+            </a>
           </article>
-
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Normativa SEC</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Pliegos técnicos y consideraciones en proyectos de distribución y potencia</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Actualizaciones sobre RIC N°01 a N°19 y directrices para tableros generales en plantas comerciales.</p>
-            <a href="#noticias" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
-          </article>
-
-          <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
-            <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Protección Incendio</span>
-            <h3 class="mt-5 font-display text-xl font-bold leading-snug">Sistemas de rociadores y extinción según estándares NFPA 13, 20 & 72</h3>
-            <p class="mt-3 text-sm text-ink/70 leading-relaxed">Coordinación de matrices húmedas y salas de bombas para aprobación de aseguradoras y Factory Mutual.</p>
-            <a href="#noticias" class="mt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">Leer artículo →</a>
-          </article>
+          {% endfor %}
         </div>
+        {% if noticias|length > 3 %}
+        <div class="mt-8 text-center">
+          <button type="button" id="noticias-mas" class="rounded-full border border-ink/20 bg-white px-6 py-3 text-sm font-semibold text-ink shadow-sm transition hover:border-ink hover:bg-ink hover:text-white">
+            Ver más noticias
+          </button>
+        </div>
+        <script>
+          (() => {
+            const boton = document.getElementById('noticias-mas');
+            boton.addEventListener('click', () => {
+              const ocultas = document.querySelectorAll('#noticias-lista .noticia.hidden');
+              ocultas.forEach(n => n.classList.remove('hidden'));
+              if (ocultas[0]) { ocultas[0].tabIndex = -1; ocultas[0].focus({ preventScroll: true }); }
+              boton.remove();
+            });
+          })();
+        </script>
+        {% endif %}
+        {% else %}
+        <p class="mt-4 rounded-3xl border border-dashed border-ink/20 bg-white/60 p-8 text-center text-sm text-ink/60">
+          Estamos actualizando las noticias. Mientras tanto, revisa la normativa vigente en
+          <a href="https://www.bcn.cl/leychile" target="_blank" rel="noopener noreferrer" class="font-semibold underline">Ley Chile</a> y las novedades de la
+          <a href="https://www.sec.cl/" target="_blank" rel="noopener noreferrer" class="font-semibold underline">SEC</a>.
+        </p>
+        {% endif %}
       </div>
     </section>
 

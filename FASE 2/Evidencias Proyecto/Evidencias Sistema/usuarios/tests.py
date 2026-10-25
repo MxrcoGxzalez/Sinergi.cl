@@ -1,9 +1,9 @@
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from sinergi.pruebas import TestCase
 from django.urls import reverse
 
 from proyectos.models import Proyecto
-from .models import CustomUser, Empresa, normalizar_rut
+from .models import Cliente, CustomUser, Empresa, normalizar_rut
 
 
 def empresa(nombre):
@@ -17,7 +17,7 @@ class SeparacionAdminTests(TestCase):
         self.root = CustomUser.objects.create_superuser('root', 'root@x.cl', 'Clave-segura-123')
         self.admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN', is_staff=True)
         self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password='Clave-segura-123', role='CLIENTE', empresa=empresa('ACME'))
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'))
 
     def test_roles_y_staff(self):
         self.root.refresh_from_db(); self.admin.refresh_from_db()
@@ -33,13 +33,13 @@ class SeparacionAdminTests(TestCase):
 
     def test_admin_web_gestiona_usuarios_pero_no_superusuarios(self):
         self.client.force_login(self.admin)
-        r = self.client.post(reverse('crear_usuario'), {
+        r = self.client.post(reverse('crear_usuario', args=['personal']), {
             'username': 'nuevo', 'role': 'EMPLEADO', 'password1': 'Clave-segura-123', 'password2': 'Clave-segura-123',
         })
         self.assertEqual(r.status_code, 302)
         self.assertFalse(CustomUser.objects.get(username='nuevo').is_staff)
-        self.assertEqual(self.client.get(reverse('editar_usuario', args=[self.root.id])).status_code, 404)
-        self.assertEqual(self.client.get(reverse('editar_usuario', args=[self.admin.id])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('editar_usuario', args=['personal', self.root.id])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('editar_usuario', args=['personal', self.admin.id])).status_code, 404)
 
     def test_gestion_proyectos(self):
         # Cliente no puede registrar proyectos
@@ -71,9 +71,9 @@ class SeparacionAdminTests(TestCase):
         self.client.force_login(self.admin)
         self.assertContains(self.client.get(reverse('dashboard')), 'Obra 1')
         self.assertNotContains(self.client.get(reverse('dashboard')), 'Django Admin)')
-        self.assertEqual(self.client.get(reverse('editar_usuario', args=[self.cli.id])).status_code, 200)
-        self.client.post(reverse('eliminar_usuario', args=[self.cli.id]))
-        self.assertTrue(CustomUser.objects.filter(id=self.cli.id).exists())
+        self.assertEqual(self.client.get(reverse('editar_usuario', args=['cliente', self.cli.id])).status_code, 200)
+        self.client.post(reverse('eliminar_usuario', args=['cliente', self.cli.id]))
+        self.assertTrue(Cliente.objects.filter(id=self.cli.id).exists())
 
         # Admin web edita y elimina
         r = self.client.post(reverse('proyectos:editar', args=[p.id]), {
@@ -110,14 +110,73 @@ class EmpresaTests(TestCase):
         self.assertEqual(Empresa.objects.count(), 1)
 
     def test_cliente_con_empresa_nueva_o_existente(self):
-        datos = {'role': 'CLIENTE', 'password1': 'Clave-segura-123', 'password2': 'Clave-segura-123'}
-        self.client.post(reverse('crear_usuario'), {**datos, 'username': 'a', 'nueva_empresa': 'Bodegas SpA'})
-        self.client.post(reverse('crear_usuario'), {**datos, 'username': 'b', 'nueva_empresa': 'BODEGAS spa'})
+        datos = {'password1': 'Clave-segura-123', 'password2': 'Clave-segura-123'}
+        url_cliente, url_personal = reverse('crear_usuario', args=['cliente']), reverse('crear_usuario', args=['personal'])
+        self.client.post(url_cliente, {**datos, 'username': 'a', 'nueva_empresa': 'Bodegas SpA'})
+        self.client.post(url_cliente, {**datos, 'username': 'b', 'nueva_empresa': 'BODEGAS spa'})
         self.assertEqual(Empresa.objects.count(), 1)  # se reutiliza, no se duplica
-        self.assertEqual(CustomUser.objects.get(username='b').empresa, Empresa.objects.get())
+        self.assertEqual(Cliente.objects.get(username='b').empresa, Empresa.objects.get())
 
-        r = self.client.post(reverse('crear_usuario'), {**datos, 'username': 'c'})
+        r = self.client.post(url_cliente, {**datos, 'username': 'c'})
         self.assertContains(r, 'Los clientes deben tener una empresa asociada.')
-        self.client.post(reverse('crear_usuario'), {**datos, 'username': 'emp', 'role': 'EMPLEADO', 'nueva_empresa': 'X'})
-        self.assertIsNone(CustomUser.objects.get(username='emp').empresa)  # el personal no tiene empresa
+        self.client.post(url_personal, {**datos, 'username': 'emp', 'role': 'EMPLEADO', 'nueva_empresa': 'X'})
+        self.assertEqual(CustomUser.objects.get(username='emp').role, 'EMPLEADO')  # el personal no tiene empresa
         self.assertEqual(Empresa.objects.count(), 1)
+
+
+class SeparacionClientesPersonalTests(TestCase):
+    """Clientes y personal en tablas separadas, un solo login y contraseñas con Argon2id."""
+
+    def setUp(self):
+        self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'))
+
+    def entrar(self, usuario, clave='Clave-segura-123'):
+        return self.client.post(reverse('login'), {'username': usuario, 'password': clave})
+
+    def test_un_solo_login_para_ambas_tablas(self):
+        self.assertRedirects(self.entrar('cli'), reverse('dashboard'), fetch_redirect_response=False)
+        self.assertTemplateUsed(self.client.get(reverse('dashboard')), 'usuario_cliente.html')
+        self.client.post(reverse('logout'))
+        self.entrar('ing')
+        self.assertTemplateUsed(self.client.get(reverse('dashboard')), 'usuario_empresa.html')
+        self.client.post(reverse('logout'))
+        self.assertNotEqual(self.entrar('cli', 'clave-mala')['Location'], reverse('dashboard'))
+
+    def test_hash_argon2id_y_conversion_de_hashes_antiguos(self):
+        from django.contrib.auth.hashers import make_password
+        for cuenta in (self.cli, self.emp):
+            self.assertTrue(cuenta.password.startswith('argon2$argon2id$'))
+            self.assertTrue(cuenta.check_password('Clave-segura-123'))   # verifica comparando el hash
+            self.assertFalse(cuenta.check_password('Clave-segura-124'))
+            # Hash antiguo (PBKDF2): sigue entrando y al iniciar sesión pasa a Argon2id
+            cuenta.password = make_password('Clave-vieja-123', hasher='pbkdf2_sha256')
+            cuenta.save()
+            self.entrar(cuenta.username, 'Clave-vieja-123')
+            cuenta.refresh_from_db()
+            self.assertTrue(cuenta.password.startswith('argon2$argon2id$'))
+            self.client.post(reverse('logout'))
+
+    def test_nombre_de_usuario_unico_entre_tablas(self):
+        admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN')
+        self.client.force_login(admin)
+        datos = {'password1': 'Clave-segura-123', 'password2': 'Clave-segura-123'}
+        r = self.client.post(reverse('crear_usuario', args=['cliente']), {**datos, 'username': 'ING', 'nueva_empresa': 'X'})
+        self.assertContains(r, 'Ya existe una cuenta')
+        r = self.client.post(reverse('crear_usuario', args=['personal']), {**datos, 'username': 'cli', 'role': 'EMPLEADO'})
+        self.assertContains(r, 'Ya existe una cuenta')
+        self.assertEqual(self.client.get(reverse('crear_usuario', args=['otra'])).status_code, 404)
+
+    def test_la_bd_no_admite_clientes_en_la_tabla_del_personal(self):
+        from django.db import IntegrityError, transaction
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            CustomUser.objects.create(username='mal', role='CLIENTE')
+
+    def test_mismo_id_en_ambas_tablas_no_da_acceso(self):
+        # Las tablas tienen contadores propios: un cliente puede tener el mismo id que un empleado
+        gemelo = Cliente.objects.create_user('gemelo', id=self.emp.id, password='x')
+        obra = Proyecto.objects.create(nombre='Obra del empleado', cliente=self.cli, empleado_encargado=self.emp)
+        self.client.force_login(gemelo)
+        self.assertEqual(self.client.get(reverse('proyectos:control', args=[obra.id])).status_code, 403)
+        self.assertEqual(self.client.get(reverse('proyectos:diagrama', args=[obra.id])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse('dashboard')), 'Obra del empleado')

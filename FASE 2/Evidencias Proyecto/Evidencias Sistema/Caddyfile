@@ -1,0 +1,16 @@
+# Proxy HTTPS de producción (servicio "caddy" de docker-compose.prod.yml).
+# - Con un dominio real (DOMINIO=sinergi.cl) obtiene y renueva solo el certificado de Let's Encrypt.
+# - Con DOMINIO=localhost usa un certificado local (para probar; el navegador avisa que no es público).
+# - Redirige http -> https y entrega a Django la IP real (X-Forwarded-For) y el esquema (X-Forwarded-Proto).
+{$DOMINIO} {
+	encode gzip
+
+	# Archivos estáticos (collectstatic) directo desde Caddy. Los documentos de obra (/media/)
+	# NO se sirven aquí: pasan por Django, que exige sesión y permiso sobre el proyecto.
+	handle_path /static/* {
+		root * /srv/static
+		file_server
+	}
+
+	reverse_proxy web:8000
+}

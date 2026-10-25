@@ -1,14 +1,16 @@
 import time
 from datetime import timedelta
+from unittest import mock
 
 from django.core import signing
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import override_settings
+from sinergi.pruebas import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from usuarios.models import CustomUser, Empresa
+from usuarios.models import Cliente, CustomUser, Empresa
 from .models import Documento, Peticion, Proyecto, RegistroActividad, SolicitudProyecto
 from .tasks import purgar_archivados
 
@@ -70,7 +72,7 @@ class SolicitudesTests(TestCase):
         })
         self.assertEqual(r.status_code, 302)
         sol.refresh_from_db()
-        cliente = CustomUser.objects.get(username='rsalas')
+        cliente = Cliente.objects.get(username='rsalas')
         self.assertEqual((cliente.role, cliente.is_staff), ('CLIENTE', False))
         self.assertEqual((sol.estado, sol.cliente, sol.revisada_por), ('APROBADA', cliente, self.admin))
 
@@ -91,7 +93,7 @@ class SolicitudesTests(TestCase):
         self.assertContains(self.client.get(reverse('dashboard')), 'Clima Quilicura')
 
     def test_vincular_cliente_existente_y_rechazar(self):
-        existente = CustomUser.objects.create_user('bodegas', email='RSALAS@bodegas.cl', role='CLIENTE', empresa=empresa('Bodegas SpA'))
+        existente = Cliente.objects.create_user('bodegas', email='RSALAS@bodegas.cl', empresa=empresa('Bodegas SpA'))
         self.enviar()
         self.enviar(empresa='Otra SpA', email='otra@spa.cl')
         sol1, sol2 = SolicitudProyecto.objects.order_by('id')
@@ -112,7 +114,7 @@ class SolicitudesTests(TestCase):
 
 class ClienteSinSubidaTests(TestCase):
     def test_cliente_no_puede_subir_documentos(self):
-        cliente = CustomUser.objects.create_user('cli', password='x', role='CLIENTE', empresa=empresa('ACME'))
+        cliente = Cliente.objects.create_user('cli', password='x', empresa=empresa('ACME'))
         p = Proyecto.objects.create(nombre='Obra', cliente=cliente)
         self.client.force_login(cliente)
         self.assertNotContains(self.client.get(reverse('dashboard')), 'type="file"')
@@ -128,7 +130,7 @@ class ArchivadoTests(TestCase):
     def setUp(self):
         self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', empresa=empresa('ACME'))
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
         self.p = Proyecto.objects.create(nombre='Obra Archivo', cliente=self.cli, empleado_encargado=self.emp)
         self.client.force_login(self.admin)
 
@@ -200,7 +202,7 @@ class SolicitudPortalTests(TestCase):
 
     def setUp(self):
         self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', email='cli@acme.cl',
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, email='cli@acme.cl',
                                                   first_name='Ana', last_name='Rojas', empresa=empresa('ACME'))
 
     def test_cliente_solicita_y_admin_crea_proyecto_directo(self):
@@ -245,8 +247,8 @@ class PeticionesTests(TestCase):
         self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
         self.emp2 = CustomUser.objects.create_user('ing2', password=CLAVE, role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', empresa=empresa('ACME'))
-        self.otro = CustomUser.objects.create_user('otro', password=CLAVE, role='CLIENTE', empresa=empresa('Otra'))
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        self.otro = Cliente.objects.create_user('otro', password=CLAVE, empresa=empresa('Otra'))
         self.p = Proyecto.objects.create(nombre='Obra Chat', cliente=self.cli, empleado_encargado=self.emp)
 
     def no_leidas(self):
@@ -260,7 +262,7 @@ class PeticionesTests(TestCase):
         self.client.post(reverse('proyectos:nueva_peticion'), {
             'proyecto': self.p.id, 'tipo': 'CONSULTA', 'asunto': 'Duda tablero', 'mensaje': '¿Cuándo instalan el tablero?'})
         pet = Peticion.objects.get()
-        self.assertEqual((pet.cliente, pet.estado, pet.creada_por), (self.cli, 'ABIERTA', self.cli))
+        self.assertEqual((pet.cliente, pet.estado, pet.creada_por), (self.cli, 'ABIERTA', None))  # la abrió el cliente
 
         # Empleado: le aparece como no leída
         self.client.force_login(self.emp)
@@ -365,7 +367,7 @@ class PeticionesTests(TestCase):
 
     def test_aislamiento(self):
         pet = Peticion.objects.create(cliente=self.cli, proyecto=self.p, asunto='Privada')
-        pet.mensajes.create(autor=self.cli, de_cliente=True, texto='secreto')
+        pet.mensajes.create(de_cliente=True, texto='secreto')
         for intruso in (self.otro, self.emp2):
             self.client.force_login(intruso)
             self.assertEqual(self.client.get(reverse('proyectos:peticion', args=[pet.id])).status_code, 404)
@@ -387,7 +389,7 @@ class PeticionesTests(TestCase):
 class BitacoraTests(TestCase):
     def test_avance_de_fases_queda_registrado_y_lo_ve_el_cliente(self):
         emp = CustomUser.objects.create_user('ing', role='EMPLEADO')
-        cli = CustomUser.objects.create_user('cli', role='CLIENTE', empresa=empresa('ACME'))
+        cli = Cliente.objects.create_user('cli', empresa=empresa('ACME'))
         p = Proyecto.objects.create(nombre='Obra', cliente=cli, empleado_encargado=emp)
         fase = p.fases.create(nombre='Canalización')
         p.fases.create(nombre='Cableado')
@@ -400,7 +402,7 @@ class BitacoraTests(TestCase):
 
     def test_cambios_de_fases_sin_cambio_de_avance_tambien_quedan(self):
         emp = CustomUser.objects.create_user('ing', role='EMPLEADO')
-        cli = CustomUser.objects.create_user('cli', role='CLIENTE')
+        cli = Cliente.objects.create_user('cli')
         p = Proyecto.objects.create(nombre='Obra', cliente=cli, empleado_encargado=emp)
         fase = p.fases.create(nombre='Ingeniería')
         self.client.force_login(emp)
@@ -423,7 +425,7 @@ class ControlDeObraTests(TestCase):
         self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
         self.emp2 = CustomUser.objects.create_user('ing2', password=CLAVE, role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', empresa=empresa('ACME'))
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
         self.p = Proyecto.objects.create(nombre='Obra Fases', cliente=self.cli, empleado_encargado=self.emp)
 
     def etapa(self, tipo, obj, accion):
@@ -523,8 +525,8 @@ class DiagramaYPerfilesTests(TestCase):
     def setUp(self):
         self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE', empresa=empresa('ACME'))
-        self.otro = CustomUser.objects.create_user('otro', password=CLAVE, role='CLIENTE', empresa=empresa('Otra'))
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        self.otro = Cliente.objects.create_user('otro', password=CLAVE, empresa=empresa('Otra'))
         self.p = Proyecto.objects.create(nombre='Obra Diagrama', cliente=self.cli, empleado_encargado=self.emp)
         fase = self.p.fases.create(nombre='Diseño e ingeniería', estado='EN_CURSO')
         fase.subfases.create(nombre='Planos eléctricos', estado='COMPLETADA')
@@ -566,7 +568,7 @@ class FichaYBitacoraCoincidenTests(TestCase):
     def setUp(self):
         self.root = CustomUser.objects.create_superuser('root', 'root@x.cl', CLAVE)
         self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
-        self.cli = CustomUser.objects.create_user('cli', password=CLAVE, role='CLIENTE')  # sin empresa
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE)  # sin empresa
         self.p = Proyecto.objects.create(nombre='Obra Ficha', cliente=self.cli, empleado_encargado=self.emp)
         self.f1 = self.p.fases.create(nombre='Diseño', orden=1)
         self.f2 = self.p.fases.create(nombre='Ejecución', orden=2)
@@ -607,3 +609,76 @@ class FichaYBitacoraCoincidenTests(TestCase):
         self.assertEqual(fichas[0], fichas[1])
         for dato in ('Sin empresa asignada', '50%', 'En Curso', 'ing'):
             self.assertIn(dato, fichas[0])
+
+
+class PortafolioTests(TestCase):
+    """Proyectos Finalizados publicados en la página web (/proyectos/), solo con textos públicos."""
+
+    def setUp(self):
+        self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        self.p = Proyecto.objects.create(nombre='Obra', cliente=self.cli, especialidad='PCI')
+
+    def publicar(self, **extra):
+        return self.client.post(reverse('proyectos:portafolio', args=[self.p.id]), {
+            'accion': 'publicar', 'portafolio_cliente': '<script>alert(1)</script>Retail', 'portafolio_descripcion': 'Alcance de prueba XYZ', **extra})
+
+    def test_publicar_y_quitar(self):
+        self.client.force_login(self.admin)
+        self.publicar()
+        self.p.refresh_from_db()
+        self.assertFalse(self.p.en_portafolio)  # en curso: no se publica
+
+        self.p.estado = 'Finalizado'
+        self.p.save()
+        self.publicar()
+        self.p.refresh_from_db()
+        self.assertTrue(self.p.en_portafolio and self.p.portafolio_publicado_en)
+        html = self.client.get(reverse('proyectos')).content.decode()
+        self.assertIn('Alcance de prueba XYZ', html)
+        self.assertNotIn('<script>alert(1)', html)               # texto escapado
+        self.assertContains(self.client.get(reverse('inicio')), 'proyectos (30)')
+        self.assertTrue(RegistroActividad.objects.filter(detalle='Publicado en el portafolio web').exists())
+
+        self.client.post(reverse('proyectos:portafolio', args=[self.p.id]), {'accion': 'quitar'})
+        self.p.refresh_from_db()
+        self.assertFalse(self.p.en_portafolio)
+        self.assertNotIn('Alcance de prueba XYZ', self.client.get(reverse('proyectos')).content.decode())
+
+    def test_solo_personal_y_no_archivados(self):
+        self.p.estado = 'Finalizado'
+        self.p.save()
+        self.client.force_login(self.cli)
+        self.assertEqual(self.publicar().status_code, 403)
+        self.client.force_login(self.admin)
+        self.publicar()
+        self.p.archivar(self.admin)
+        self.assertEqual(Proyecto.portafolio_publico().count(), 0)
+
+
+@override_settings(CLAMAV_HOST='clamav')
+class AntivirusTests(TestCase):
+    """Cada documento subido pasa por ClamAV antes de guardarse (aquí se simula su respuesta)."""
+
+    def setUp(self):
+        self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
+        self.p = Proyecto.objects.create(nombre='Obra', cliente=Cliente.objects.create_user('cli'), empleado_encargado=self.emp)
+        self.client.force_login(self.emp)
+
+    def subir(self):
+        return self.client.post(reverse('proyectos:subir_documento'), {
+            'proyecto': self.p.id, 'nombre_archivo': 'Plano', 'archivo': SimpleUploadedFile('plano.pdf', b'%PDF-1.4 plano')})
+
+    def test_limpio_infectado_y_antivirus_caido(self):
+        from .antivirus import AntivirusNoDisponible
+        casos = [(None, True, ''), ('Pdf.Exploit-1', False, 'bloqueado por el antivirus'),
+                 (AntivirusNoDisponible('sin conexión'), False, 'No se pudo analizar el archivo')]
+        for respuesta, guardado, mensaje in casos:
+            Documento.objects.all().delete()
+            with mock.patch('proyectos.antivirus.escanear', side_effect=[respuesta]) as escanear:
+                r = self.subir()
+            escanear.assert_called_once()
+            self.assertEqual(Documento.objects.exists(), guardado, respuesta)
+            if mensaje:
+                self.assertIn(mensaje, ' '.join(str(m) for m in r.wsgi_request._messages))
+

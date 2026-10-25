@@ -1,0 +1,42 @@
+# Producción con HTTPS. Se usa SOBRE docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Requiere en .env: DEBUG=False, una SECRET_KEY nueva (50+ caracteres), DOMINIO=tu-dominio,
+# ALLOWED_HOSTS=tu-dominio y BEHIND_PROXY=true. El dominio debe apuntar a este servidor
+# (puertos 80 y 443 abiertos) para que Let's Encrypt entregue el certificado.
+services:
+  web:
+    # gunicorn en vez del servidor de desarrollo; el código va dentro de la imagen (sin montar la carpeta)
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn sinergi.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    ports: !reset []          # Django ya no queda expuesto: solo se entra por Caddy (HTTPS)
+    volumes: !override        # reemplaza el montaje del código de desarrollo
+      - ./media:/app/media
+      - estaticos:/app/staticfiles
+    restart: unless-stopped
+
+  celery-worker:
+    volumes: !override
+      - ./media:/app/media
+    restart: unless-stopped
+
+  celery-beat:
+    volumes: !reset []
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - estaticos:/srv/static:ro
+      - caddy_datos:/data          # certificados: se conservan entre reinicios
+    depends_on: [web]
+    restart: unless-stopped
+
+volumes:
+  estaticos:
+  caddy_datos:

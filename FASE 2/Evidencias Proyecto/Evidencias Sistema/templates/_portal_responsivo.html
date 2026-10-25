@@ -1,6 +1,7 @@
 <!-- Comportamiento responsivo de los paneles por rol (cliente, empleado y admin):
      - Menú lateral deslizable en móvil/tablet (botón #portal-menu-boton del header, aside #portal-menu).
-     - Etiquetas de columna (data-label) para que las .tabla-responsive se lean como tarjetas en celular. -->
+     - Etiquetas de columna (data-label) para que las .tabla-responsive se lean como tarjetas en celular.
+     - Formularios de subida (form[data-subida]): animación de carga mientras se sube y el antivirus analiza. -->
 <div id="portal-menu-fondo" class="portal-menu-fondo" hidden></div>
 
 <script>
@@ -28,6 +29,20 @@
       });
       matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) abrir(false); });
     }
+
+    // Subida de archivos: el antivirus tarda ~1 s por cada 10 MB, más el tiempo de subida.
+    // Se bloquea el botón (evita doble envío) y se muestra la animación hasta que responde el servidor.
+    const subidas = document.querySelectorAll('form[data-subida]');
+    subidas.forEach((form) => form.addEventListener('submit', () => {
+      const boton = form.querySelector('button[type="submit"]');
+      boton.disabled = true;
+      boton.classList.add('opacity-75', 'cursor-wait');
+      form.querySelector('.subida-cargando').classList.remove('hidden');
+      form.querySelector('.subida-texto').textContent = 'Analizando…';
+      form.querySelector('.subida-estado').classList.remove('hidden');
+    }));
+    // Al volver con "atrás" el navegador puede restaurar la página con el botón aún bloqueado
+    addEventListener('pageshow', (e) => { if (e.persisted && subidas.length) location.reload(); });
 
     document.querySelectorAll('.tabla-responsive').forEach((tabla) => {
       const titulos = [...tabla.querySelectorAll('thead th')].map((th) => th.textContent.trim());

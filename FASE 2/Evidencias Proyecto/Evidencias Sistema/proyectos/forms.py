@@ -7,7 +7,7 @@ from django import forms
 from django.core import signing
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from usuarios.models import CustomUser
+from usuarios.models import Cliente
 from .models import Documento, Fase, Peticion, Proyecto, SolicitudProyecto, Subfase
 
 LIMITE_MB = 10
@@ -263,7 +263,7 @@ class PeticionForm(forms.ModelForm):
             self.fields['proyecto'].required = True
         else:
             self.fields['cliente'] = forms.ModelChoiceField(
-                queryset=CustomUser.objects.filter(role='CLIENTE', is_active=True).select_related('empresa'),
+                queryset=Cliente.objects.filter(is_active=True).select_related('empresa'),
                 required=False, label='Cliente (solo si no hay proyecto)')
         self.fields['proyecto'].queryset = proyectos
         for field in self.fields.values():

@@ -1,11 +1,13 @@
 from unittest import mock
 
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import override_settings
+
+from sinergi.pruebas import TestCase
 from rest_framework.test import APIClient
 
 from proyectos.models import Peticion, Proyecto
-from usuarios.models import CustomUser, Empresa
+from usuarios.models import Cliente, CustomUser, Empresa
 
 from . import llm
 from .contexto import construir_system_prompt
@@ -19,8 +21,8 @@ class AsistenteClienteTests(TestCase):
         cache.clear()
         acme = Empresa.objects.create(razon_social='ACME')
         otra = Empresa.objects.create(razon_social='OtraCorp')
-        self.cli_a = CustomUser.objects.create_user('cliA', password='x', role='CLIENTE', empresa=acme)
-        self.cli_b = CustomUser.objects.create_user('cliB', password='x', role='CLIENTE', empresa=otra)
+        self.cli_a = Cliente.objects.create_user('cliA', password='x', empresa=acme)
+        self.cli_b = Cliente.objects.create_user('cliB', password='x', empresa=otra)
         self.emp = CustomUser.objects.create_user('emp', password='x', role='EMPLEADO')
         p = Proyecto.objects.create(nombre='Climatizacion Bodega ACME', cliente=self.cli_a, empleado_encargado=self.emp)
         p.cargar_fases_estandar()

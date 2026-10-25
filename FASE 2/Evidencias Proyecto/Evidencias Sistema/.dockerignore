@@ -6,3 +6,10 @@ __pycache__/
 db.sqlite3
 .git/
 celerybeat-schedule
+# Respaldos: contienen la BD (hashes, datos de clientes) y sus documentos. Nunca a git.
+respaldos/
+# collectstatic (producción)
+staticfiles/
+# Documentos de clientes: nunca dentro de la imagen (en producción se montan como volumen)
+media/
+graphify-out/

@@ -1,0 +1,57 @@
+<!-- Lista de cuentas de un tipo de usuario. Requiere `cuentas`, `tipo` ('personal' o 'cliente'), `titulo` y `boton`;
+     `rol` (ADMIN/EMPLEADO) preselecciona el rol al crear personal. -->
+<div class="space-y-3">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-sm font-bold text-slate-900">{{ titulo }} <span class="font-mono text-xs text-slate-400">({{ cuentas|length }})</span></h2>
+    <a href="{% url 'crear_usuario' tipo %}{% if rol %}?rol={{ rol }}{% endif %}" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-3.5 py-1.5 rounded shadow-sm">
+      + {{ boton }}
+    </a>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+    <table class="tabla-responsive w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+          <th class="p-3.5">Usuario / Nombre</th>
+          <th class="p-3.5">{% if tipo == 'cliente' %}Empresa{% else %}Área{% endif %}</th>
+          <th class="p-3.5">Rol</th>
+          <th class="p-3.5">Estado Cuenta</th>
+          <th class="p-3.5 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-xs">
+        {% for u in cuentas %}
+        <tr class="hover:bg-slate-50">
+          <td class="p-3.5">
+            <div class="font-semibold text-slate-900">{{ u.get_full_name|default:u.username }}</div>
+            <div class="font-mono text-slate-400 text-[11px] break-all">{{ u.email|default:u.username }}</div>
+          </td>
+          <td class="p-3.5 text-slate-700">{% if tipo == 'cliente' %}{{ u.empresa|default:"Sin empresa" }}{% else %}Sinergi{% endif %}</td>
+          <td class="p-3.5">
+            <span class="{% if u.role == 'CLIENTE' %}bg-sky-100 text-sky-800{% elif u.role == 'ADMIN' %}bg-red-100 text-sinergi-red{% else %}bg-slate-200 text-slate-800{% endif %} font-semibold px-2 py-0.5 rounded font-mono text-[10px]">{{ u.role }}</span>
+          </td>
+          <td class="p-3.5">
+            {% if u.is_active %}
+            <span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activo</span>
+            {% else %}
+            <span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="p-3.5 text-right">
+            <div class="flex flex-wrap items-center md:justify-end gap-1">
+            <a href="{% url 'editar_usuario' tipo u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+            <form method="POST" action="{% url 'eliminar_usuario' tipo u.id %}" class="inline" onsubmit="return confirm('¿Eliminar la cuenta {{ u.username|escapejs }}? Esta acción no se puede deshacer.')">
+              {% csrf_token %}
+              <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</button>
+            </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="p-6 text-center text-slate-500 italic">Sin cuentas registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

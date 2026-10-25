@@ -1,0 +1,584 @@
+{
+  "asistente/__init__.py": {
+    "mtime": 1792950695.5783222,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "asistente/apps.py": {
+    "mtime": 1792950695.5783222,
+    "seen": 1792952167.8453927,
+    "ast_hash": "662ea34100c931eef29069d57c2a4ffb",
+    "semantic_hash": "662ea34100c931eef29069d57c2a4ffb"
+  },
+  "asistente/contexto.py": {
+    "mtime": 1792950695.5793219,
+    "seen": 1792952167.8453927,
+    "ast_hash": "9cd9cc9e43b60fd94bac9c64a5a95dd2",
+    "semantic_hash": "9cd9cc9e43b60fd94bac9c64a5a95dd2"
+  },
+  "asistente/llm.py": {
+    "mtime": 1792950695.5798304,
+    "seen": 1792952167.8453927,
+    "ast_hash": "eb5746539802270da9f614f528da1050",
+    "semantic_hash": "eb5746539802270da9f614f528da1050"
+  },
+  "asistente/migrations/__init__.py": {
+    "mtime": 1792950695.5814016,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "asistente/tests.py": {
+    "mtime": 1792950695.5819407,
+    "seen": 1792952167.8453927,
+    "ast_hash": "1d775b4552224199e309ebe2612e834e",
+    "semantic_hash": "1d775b4552224199e309ebe2612e834e"
+  },
+  "asistente/urls.py": {
+    "mtime": 1792950695.5819407,
+    "seen": 1792952167.8453927,
+    "ast_hash": "74523bff7c82f687ed65537f19878c61",
+    "semantic_hash": "74523bff7c82f687ed65537f19878c61"
+  },
+  "asistente/views.py": {
+    "mtime": 1792950695.5831301,
+    "seen": 1792952167.8453927,
+    "ast_hash": "ca116c123b2dcc4eba90b43cd73a2124",
+    "semantic_hash": "ca116c123b2dcc4eba90b43cd73a2124"
+  },
+  "docker-compose.yml": {
+    "mtime": 1792950695.584306,
+    "seen": 1792952167.8453927,
+    "ast_hash": "2b8e6d27128022223ea4da3826d90922",
+    "semantic_hash": "2b8e6d27128022223ea4da3826d90922"
+  },
+  "manage.py": {
+    "mtime": 1792950695.584306,
+    "seen": 1792952167.8453927,
+    "ast_hash": "b07b44fffb0b56b9aad5d637c047d30f",
+    "semantic_hash": "b07b44fffb0b56b9aad5d637c047d30f"
+  },
+  "proyectos/__init__.py": {
+    "mtime": 1792950695.5873747,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "proyectos/admin.py": {
+    "mtime": 1792950695.5873747,
+    "seen": 1792952167.8453927,
+    "ast_hash": "968c6c1943ab58891a09ab86a262fc34",
+    "semantic_hash": "968c6c1943ab58891a09ab86a262fc34"
+  },
+  "proyectos/apps.py": {
+    "mtime": 1792950695.5888655,
+    "seen": 1792952167.8453927,
+    "ast_hash": "abf3e98ff08e6fc8804de6ff27c13c31",
+    "semantic_hash": "abf3e98ff08e6fc8804de6ff27c13c31"
+  },
+  "proyectos/forms.py": {
+    "mtime": 1792950695.5894816,
+    "seen": 1792952167.8453927,
+    "ast_hash": "bb7b663d75777ac842b5bb3e32494877",
+    "semantic_hash": "bb7b663d75777ac842b5bb3e32494877"
+  },
+  "proyectos/migrations/0001_initial.py": {
+    "mtime": 1792950695.5912933,
+    "seen": 1792952167.8453927,
+    "ast_hash": "0bb8cffa19fdd3f39476f39c2ed4e9ca",
+    "semantic_hash": "0bb8cffa19fdd3f39476f39c2ed4e9ca"
+  },
+  "proyectos/migrations/0002_gestion_proyectos.py": {
+    "mtime": 1792950695.5912933,
+    "seen": 1792952167.8453927,
+    "ast_hash": "0beca33ff4dfcae10e0aa509297cd801",
+    "semantic_hash": "0beca33ff4dfcae10e0aa509297cd801"
+  },
+  "proyectos/migrations/0003_solicitudes_proyectos.py": {
+    "mtime": 1792950695.592297,
+    "seen": 1792952167.8453927,
+    "ast_hash": "c4e3ef0272e66e111dc0b5c32c9cf326",
+    "semantic_hash": "c4e3ef0272e66e111dc0b5c32c9cf326"
+  },
+  "proyectos/migrations/0004_documentos_nombre_aleatorio.py": {
+    "mtime": 1792950695.5932896,
+    "seen": 1792952167.8453927,
+    "ast_hash": "75664edd415dec2939d0f1cf0cbc9249",
+    "semantic_hash": "75664edd415dec2939d0f1cf0cbc9249"
+  },
+  "proyectos/migrations/0005_empresas_archivado_peticiones.py": {
+    "mtime": 1792950695.5932896,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fe35fae184ee3110d05fd997f10f4c01",
+    "semantic_hash": "fe35fae184ee3110d05fd997f10f4c01"
+  },
+  "proyectos/migrations/0006_proyectos_empresa_existente.py": {
+    "mtime": 1792950695.5942888,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f6be520a4e8da9c97c53bbd521baaadf",
+    "semantic_hash": "f6be520a4e8da9c97c53bbd521baaadf"
+  },
+  "proyectos/migrations/0007_fases_subfases.py": {
+    "mtime": 1792950695.5957136,
+    "seen": 1792952167.8453927,
+    "ast_hash": "03e1e1a91bed9ba936e9ae4e401ddebf",
+    "semantic_hash": "03e1e1a91bed9ba936e9ae4e401ddebf"
+  },
+  "proyectos/migrations/0008_avance_automatico.py": {
+    "mtime": 1792950695.5963826,
+    "seen": 1792952167.8453927,
+    "ast_hash": "67d5e23324a83ea129518e5835a027e2",
+    "semantic_hash": "67d5e23324a83ea129518e5835a027e2"
+  },
+  "proyectos/migrations/0009_normalizar_estados_heredados.py": {
+    "mtime": 1792950695.5963826,
+    "seen": 1792952167.8453927,
+    "ast_hash": "5708b08fae98ba0033f5d9ca03107731",
+    "semantic_hash": "5708b08fae98ba0033f5d9ca03107731"
+  },
+  "proyectos/migrations/0010_portafolio_web.py": {
+    "mtime": 1792950695.5974345,
+    "seen": 1792952167.8453927,
+    "ast_hash": "ec14d656c2f44c6d185b93e0c3df0375",
+    "semantic_hash": "ec14d656c2f44c6d185b93e0c3df0375"
+  },
+  "proyectos/migrations/__init__.py": {
+    "mtime": 1792950695.5974345,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "proyectos/models.py": {
+    "mtime": 1792950695.5984347,
+    "seen": 1792952167.8453927,
+    "ast_hash": "9ac49e1c52a70c860e7a249227aba160",
+    "semantic_hash": "9ac49e1c52a70c860e7a249227aba160"
+  },
+  "proyectos/tasks.py": {
+    "mtime": 1792950695.5993292,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d91c0ffa2957f1f8b68081eb0837cfaf",
+    "semantic_hash": "d91c0ffa2957f1f8b68081eb0837cfaf"
+  },
+  "proyectos/tests.py": {
+    "mtime": 1792950695.6003628,
+    "seen": 1792952167.8453927,
+    "ast_hash": "31e6284b329f740bc61ee8252fe7c661",
+    "semantic_hash": "31e6284b329f740bc61ee8252fe7c661"
+  },
+  "proyectos/urls.py": {
+    "mtime": 1792950695.6003628,
+    "seen": 1792952167.8453927,
+    "ast_hash": "05b2e3af19682bffd746ecf0388f8339",
+    "semantic_hash": "05b2e3af19682bffd746ecf0388f8339"
+  },
+  "proyectos/views.py": {
+    "mtime": 1792950695.6013725,
+    "seen": 1792952167.8453927,
+    "ast_hash": "53a51eb2968ef0a7341dd0631e81dc89",
+    "semantic_hash": "53a51eb2968ef0a7341dd0631e81dc89"
+  },
+  "sinergi/__init__.py": {
+    "mtime": 1792950695.6026506,
+    "seen": 1792952167.8453927,
+    "ast_hash": "03ffddcbbf3fe4a5611bd87e2fc748f7",
+    "semantic_hash": "03ffddcbbf3fe4a5611bd87e2fc748f7"
+  },
+  "sinergi/asgi.py": {
+    "mtime": 1792950695.6039107,
+    "seen": 1792952167.8453927,
+    "ast_hash": "43b613875384d976322fb8d646d5eb43",
+    "semantic_hash": "43b613875384d976322fb8d646d5eb43"
+  },
+  "sinergi/celery.py": {
+    "mtime": 1792950695.6039107,
+    "seen": 1792952167.8453927,
+    "ast_hash": "5b06cdea8f7022cdb37cff862bed772e",
+    "semantic_hash": "5b06cdea8f7022cdb37cff862bed772e"
+  },
+  "sinergi/desarrollo.py": {
+    "mtime": 1792950695.6054177,
+    "seen": 1792952167.8453927,
+    "ast_hash": "e38f11ee3f4e5c7e36637eaf92a868bb",
+    "semantic_hash": "e38f11ee3f4e5c7e36637eaf92a868bb"
+  },
+  "sinergi/seguridad.py": {
+    "mtime": 1792950695.6064262,
+    "seen": 1792952167.8453927,
+    "ast_hash": "8f8f34798c2045a01f3b617b44cd7815",
+    "semantic_hash": "8f8f34798c2045a01f3b617b44cd7815"
+  },
+  "sinergi/settings.py": {
+    "mtime": 1792950695.6073933,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f27172d46a1cb8644c91533afc602a08",
+    "semantic_hash": "f27172d46a1cb8644c91533afc602a08"
+  },
+  "sinergi/tests.py": {
+    "mtime": 1792950695.608464,
+    "seen": 1792952167.8453927,
+    "ast_hash": "633c9e6af6fb574e58800023f63f7e2b",
+    "semantic_hash": "633c9e6af6fb574e58800023f63f7e2b"
+  },
+  "sinergi/urls.py": {
+    "mtime": 1792950695.6095698,
+    "seen": 1792952167.8453927,
+    "ast_hash": "7af7482356fbaf4c051c98e84b6b3918",
+    "semantic_hash": "7af7482356fbaf4c051c98e84b6b3918"
+  },
+  "sinergi/wsgi.py": {
+    "mtime": 1792950695.6095698,
+    "seen": 1792952167.8453927,
+    "ast_hash": "8c5d3fc322fcdf67143b44a498e02f62",
+    "semantic_hash": "8c5d3fc322fcdf67143b44a498e02f62"
+  },
+  "usuarios/__init__.py": {
+    "mtime": 1792950695.632629,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "usuarios/admin.py": {
+    "mtime": 1792950695.6346548,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fbb866de1dc7529947190785d393f390",
+    "semantic_hash": "fbb866de1dc7529947190785d393f390"
+  },
+  "usuarios/apps.py": {
+    "mtime": 1792950695.6346548,
+    "seen": 1792952167.8453927,
+    "ast_hash": "191e15052283735f7a151948d18b0fcd",
+    "semantic_hash": "191e15052283735f7a151948d18b0fcd"
+  },
+  "usuarios/forms.py": {
+    "mtime": 1792950695.6346548,
+    "seen": 1792952167.8453927,
+    "ast_hash": "7138bde7cbcfbc84b431c49956f16da4",
+    "semantic_hash": "7138bde7cbcfbc84b431c49956f16da4"
+  },
+  "usuarios/migrations/0001_initial.py": {
+    "mtime": 1792950695.6346548,
+    "seen": 1792952167.8453927,
+    "ast_hash": "b7f5f6da3deefd41bf49bb63262023e8",
+    "semantic_hash": "b7f5f6da3deefd41bf49bb63262023e8"
+  },
+  "usuarios/migrations/0002_separar_admin_superusuario.py": {
+    "mtime": 1792950695.6366644,
+    "seen": 1792952167.8453927,
+    "ast_hash": "5bb196739b3b9d4827d66461a32761ae",
+    "semantic_hash": "5bb196739b3b9d4827d66461a32761ae"
+  },
+  "usuarios/migrations/0003_empresas.py": {
+    "mtime": 1792950695.6366644,
+    "seen": 1792952167.8453927,
+    "ast_hash": "77bffea852753d55b4ba95183829acdc",
+    "semantic_hash": "77bffea852753d55b4ba95183829acdc"
+  },
+  "usuarios/migrations/0004_migrar_empresa_cliente.py": {
+    "mtime": 1792950695.6381726,
+    "seen": 1792952167.8453927,
+    "ast_hash": "760f0fb6869b134dd67b20779e2d89bc",
+    "semantic_hash": "760f0fb6869b134dd67b20779e2d89bc"
+  },
+  "usuarios/migrations/0005_quitar_empresa_cliente.py": {
+    "mtime": 1792950695.6381726,
+    "seen": 1792952167.8453927,
+    "ast_hash": "c379c23b0722b228e35db96992adfa6f",
+    "semantic_hash": "c379c23b0722b228e35db96992adfa6f"
+  },
+  "usuarios/migrations/__init__.py": {
+    "mtime": 1792950695.6381726,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "usuarios/models.py": {
+    "mtime": 1792950695.6381726,
+    "seen": 1792952167.8453927,
+    "ast_hash": "2760a643d09026d83f899da86a307761",
+    "semantic_hash": "2760a643d09026d83f899da86a307761"
+  },
+  "usuarios/tests.py": {
+    "mtime": 1792950695.6381726,
+    "seen": 1792952167.8453927,
+    "ast_hash": "07dff42588b76783edd4c63988b18e17",
+    "semantic_hash": "07dff42588b76783edd4c63988b18e17"
+  },
+  "usuarios/urls.py": {
+    "mtime": 1792950695.6422062,
+    "seen": 1792952167.8453927,
+    "ast_hash": "e0d0e3a49f789564953f7387e39bc8aa",
+    "semantic_hash": "e0d0e3a49f789564953f7387e39bc8aa"
+  },
+  "usuarios/views.py": {
+    "mtime": 1792950695.6422062,
+    "seen": 1792952167.8453927,
+    "ast_hash": "837e1723d36ea68bfbe801cbe0ff25e1",
+    "semantic_hash": "837e1723d36ea68bfbe801cbe0ff25e1"
+  },
+  "web/__init__.py": {
+    "mtime": 1792950695.6432133,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "web/admin.py": {
+    "mtime": 1792950695.6432133,
+    "seen": 1792952167.8453927,
+    "ast_hash": "ef4c241c5311eee11a93e9366f492a72",
+    "semantic_hash": "ef4c241c5311eee11a93e9366f492a72"
+  },
+  "web/apps.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d9832badd4cec04c5dd4705aff13fac0",
+    "semantic_hash": "d9832badd4cec04c5dd4705aff13fac0"
+  },
+  "web/migrations/__init__.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "web/models.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d66d26e53e7ac2028454d3dd6f7e92ad",
+    "semantic_hash": "d66d26e53e7ac2028454d3dd6f7e92ad"
+  },
+  "web/tests.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "e08f0582500f6562bf0a931ef9503b39",
+    "semantic_hash": "e08f0582500f6562bf0a931ef9503b39"
+  },
+  "web/urls.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "09e9823afa062a4d3b6b1a49cb63c8be",
+    "semantic_hash": "09e9823afa062a4d3b6b1a49cb63c8be"
+  },
+  "web/views.py": {
+    "mtime": 1792950695.6452522,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f9b233a27a9005a82919698abeaaae40",
+    "semantic_hash": "f9b233a27a9005a82919698abeaaae40"
+  },
+  "requirements.txt": {
+    "mtime": 1792950695.6026506,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fc0661b0de7207453d32ca689e5c740f",
+    "semantic_hash": "fc0661b0de7207453d32ca689e5c740f"
+  },
+  "templates/_archivados.html": {
+    "mtime": 1792950695.6143577,
+    "seen": 1792952167.8453927,
+    "ast_hash": "7bfb0cbb522722d1cb374842e85aa885",
+    "semantic_hash": "7bfb0cbb522722d1cb374842e85aa885"
+  },
+  "templates/_asistente_cliente.html": {
+    "mtime": 1792950695.6143577,
+    "seen": 1792952167.8453927,
+    "ast_hash": "d7120a5c1c6dccfa2650c9a4e48a0e2e",
+    "semantic_hash": "d7120a5c1c6dccfa2650c9a4e48a0e2e"
+  },
+  "templates/_ayuda_publica.html": {
+    "mtime": 1792950695.6160939,
+    "seen": 1792952167.8453927,
+    "ast_hash": "c78223cb1967debbecc76a8285356318",
+    "semantic_hash": "c78223cb1967debbecc76a8285356318"
+  },
+  "templates/_bitacora.html": {
+    "mtime": 1792950695.6160939,
+    "seen": 1792952167.8453927,
+    "ast_hash": "a7d53bbef8bee2535f243edd3eb751aa",
+    "semantic_hash": "a7d53bbef8bee2535f243edd3eb751aa"
+  },
+  "templates/_boton_etapa.html": {
+    "mtime": 1792950695.6171968,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fc58db73bd349e11d9632bc06d6ec384",
+    "semantic_hash": "fc58db73bd349e11d9632bc06d6ec384"
+  },
+  "templates/_campos_form.html": {
+    "mtime": 1792950695.6171968,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fa3745c432e08dc4cb6ece709dcd8c6d",
+    "semantic_hash": "fa3745c432e08dc4cb6ece709dcd8c6d"
+  },
+  "templates/_diagrama_fases.html": {
+    "mtime": 1792950695.6171968,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f24bbed980530acdb8267e372762c193",
+    "semantic_hash": "f24bbed980530acdb8267e372762c193"
+  },
+  "templates/_estado_peticion.html": {
+    "mtime": 1792950695.618705,
+    "seen": 1792952167.8453927,
+    "ast_hash": "96823cd30deab2dcddf07df3431f8762",
+    "semantic_hash": "96823cd30deab2dcddf07df3431f8762"
+  },
+  "templates/_ficha_proyecto.html": {
+    "mtime": 1792950695.618705,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f8247e30e2eafe3665d0a5f23db30d80",
+    "semantic_hash": "f8247e30e2eafe3665d0a5f23db30d80"
+  },
+  "templates/_header_portal.html": {
+    "mtime": 1792950695.6197155,
+    "seen": 1792952167.8453927,
+    "ast_hash": "5ec23f63cd8508388204f66e616eadce",
+    "semantic_hash": "5ec23f63cd8508388204f66e616eadce"
+  },
+  "templates/_hitos_proyecto.html": {
+    "mtime": 1792950695.6197155,
+    "seen": 1792952167.8453927,
+    "ast_hash": "a51d8208c0153602f9a49d9cb706b444",
+    "semantic_hash": "a51d8208c0153602f9a49d9cb706b444"
+  },
+  "templates/_mensajes.html": {
+    "mtime": 1792950695.6207142,
+    "seen": 1792952167.8453927,
+    "ast_hash": "df5a7d8bbfe7ce9846a363965dd52268",
+    "semantic_hash": "df5a7d8bbfe7ce9846a363965dd52268"
+  },
+  "templates/_modal_observar.html": {
+    "mtime": 1792950695.6207142,
+    "seen": 1792952167.8453927,
+    "ast_hash": "57aabf62ff2e6b20aa62805174c56bc4",
+    "semantic_hash": "57aabf62ff2e6b20aa62805174c56bc4"
+  },
+  "templates/_modal_portafolio.html": {
+    "mtime": 1792950695.6217148,
+    "seen": 1792952167.8453927,
+    "ast_hash": "468cd503835b19b572c4cbc4cd001ca7",
+    "semantic_hash": "468cd503835b19b572c4cbc4cd001ca7"
+  },
+  "templates/_peticiones.html": {
+    "mtime": 1792950695.6222212,
+    "seen": 1792952167.8453927,
+    "ast_hash": "a04c28f70f5b2de800c49f2b6c2e9392",
+    "semantic_hash": "a04c28f70f5b2de800c49f2b6c2e9392"
+  },
+  "templates/_portal_responsivo.html": {
+    "mtime": 1792950695.6222212,
+    "seen": 1792952167.8453927,
+    "ast_hash": "20f26dd578e8412236134677ee4e1595",
+    "semantic_hash": "20f26dd578e8412236134677ee4e1595"
+  },
+  "templates/base_paginas.html": {
+    "mtime": 1792950695.6230793,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f3561015c8f9300822e740df50cdc2d0",
+    "semantic_hash": "f3561015c8f9300822e740df50cdc2d0"
+  },
+  "templates/base_usuarios.html": {
+    "mtime": 1792950695.6230793,
+    "seen": 1792952167.8453927,
+    "ast_hash": "3e08737a6e8bc9f83144c2db73f53488",
+    "semantic_hash": "3e08737a6e8bc9f83144c2db73f53488"
+  },
+  "templates/bloqueo.html": {
+    "mtime": 1792950695.6230793,
+    "seen": 1792952167.8453927,
+    "ast_hash": "7721661e6036cfaa4d9c832e91be0b11",
+    "semantic_hash": "7721661e6036cfaa4d9c832e91be0b11"
+  },
+  "templates/login.html": {
+    "mtime": 1792950695.6250894,
+    "seen": 1792952167.8453927,
+    "ast_hash": "46fc0f6c1ede46a26d6a3da8abe6b927",
+    "semantic_hash": "46fc0f6c1ede46a26d6a3da8abe6b927"
+  },
+  "templates/pagina_contacto.html": {
+    "mtime": 1792950695.6250894,
+    "seen": 1792952167.8453927,
+    "ast_hash": "54624706834e0ebdddb1435bc3c86ec9",
+    "semantic_hash": "54624706834e0ebdddb1435bc3c86ec9"
+  },
+  "templates/pagina_inicio.html": {
+    "mtime": 1792950695.6271012,
+    "seen": 1792952167.8453927,
+    "ast_hash": "0ff8dc4fa647a6784202fcdd70f44963",
+    "semantic_hash": "0ff8dc4fa647a6784202fcdd70f44963"
+  },
+  "templates/pagina_nosotros.html": {
+    "mtime": 1792950695.6271012,
+    "seen": 1792952167.8453927,
+    "ast_hash": "2197960af412e1f6cdcc16dda169daa9",
+    "semantic_hash": "2197960af412e1f6cdcc16dda169daa9"
+  },
+  "templates/pagina_proyectos.html": {
+    "mtime": 1792950695.6271012,
+    "seen": 1792952167.8453927,
+    "ast_hash": "1d2d7fea404e5dfe935c560fcf0866ad",
+    "semantic_hash": "1d2d7fea404e5dfe935c560fcf0866ad"
+  },
+  "templates/pagina_servicios.html": {
+    "mtime": 1792950695.6271012,
+    "seen": 1792952167.8453927,
+    "ast_hash": "9b384fd4ccfb14eb5778ac7da9a6f34d",
+    "semantic_hash": "9b384fd4ccfb14eb5778ac7da9a6f34d"
+  },
+  "templates/panel_form.html": {
+    "mtime": 1792950695.6291108,
+    "seen": 1792952167.8453927,
+    "ast_hash": "21061458d767d296d0b52076b8621f92",
+    "semantic_hash": "21061458d767d296d0b52076b8621f92"
+  },
+  "templates/peticion_detalle.html": {
+    "mtime": 1792950695.6291108,
+    "seen": 1792952167.8453927,
+    "ast_hash": "c7a5deb3e555a6156638c69ec05376b9",
+    "semantic_hash": "c7a5deb3e555a6156638c69ec05376b9"
+  },
+  "templates/proyecto_control.html": {
+    "mtime": 1792950695.6291108,
+    "seen": 1792952167.8453927,
+    "ast_hash": "fd4d85022b8b2e3a5d59e50010ac7225",
+    "semantic_hash": "fd4d85022b8b2e3a5d59e50010ac7225"
+  },
+  "templates/proyecto_diagrama.html": {
+    "mtime": 1792950695.6311207,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f1657e4702e98731c952e56e48a190ed",
+    "semantic_hash": "f1657e4702e98731c952e56e48a190ed"
+  },
+  "templates/solicitud_asignar.html": {
+    "mtime": 1792950695.6311207,
+    "seen": 1792952167.8453927,
+    "ast_hash": "8ed6a2a643d551d37a3437703743c02b",
+    "semantic_hash": "8ed6a2a643d551d37a3437703743c02b"
+  },
+  "templates/usuario_admin.html": {
+    "mtime": 1792950695.6311207,
+    "seen": 1792952167.8453927,
+    "ast_hash": "c5fe56dd1e364ca36c727a2d2b772184",
+    "semantic_hash": "c5fe56dd1e364ca36c727a2d2b772184"
+  },
+  "templates/usuario_cliente.html": {
+    "mtime": 1792950695.632629,
+    "seen": 1792952167.8453927,
+    "ast_hash": "8a702db082dede57b496710d02b3bb7b",
+    "semantic_hash": "8a702db082dede57b496710d02b3bb7b"
+  },
+  "templates/usuario_empresa.html": {
+    "mtime": 1792950695.632629,
+    "seen": 1792952167.8453927,
+    "ast_hash": "2cdf359455fe19d6bebe9afcae54dfdc",
+    "semantic_hash": "2cdf359455fe19d6bebe9afcae54dfdc"
+  },
+  "static/loader.png": {
+    "mtime": 1792950695.6123576,
+    "seen": 1792952167.8453927,
+    "ast_hash": "7b060bdd9adecf27699759dfced14ea5",
+    "semantic_hash": "7b060bdd9adecf27699759dfced14ea5"
+  },
+  "static/sinergi-logo.png": {
+    "mtime": 1792950695.6133575,
+    "seen": 1792952167.8453927,
+    "ast_hash": "f04996b9beb02c7e56cd056d60b8240b",
+    "semantic_hash": "f04996b9beb02c7e56cd056d60b8240b"
+  }
+}

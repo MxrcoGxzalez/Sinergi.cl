@@ -22,7 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-AUTH_USER_MODEL = 'usuarios.CustomUser'
+AUTH_USER_MODEL = 'usuarios.CustomUser'  # personal Sinergi (empleados y admins)
+
+# Un solo login, dos tablas: primero se busca en el personal y después en los clientes.
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'usuarios.backends.ClienteBackend',
+]
 
 
 
@@ -32,12 +38,21 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
+# Producción con la clave de ejemplo = sesiones y tokens falsificables: se niega a arrancar
+if not DEBUG and (SECRET_KEY.startswith('dev-') or len(SECRET_KEY) < 50):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('SECRET_KEY de producción insegura: genera una nueva (50+ caracteres aleatorios).')
 
 # Chatbot de clientes (Módulo 4). Proveedor compatible con OpenAI; por defecto Groq.
 LLM_API_KEY = env('LLM_API_KEY', default='')
 LLM_BASE_URL = env('LLM_BASE_URL', default='https://api.groq.com/openai/v1')
 LLM_MODEL = env('LLM_MODEL', default='openai/gpt-oss-120b')
 LLM_TIMEOUT = env.int('LLM_TIMEOUT', default=25)
+
+# Antivirus de documentos subidos (ClamAV, servicio "clamav"). Vacío = desactivado (solo para tests).
+CLAMAV_HOST = env('CLAMAV_HOST', default='clamav')
+CLAMAV_PORT = env.int('CLAMAV_PORT', default=3310)
+CLAMAV_TIMEOUT = env.int('CLAMAV_TIMEOUT', default=30)
 
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
@@ -47,6 +62,7 @@ CELERY_TIMEZONE = 'America/Santiago'
 DIAS_ARCHIVO = env.int('DIAS_ARCHIVO', default=60)
 CELERY_BEAT_SCHEDULE = {
     'purgar-archivados': {'task': 'proyectos.tasks.purgar_archivados', 'schedule': 60 * 60 * 24},
+    'actualizar-noticias': {'task': 'web.tasks.actualizar_noticias', 'schedule': 60 * 60 * 6},
 }
 
 
@@ -73,6 +89,9 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
+# HTTPS lo termina el proxy Caddy (docker-compose.prod.yml); Django recibe HTTP interno.
+BEHIND_PROXY = env.bool('BEHIND_PROXY', default=False)
+
 # Solo en producción (DEBUG=False): HTTPS obligatorio, cookies seguras y HSTS.
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
@@ -80,9 +99,15 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    # Solo si hay un proxy (nginx) que termina HTTPS y SOBRESCRIBE esta cabecera.
-    if env.bool('BEHIND_PROXY', default=False):
+    # Solo si hay un proxy (Caddy) que termina HTTPS y SOBRESCRIBE esta cabecera.
+    if BEHIND_PROXY:
         SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# API (chatbot): solo sesión, con CSRF. Sin esto DRF acepta también HTTP Basic, que permitiría
+# probar contraseñas sin pasar por el bloqueo de fuerza bruta del login.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.SessionAuthentication'],
+}
 
 # Archivos subidos: no ejecutables ni legibles por otros usuarios del servidor.
 FILE_UPLOAD_PERMISSIONS = 0o640
@@ -210,6 +235,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic (producción): lo sirve Caddy
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

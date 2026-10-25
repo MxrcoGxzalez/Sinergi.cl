@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.conf import settings
 from django.db.models import Count, ProtectedError, Q
 from django.urls import reverse
@@ -12,8 +13,8 @@ from django.views.decorators.http import require_POST
 from proyectos.models import Proyecto, Documento, RegistroActividad, SolicitudProyecto
 from proyectos.forms import DocumentoClienteForm
 from proyectos.views import _bandeja, _proyectos_editables
-from .forms import EmpresaForm, UsuarioCrearForm, UsuarioEditarForm
-from .models import CustomUser, Empresa
+from .forms import ClienteCrearForm, ClienteEditarForm, EmpresaForm, PersonalCrearForm, PersonalEditarForm
+from .models import Cliente, CustomUser, Empresa
 from sinergi.seguridad import ip_cliente, log, registrar, superado
 
 # Fuerza bruta: tras N fallos se bloquea el login desde esa IP durante la ventana.
@@ -125,11 +126,13 @@ def dashboard(request):
         contexto = {
             'total_proyectos': proyectos_todos.count(),
             'proyectos_activos': proyectos_todos.filter(estado='En Curso').count(),
-            'total_clientes': CustomUser.objects.filter(role='CLIENTE', is_active=True).count(),
+            'total_clientes': Cliente.objects.filter(is_active=True).count(),
             'proyectos': proyectos_todos,
-            'usuarios': _usuarios_gestionables(request.user).select_related('empresa').order_by('role', 'username'),
+            'administradores': _usuarios_gestionables(request.user).filter(role='ADMIN').order_by('username'),
+            'empleados': _usuarios_gestionables(request.user).filter(role='EMPLEADO').order_by('username'),
+            'clientes': _usuarios_gestionables(request.user, 'cliente').select_related('empresa'),
             'empresas': Empresa.objects.annotate(
-                n_clientes=Count('usuarios', distinct=True),
+                n_clientes=Count('clientes', distinct=True),
                 n_proyectos=Count('proyectos', filter=Q(proyectos__archivado_en__isnull=True), distinct=True)),
             'solicitudes_pendientes': solicitudes.filter(estado=SolicitudProyecto.PENDIENTE).select_related('cliente'),
             'solicitudes_revisadas': (solicitudes.exclude(estado=SolicitudProyecto.PENDIENTE)
@@ -184,10 +187,19 @@ def eliminar_documento(request, doc_id):
 # El admin de la empresa gestiona cuentas desde su panel, sin pasar por Django Admin.
 # Los superusuarios solo se gestionan desde Django Admin, y nadie se edita a sí mismo aquí.
 
-def _usuarios_gestionables(admin):
+def _usuarios_gestionables(admin, tipo='personal'):
+    """Cuentas que el admin de la página puede gestionar, según la tabla: 'personal' o 'cliente'."""
     if admin.role != 'ADMIN':
         raise PermissionDenied
-    return CustomUser.objects.filter(is_superuser=False).exclude(pk=admin.pk)
+    if tipo == 'cliente':
+        return Cliente.objects.all()
+    if tipo == 'personal':
+        return CustomUser.objects.filter(is_superuser=False).exclude(pk=admin.pk)
+    raise Http404
+
+
+FORMS_CREAR = {'cliente': ClienteCrearForm, 'personal': PersonalCrearForm}
+FORMS_EDITAR = {'cliente': ClienteEditarForm, 'personal': PersonalEditarForm}
 
 
 def _volver_usuarios():
@@ -195,9 +207,9 @@ def _volver_usuarios():
 
 
 @login_required(login_url='login')
-def crear_usuario(request):
-    _usuarios_gestionables(request.user)
-    form = UsuarioCrearForm(request.POST or None)
+def crear_usuario(request, tipo):
+    _usuarios_gestionables(request.user, tipo)
+    form = FORMS_CREAR[tipo](request.POST or None, initial={'role': request.GET.get('rol')})  # ?rol= preselecciona
     if request.method == 'POST' and form.is_valid():
         usuario = form.save()
         RegistroActividad.anotar('CREAR', f'Usuario {usuario.username}', usuario.get_role_display(), request)
@@ -205,16 +217,17 @@ def crear_usuario(request):
         return _volver_usuarios()
     return render(request, 'panel_form.html', {
         'form': form,
-        'titulo': 'Crear Nuevo Usuario',
-        'subtitulo': 'Cuentas de clientes, empleados o administradores de la página. No otorga acceso a Django Admin.',
+        'titulo': 'Nueva Cuenta de Cliente' if tipo == 'cliente' else 'Nueva Cuenta de Personal Sinergi',
+        'subtitulo': ('Usuario de la página web de una empresa mandante (tabla de clientes).' if tipo == 'cliente' else
+                      'Empleado o administrador de la página (tabla del personal). No otorga acceso a Django Admin.'),
         'boton': 'Crear Usuario',
     })
 
 
 @login_required(login_url='login')
-def editar_usuario(request, user_id):
-    usuario = get_object_or_404(_usuarios_gestionables(request.user), pk=user_id)
-    form = UsuarioEditarForm(request.POST or None, instance=usuario)
+def editar_usuario(request, tipo, user_id):
+    usuario = get_object_or_404(_usuarios_gestionables(request.user, tipo), pk=user_id)
+    form = FORMS_EDITAR[tipo](request.POST or None, instance=usuario)
     if request.method == 'POST' and form.is_valid():
         form.save()
         cambios = [c for c in form.changed_data if c != 'nueva_password']
@@ -225,18 +238,18 @@ def editar_usuario(request, user_id):
         return _volver_usuarios()
     return render(request, 'panel_form.html', {
         'form': form,
-        'titulo': f'Editar Usuario: {usuario.username}',
+        'titulo': f'Editar {"Cliente" if tipo == "cliente" else "Personal"}: {usuario.username}',
         'boton': 'Guardar Cambios',
     })
 
 
 @login_required(login_url='login')
 @require_POST
-def eliminar_usuario(request, user_id):
-    usuario = get_object_or_404(_usuarios_gestionables(request.user), pk=user_id)
+def eliminar_usuario(request, tipo, user_id):
+    usuario = get_object_or_404(_usuarios_gestionables(request.user, tipo), pk=user_id)
     try:
         usuario.delete()
-        RegistroActividad.anotar('ELIMINAR', f'Usuario {usuario.username}', request=request)
+        RegistroActividad.anotar('ELIMINAR', f'Usuario {usuario.username}', usuario.get_role_display(), request)
         messages.warning(request, f'Usuario "{usuario.username}" eliminado.')
     except ProtectedError:
         messages.error(request, f'"{usuario.username}" tiene proyectos o peticiones asociadas. Desactiva la cuenta en lugar de eliminarla.')

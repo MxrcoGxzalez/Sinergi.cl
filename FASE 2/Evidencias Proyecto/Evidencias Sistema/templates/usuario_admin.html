@@ -176,63 +176,14 @@
       <!-- VISTA 2: GESTIÓN DE USUARIOS                             -->
       <!-- ======================================================== -->
       <section id="view-usuarios" class="tab-content hidden space-y-6">
-        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
-            <p class="text-sm text-slate-500 mt-1">Crea, edita o elimina cuentas de clientes, empleados y administradores de la página.</p>
-          </div>
-          <a href="{% url 'crear_usuario' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">
-            + Crear Nuevo Usuario
-          </a>
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
+          <p class="text-sm text-slate-500 mt-1">Separados por tipo de usuario. Clientes y personal Sinergi están en tablas distintas. Ambos entran por el mismo acceso, y un nombre de usuario no puede repetirse entre ellas.</p>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
-          <table class="tabla-responsive w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
-                <th class="p-3.5">Usuario / Nombre</th>
-                <th class="p-3.5">Empresa / Área</th>
-                <th class="p-3.5">Rol</th>
-                <th class="p-3.5">Estado Cuenta</th>
-                <th class="p-3.5 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-xs">
-              {% for u in usuarios %}
-              <tr class="hover:bg-slate-50">
-                <td class="p-3.5">
-                  <div class="font-semibold text-slate-900">{{ u.get_full_name|default:u.username }}</div>
-                  <div class="font-mono text-slate-400 text-[11px] break-all">{{ u.email|default:u.username }}</div>
-                </td>
-                <td class="p-3.5 text-slate-700">{{ u.empresa|default:"Sinergi" }}</td>
-                <td class="p-3.5">
-                  <span class="{% if u.role == 'CLIENTE' %}bg-sky-100 text-sky-800{% elif u.role == 'ADMIN' %}bg-red-100 text-sinergi-red{% else %}bg-slate-200 text-slate-800{% endif %} font-semibold px-2 py-0.5 rounded font-mono text-[10px]">{{ u.role }}</span>
-                </td>
-                <td class="p-3.5">
-                  {% if u.is_active %}
-                  <span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activo</span>
-                  {% else %}
-                  <span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactivo</span>
-                  {% endif %}
-                </td>
-                <td class="p-3.5 text-right">
-                  <div class="flex flex-wrap items-center md:justify-end gap-1">
-                  <a href="{% url 'editar_usuario' u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
-                  <form method="POST" action="{% url 'eliminar_usuario' u.id %}" class="inline" onsubmit="return confirm('¿Eliminar la cuenta {{ u.username|escapejs }}? Esta acción no se puede deshacer.')">
-                    {% csrf_token %}
-                    <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</button>
-                  </form>
-                  </div>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="5" class="p-6 text-center text-slate-500 italic">No hay otros usuarios registrados.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {% include '_tabla_cuentas.html' with cuentas=administradores tipo='personal' rol='ADMIN' titulo='Administradores' boton='Nuevo Administrador' %}
+        {% include '_tabla_cuentas.html' with cuentas=empleados tipo='personal' rol='EMPLEADO' titulo='Empleados' boton='Nuevo Empleado' %}
+        {% include '_tabla_cuentas.html' with cuentas=clientes tipo='cliente' titulo='Clientes (usuarios de la página web)' boton='Nuevo Cliente' %}
       </section>
 
       <!-- ======================================================== -->
