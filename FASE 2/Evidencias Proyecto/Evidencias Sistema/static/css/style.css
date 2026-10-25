@@ -1,14 +1,18 @@
 /* ==========================================================================
    SINERGI - Estilos personalizados de las páginas públicas
    Tailwind permanece en las plantillas HTML; aquí vive el CSS propio.
+   Marca (logo y CSS de sinergi.cl): rojo #FF0000 y gris #4D4D4D, tipografía tipo Futura (Jost).
    ========================================================================== */
 
 /* Variables y elementos globales */
 :root {
-  --ink: #0F1B2D;
-  --brick: #9C4B44;
+  --ink: #2B2B2B;
+  --gris: #4D4D4D;
+  --brick: #E60000;        /* rojo Sinergi con contraste AA para textos y botones */
+  --rojo: #FF0000;         /* rojo exacto del logo: engranajes, líneas y acentos */
+  /* Colores de cada red en el plano y en los proyectos (información, no decoración) */
   --c-elec: #C98500;
-  --c-pci: #D23F2C;
+  --c-pci: #E60000;
   --c-hvac: #1B86B5;
   --c-san: #17946F;
   --c-seg: #6A55D6;
@@ -20,10 +24,10 @@
 
 /* Fondo tipo plano de ingeniería */
 .bg-plan {
-  background-color: #F1F3F2;
+  background-color: #F9F9F9;
   background-image:
-    linear-gradient(rgba(15, 27, 45, .055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 27, 45, .055) 1px, transparent 1px);
+    linear-gradient(rgba(77, 77, 77, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 77, 77, .06) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
@@ -32,37 +36,83 @@
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
 }
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Navegación activa */
+/* Navegación: subrayado rojo como el menú de sinergi.cl */
 .nav-item { position: relative; transition: color 0.25s ease; }
 .nav-item::after {
   content: '';
   position: absolute;
-  bottom: -6px;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background-color: var(--brick);
-  border-radius: 9999px;
-  transform: translateX(-50%);
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--rojo);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.nav-item:hover { color: var(--ink); }
 .nav-item:hover::after,
-.nav-item[aria-current="true"]::after { width: 100%; }
-.nav-item[aria-current="true"] { color: #FFFFFF !important; font-weight: 600; }
+.nav-item[aria-current="true"]::after { transform: scaleX(1); }
+.nav-item[aria-current="true"] { color: var(--ink) !important; font-weight: 600; }
 
 /* Menú móvil */
 #mobile-menu { clip-path: inset(0 0 100% 0); transition: clip-path .4s cubic-bezier(0.16, 1, 0.3, 1); }
 #mobile-menu.is-open { clip-path: inset(0 0 0 0); }
 
+/* Botón principal: destello que cruza al pasar el mouse */
+.btn-brillo { position: relative; overflow: hidden; isolation: isolate; }
+.btn-brillo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .7s ease;
+}
+.btn-brillo:hover::before { transform: translateX(120%); }
+
+/* "+ Leer más", el enlace característico de sinergi.cl */
+.leer-mas { display: inline-flex; align-items: center; gap: .35rem; font-weight: 700; color: var(--brick); }
+.leer-mas::before { content: '+'; transition: transform .3s ease; }
+.leer-mas:hover { color: #AA0000; }
+.leer-mas:hover::before { transform: rotate(90deg); }
+
+/* Engranajes del logo: giran en sentidos opuestos (sinergia). El chico tiene 1/3 de los dientes: gira 3 veces más rápido */
+.engranaje { transform-box: fill-box; transform-origin: center; animation: girar 60s linear infinite; }
+.engranaje.inverso { animation-duration: 20s; animation-direction: reverse; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* Frases rotativas del hero (los textos del slider de sinergi.cl) */
+/* Las tres se apilan en la misma celda: el bloque mide lo que la más larga y no salta al cambiar */
+.frase { grid-area: 1 / 1; opacity: 0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease; }
+.frase.is-active { opacity: 1; transform: none; }
+
+/* Tarjetas con borde rojo que crece al pasar el mouse */
+.tarjeta-roja { position: relative; transition: transform .35s ease, box-shadow .35s ease; }
+.tarjeta-roja::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--rojo);
+  transform: scaleY(.25);
+  transform-origin: top;
+  transition: transform .45s cubic-bezier(.16, 1, .3, 1);
+}
+.tarjeta-roja:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .25); }
+.tarjeta-roja:hover::before { transform: scaleY(1); }
+
 /* Animación de filas de proyectos */
 .proj-row { transition: background-color 0.25s ease, transform 0.25s ease; }
-.proj-row:hover { background-color: #0F1B2D; color: #FFFFFF; }
+.proj-row:hover { background-color: #2B2B2B; color: #FFFFFF; }
 .proj-row:hover .proj-desc { color: rgba(255, 255, 255, 0.8); }
 .proj-row:hover .proj-tag {
   border-color: rgba(255, 255, 255, 0.25);
@@ -78,12 +128,12 @@
 
 /* Plano SVG interactivo de la página principal */
 .ln { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
-.st { stroke: var(--ink); }
+.st { stroke: var(--gris); }
 .thin { stroke-width: .8; opacity: .5; }
 .gridline { stroke-dasharray: 10 4 2 4; stroke-width: .8; --o: .3; opacity: .3; }
 .dash { stroke-dasharray: 3 3; stroke-width: 1.2; --o: .8; }
 .cone { fill: var(--c-seg); fill-opacity: .1; stroke: none; }
-.tx { font: 500 11px 'Instrument Sans', sans-serif; fill: var(--ink); stroke: none; }
+.tx { font: 500 11px 'Jost', sans-serif; fill: var(--gris); stroke: none; }
 .tx.sm { font-size: 9.5px; opacity: .65; }
 .tx.bold { font-weight: 700; font-size: 10.5px; }
 
@@ -103,7 +153,7 @@
 #plan[data-focus="san"] .sys-san,
 #plan[data-focus="seg"] .sys-seg { opacity: 1; }
 
-/* Carrusel de proyectos */
+/* Carrusel de especialidades */
 .slide { position: absolute; inset: 0; visibility: hidden; z-index: 0; }
 .slide.is-leaving { visibility: visible; z-index: 10; }
 .slide.is-active { visibility: visible; z-index: 20; }
@@ -127,4 +177,10 @@
 .marquee-mask {
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+/* Quien pide menos movimiento en su sistema ve todo quieto y visible */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .reveal { opacity: 1; transform: none; }
 }

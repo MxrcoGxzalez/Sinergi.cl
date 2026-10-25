@@ -1,0 +1,62 @@
+<!-- Menú "Mostrar en portafolio": publica un proyecto Finalizado en la página web pública (/proyectos/).
+     Solo se publican estos dos textos, nunca datos internos de la obra. Requiere `proyecto`. -->
+<div id="portafolio-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-lg border border-slate-200 shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+
+    <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">Mostrar en el Portafolio Web</h3>
+        <p class="text-[11px] text-slate-500 font-mono">{{ proyecto.codigo }} · {{ proyecto.nombre }}</p>
+      </div>
+      <button type="button" data-cerrar-portafolio class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+    </div>
+
+    <form method="POST" action="{% url 'proyectos:portafolio' proyecto.id %}" class="p-5 space-y-4">
+      {% csrf_token %}
+      {% if proyecto.visible_en_portafolio %}
+      <div class="text-[11px] bg-emerald-50 border border-emerald-200 text-emerald-800 rounded p-2.5 flex flex-wrap justify-between gap-2">
+        <span>Publicado en la página web desde el {{ proyecto.portafolio_publicado_en|date:"d M Y" }}.</span>
+        <a href="{% url 'proyectos' %}" target="_blank" rel="noopener" class="font-semibold underline">Ver en la página web &rarr;</a>
+      </div>
+      {% endif %}
+
+      <p class="text-[11px] text-slate-500">Se mostrará en la sección <strong>Proyectos</strong> del sitio público. No incluyas datos sensibles: montos, direcciones exactas, contactos ni detalles internos.</p>
+
+      <div>
+        <label for="id_portafolio_cliente" class="block text-xs font-semibold text-slate-700 mb-1">Cliente (como se verá en la web) *</label>
+        <input type="text" name="portafolio_cliente" id="id_portafolio_cliente" required maxlength="150"
+               value="{{ proyecto.portafolio_cliente|default:proyecto.empresa|default:'' }}"
+               class="w-full text-xs border border-slate-300 rounded p-2.5 bg-white outline-none focus:border-[#1D5B8A]">
+      </div>
+
+      <div>
+        <label for="id_portafolio_descripcion" class="block text-xs font-semibold text-slate-700 mb-1">Alcance del proyecto *</label>
+        <textarea name="portafolio_descripcion" id="id_portafolio_descripcion" rows="3" required maxlength="300"
+                  placeholder="Ej: Ingeniería de detección y extinción para centro de distribución."
+                  class="w-full text-xs border border-slate-300 rounded p-2.5 bg-white outline-none focus:border-[#1D5B8A]">{{ proyecto.portafolio_descripcion|default:proyecto.nombre }}</textarea>
+        <p class="text-[10px] text-slate-400 mt-1">Especialidad mostrada: {{ proyecto.get_especialidad_display|default:"sin especialidad" }}</p>
+      </div>
+
+      <div class="pt-3 border-t border-slate-200 flex flex-wrap justify-end gap-2">
+        {% if proyecto.en_portafolio %}
+        <button type="submit" name="accion" value="quitar" formnovalidate class="mr-auto px-3.5 py-1.5 text-xs text-[#C52222] hover:bg-red-50 border border-red-200 rounded font-medium">Quitar de la web</button>
+        {% endif %}
+        <button type="button" data-cerrar-portafolio class="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded font-medium">Cancelar</button>
+        <button type="submit" name="accion" value="publicar" class="px-4 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded shadow-sm">
+          {% if proyecto.en_portafolio %}Guardar cambios{% else %}Publicar en la página web{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const modal = document.getElementById('portafolio-modal');
+    document.querySelectorAll('[data-abrir-portafolio]').forEach(b => b.addEventListener('click', () => modal.classList.remove('hidden')));
+    document.querySelectorAll('[data-cerrar-portafolio]').forEach(b => b.addEventListener('click', () => modal.classList.add('hidden')));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    // Los paneles enlazan a /control/#portafolio para abrir este menú directamente
+    if (location.hash === '#portafolio') modal.classList.remove('hidden');
+  })();
+</script>

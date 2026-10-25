@@ -8,14 +8,14 @@
       <!-- ================================================================== -->
       <!-- HERO HEADER DE CONTACTO                                            -->
       <!-- ================================================================== -->
-      <section class="relative min-h-[48svh] flex items-end overflow-hidden bg-[#101417] text-white">
+      <section class="relative min-h-[48svh] flex items-end overflow-hidden bg-ink-900 text-white">
         <img
           src="https://images.unsplash.com/photo-1541888946425-d0fbb186c5f9?auto=format&fit=crop&w=2400&q=88"
           alt="Ingeniería y faenas Sinergi"
           class="absolute inset-0 h-full w-full object-cover object-center opacity-25"
         >
-        <div class="absolute inset-0 bg-gradient-to-r from-[#0A0E11]/95 via-[#0A0E11]/85 to-[#0A0E11]/40"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[#0A0E11] via-transparent to-[#0A0E11]/40"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-900/95 via-ink-900/85 to-ink-900/40"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-ink-900 via-transparent to-ink-900/40"></div>
 
         <div class="relative z-10 w-full max-w-shell mx-auto px-6 sm:px-10 lg:px-12 pb-14 pt-36 sm:pb-16">
           <div class="max-w-4xl">
@@ -319,15 +319,15 @@
 
       const onScroll = () => {
         if (window.scrollY > 30) {
-          header.classList.add('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
-          header.classList.remove('bg-[#101417]/40', 'border-white/10');
+          header.classList.add('shadow-xl', 'border-black/10');
+          header.classList.remove('border-black/5');
           headerContainer.classList.add('h-[60px]');
           headerContainer.classList.remove('h-24');
           logoIcon.classList.add('size-8');
           logoIcon.classList.remove('size-10');
         } else {
-          header.classList.remove('bg-[#101417]/95', 'shadow-xl', 'border-white/15');
-          header.classList.add('bg-[#101417]/40', 'border-white/10');
+          header.classList.remove('shadow-xl', 'border-black/10');
+          header.classList.add('border-black/5');
           headerContainer.classList.remove('h-[60px]');
           headerContainer.classList.add('h-24');
           logoIcon.classList.remove('size-8');
