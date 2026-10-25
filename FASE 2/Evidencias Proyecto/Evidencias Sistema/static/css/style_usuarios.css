@@ -71,6 +71,8 @@ body {
     font-weight: 600;
     background-color: #f1f5f9;
     color: #334155;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .estado[data-estado="En Curso"]   { background-color: #d1fae5; color: #065f46; }
 .estado[data-estado="Pausado"]    { background-color: #fef3c7; color: #92400e; }
@@ -340,18 +342,83 @@ main a, main button, .portal-contenido a, .portal-contenido button {
 }
 
 /* ==================== PORTAL: MENÚ LATERAL ANCLADO ====================
-   En escritorio el menú queda fijo a la altura de la pantalla (bajo la barra superior de 4rem)
-   y no se estira con el contenido; si no cabe, hace scroll propio. En móvil sigue arriba. */
-@media (min-width: 768px) {
-    aside.bg-white {
-        width: 17rem;               /* antes 16rem (md:w-64) */
+   En escritorio (≥1024px) el menú queda fijo a la altura de la pantalla (bajo la barra superior
+   de 4rem) y no se estira con el contenido; si no cabe, hace scroll propio.
+   En móvil y tablet se convierte en un panel deslizable que abre el botón "Menú" del header. */
+.portal-menu {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+@media (min-width: 1024px) {
+    .portal-menu {
+        width: 17rem;
         flex-shrink: 0;
         position: sticky;
         top: 4rem;
         height: calc(100vh - 4rem);
-        overflow-y: auto;
-        scrollbar-width: thin;
     }
+}
+@media (max-width: 1023.98px) {
+    .portal-menu {
+        position: fixed;
+        top: 4rem;
+        bottom: 0;
+        left: 0;
+        z-index: 45;
+        width: min(18rem, 85vw);
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform 0.22s ease, visibility 0s linear 0.22s;
+    }
+    .portal-menu.abierto {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.22s ease;
+        box-shadow: 8px 0 24px -8px rgba(15, 23, 42, 0.35);
+    }
+    body.menu-abierto { overflow: hidden; }
+}
+.portal-menu-fondo {
+    position: fixed;
+    inset: 4rem 0 0 0;
+    z-index: 44;
+    background-color: rgba(15, 23, 42, 0.5);
+}
+.portal-menu-fondo[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+    .portal-menu, .portal-menu.abierto { transition: none; }
+}
+
+/* ==================== PORTAL: TABLAS RESPONSIVAS ====================
+   En pantallas angostas cada fila de una .tabla-responsive se muestra como tarjeta y cada celda
+   lleva arriba el nombre de su columna (data-label, lo completa _portal_responsivo.html). */
+@media (max-width: 767.98px) {
+    .tabla-responsive thead { display: none; }
+    .tabla-responsive,
+    .tabla-responsive tbody,
+    .tabla-responsive tr,
+    .tabla-responsive td { display: block; width: 100%; }
+    .tabla-responsive tr { padding: 0.75rem 1rem; }
+    .tabla-responsive td {
+        padding: 0.25rem 0;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    .tabla-responsive td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.125rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #94a3b8;
+    }
+    .tabla-responsive td:last-child:not([colspan]) { padding-top: 0.5rem; }
+    .tabla-responsive td[colspan] { text-align: center; padding: 1rem 0; }
 }
 
 /* ==================== PORTAL: DETALLES ESTÉTICOS ==================== */

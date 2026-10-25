@@ -9,10 +9,10 @@
   <div>
     <a href="{% url 'dashboard' %}?tab={% if user.role == 'ADMIN' %}supervision-hitos{% else %}proyectos{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver al panel</a>
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mt-2 pb-4 border-b border-slate-200">
-      <div>
+      <div class="min-w-0 break-words">
         <span class="font-mono text-xs text-[#1D5B8A] font-bold">CONTROL DE OBRA · {{ proyecto.codigo }}</span>
         {% if proyecto.es_nuevo %}<span class="badge-nuevo">NUEVO</span>{% endif %}
-        <h1 class="text-2xl font-bold text-slate-900">{{ proyecto.nombre }}</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{{ proyecto.nombre }}</h1>
         <p class="text-xs text-slate-500 mt-1">
           Empresa: <strong>{{ proyecto.empresa|default:"—" }}</strong>{% if proyecto.sucursal %} · Sucursal: {{ proyecto.sucursal }}{% endif %}
           · Contacto: {{ proyecto.cliente.get_full_name|default:proyecto.cliente.username }}
@@ -23,6 +23,11 @@
         <span class="estado self-center" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
         <a href="{% url 'proyectos:editar' proyecto.id %}" class="text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold px-3 py-1.5 rounded shadow-sm">Editar Datos del Proyecto</a>
         <a href="{% url 'proyectos:diagrama' proyecto.id %}" target="_blank" rel="noopener" class="text-xs bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold px-3 py-1.5 rounded shadow-sm">Abrir Diagrama (imprimible)</a>
+        {% if proyecto.estado == 'Finalizado' %}
+        <button type="button" data-abrir-portafolio class="text-xs {% if proyecto.en_portafolio %}bg-emerald-50 border border-emerald-300 text-emerald-800{% else %}bg-emerald-700 hover:bg-emerald-800 text-white{% endif %} font-semibold px-3 py-1.5 rounded shadow-sm">
+          {% if proyecto.en_portafolio %}✓ En el portafolio web{% else %}Mostrar en portafolio{% endif %}
+        </button>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -31,7 +36,7 @@
 
   <!-- Avance general -->
   <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-    <div class="flex justify-between items-end mb-2">
+    <div class="flex justify-between items-end gap-3 mb-2">
       <span class="font-mono text-[11px] uppercase font-bold text-slate-500">Avance general · calculado automáticamente desde las fases y subfases</span>
       <span class="font-mono text-2xl font-black text-slate-900">{{ proyecto.porcentaje_avance }}%</span>
     </div>
@@ -42,7 +47,7 @@
 
   <!-- ==================== FASES Y SUBFASES ==================== -->
   <section class="bg-white border border-slate-200 rounded-lg shadow-sm">
-        <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center">
+        <div class="px-4 sm:px-5 py-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
           <div>
             <h2 class="text-base font-bold text-slate-900">Fases y Subfases</h2>
             <p class="text-[11px] text-slate-500">{{ fases|length }} fase(s). Es lo que ve el cliente. Al completar fases y subfases, el avance se actualiza solo.</p>
@@ -53,11 +58,11 @@
           </div>
         </div>
 
-        <div id="vista-diagrama" class="p-5 hidden">
+        <div id="vista-diagrama" class="p-3 sm:p-5 hidden">
           {% include '_diagrama_fases.html' %}
         </div>
 
-        <div id="vista-lista" class="p-5 space-y-4">
+        <div id="vista-lista" class="p-3 sm:p-5 space-y-4">
           {% if not fases %}
           <div class="bg-slate-50 border border-dashed border-slate-300 rounded p-4 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span>Este proyecto aún no tiene fases (avance 0%). Agrégalas abajo o carga las 4 fases estándar como punto de partida.</span>
@@ -143,6 +148,7 @@
         </div>
   </section>
 </div>
+{% if proyecto.estado == 'Finalizado' %}{% include '_modal_portafolio.html' %}{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}

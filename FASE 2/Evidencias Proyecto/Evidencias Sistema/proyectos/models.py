@@ -205,6 +205,13 @@ class Proyecto(Archivable):
     creado_en = models.DateTimeField(default=timezone.now, editable=False)
     actualizado_en = models.DateTimeField(auto_now=True)
 
+    # Portafolio público (/proyectos/): solo proyectos Finalizados y solo estos textos,
+    # nunca datos internos de la obra (documentos, contactos, ubicación, avance).
+    en_portafolio = models.BooleanField(default=False, verbose_name="Mostrar en el portafolio web")
+    portafolio_cliente = models.CharField(max_length=150, blank=True, verbose_name="Cliente (texto público)")
+    portafolio_descripcion = models.CharField(max_length=300, blank=True, verbose_name="Alcance (texto público)")
+    portafolio_publicado_en = models.DateTimeField(null=True, blank=True, editable=False)
+
     class Meta:
         ordering = ['-creado_en']
 
@@ -215,6 +222,14 @@ class Proyecto(Archivable):
     @property
     def es_nuevo(self):
         return self.creado_en >= timezone.now() - timedelta(days=7)
+
+    @classmethod
+    def portafolio_publico(cls):
+        return cls.objects.activos().filter(en_portafolio=True, estado='Finalizado').order_by('-portafolio_publicado_en')
+
+    @property
+    def visible_en_portafolio(self):
+        return self.en_portafolio and self.estado == 'Finalizado' and not self.archivado_en
 
     def save(self, *args, **kwargs):
         self.porcentaje_avance = max(0, min(100, int(self.porcentaje_avance or 0)))

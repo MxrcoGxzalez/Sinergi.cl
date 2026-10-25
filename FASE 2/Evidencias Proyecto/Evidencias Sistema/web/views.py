@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from proyectos.forms import SolicitudPublicaForm
-from proyectos.models import ESPECIALIDADES
+from proyectos.models import ESPECIALIDADES, Proyecto
 from sinergi.seguridad import ip_cliente, registrar, superado
 
 log = logging.getLogger('sinergi.seguridad')
@@ -13,8 +13,19 @@ log = logging.getLogger('sinergi.seguridad')
 MAX_SOLICITUDES_HORA = 3
 MAX_SOLICITUDES_DIA = 10
 
+# Catálogo histórico escrito a mano en pagina_proyectos.html (antes del sistema)
+PROYECTOS_HISTORICOS = 29
+
+# Especialidad del proyecto -> puntos de color del catálogo público (ver pagina_proyectos.html)
+PUNTOS_ESPECIALIDAD = {
+    'ELECTRICA': ['elec'], 'PCI': ['pci'], 'HVAC': ['hvac'], 'SEGURIDAD': ['seg'], 'SANITARIA': ['san'],
+    'COORDINACION': ['elec', 'pci', 'hvac', 'san', 'seg'],
+}
+
+
 def inicio(request):
-    return render(request, 'pagina_inicio.html')
+    total = PROYECTOS_HISTORICOS + Proyecto.portafolio_publico().count()
+    return render(request, 'pagina_inicio.html', {'total_proyectos': total})
 
 def nosotros(request):
     return render(request, 'pagina_nosotros.html')
@@ -58,4 +69,12 @@ def contacto(request):
     }, status=429 if bloqueado else 200)
 
 def proyectos(request):
-    return render(request, 'pagina_proyectos.html')
+    """Catálogo público. Suma al histórico los proyectos Finalizados que el equipo publicó
+    en el portafolio, solo con sus textos públicos."""
+    portafolio = [
+        {'c': p.portafolio_cliente, 's': p.portafolio_descripcion,
+         'd': PUNTOS_ESPECIALIDAD.get(p.especialidad, []),
+         'type': 'tdd' if p.especialidad == 'TDD' else 'proy', 'nuevo': True}
+        for p in Proyecto.portafolio_publico()
+    ]
+    return render(request, 'pagina_proyectos.html', {'portafolio': portafolio})

@@ -58,15 +58,15 @@
 
   <!-- Header y navegación principal -->
   <header id="site-header" class="fixed inset-x-0 top-0 z-50 transition-all duration-500 bg-[#101417]/40 backdrop-blur-md border-b border-white/10">
-    <div id="header-container" class="mx-auto flex h-24 max-w-shell items-center justify-between px-6 transition-all duration-500 sm:px-10 lg:px-12">
-      <a href="{% url 'inicio' %}" class="flex items-center gap-3.5 text-white group" aria-label="Sinergi, inicio">
+    <div id="header-container" class="mx-auto flex h-24 max-w-shell items-center justify-between gap-3 px-4 transition-all duration-500 sm:px-10 lg:px-8 xl:px-12">
+      <a href="{% url 'inicio' %}" class="flex shrink-0 items-center gap-3.5 text-white group" aria-label="Sinergi, inicio">
         <span class="logo-placa">
           <img id="logo-icon" src="{% static 'sinergi-logo.png' %}" alt="Sinergi Engineering & Consultancy" width="154" height="40" class="size-10 transition-all duration-500 group-hover:scale-105">
         </span>
       </a>
 
       <!-- Navegación principal; el estado activo se marca según data-page -->
-      <nav aria-label="Principal" class="hidden items-center gap-9 text-[14px] font-medium text-white/70 lg:flex">
+      <nav aria-label="Principal" class="hidden items-center gap-5 text-[14px] font-medium text-white/70 lg:flex xl:gap-9">
         <a href="{% url 'inicio' %}" class="nav-item" data-page-link="home" data-spy="inicio">Inicio</a>
         <a href="{% url 'inicio' %}#especialidades" class="nav-item" data-page-link="especialidades" data-spy="especialidades">Especialidades</a>
         <a href="{% url 'servicios' %}" class="nav-item" data-page-link="servicios">Servicios</a>
@@ -77,13 +77,14 @@
       </nav>
 
       <div class="flex items-center gap-3">
-        <button type="button" data-open-portal class="hidden rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink sm:inline-flex">
+        <button type="button" data-open-portal class="hidden whitespace-nowrap rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white hover:text-ink sm:inline-flex">
           Portal Clientes
         </button>
-        <a href="{% url 'contacto' %}" class="inline-flex rounded-full bg-brick px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-brick-dark shadow-md shadow-black/20 hover:shadow-brick/30">
+        <!-- En celular este botón vive dentro del menú móvil; entre lg y xl se oculta (equivale a "Contacto") para que la navegación quepa -->
+        <a href="{% url 'contacto' %}" class="hidden whitespace-nowrap rounded-full bg-brick px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-brick-dark shadow-md shadow-black/20 hover:shadow-brick/30 sm:inline-flex lg:hidden xl:inline-flex">
           Iniciar proyecto
         </a>
-        <button id="menu-open" type="button" class="inline-flex size-10 items-center justify-center rounded-full border border-white/20 text-white lg:hidden" aria-label="Abrir menú">
+        <button id="menu-open" type="button" class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-white/20 text-white lg:hidden" aria-label="Abrir menú" aria-controls="mobile-menu" aria-expanded="false">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>
         </button>
       </div>
@@ -91,7 +92,7 @@
   </header>
 
   <!-- Menú móvil -->
-  <div id="mobile-menu" class="fixed inset-x-4 top-24 z-50 rounded-2xl border border-white/10 bg-[#101417]/95 p-6 shadow-2xl backdrop-blur-xl lg:hidden">
+  <div id="mobile-menu" class="fixed inset-x-4 top-24 z-50 overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#101417]/95 p-6 shadow-2xl backdrop-blur-xl lg:hidden">
     <nav class="flex flex-col gap-4 text-base font-semibold text-white/85">
       <a href="{% url 'inicio' %}" class="m-link hover:text-brick-light" data-page-link="home">Inicio</a>
       <a href="{% url 'inicio' %}#especialidades" class="m-link hover:text-brick-light" data-page-link="especialidades">Especialidades</a>
@@ -102,6 +103,7 @@
       <a href="{% url 'contacto' %}" class="m-link hover:text-brick-light" data-page-link="contacto">Contacto</a>
       <hr class="border-white/10 my-2">
       <button type="button" data-open-portal class="text-left text-sm text-brick-light font-semibold">Portal Clientes →</button>
+      <a href="{% url 'contacto' %}" class="m-link mt-1 inline-flex justify-center rounded-full bg-brick px-5 py-3 text-sm font-semibold text-white transition hover:bg-brick-dark sm:hidden">Iniciar proyecto</a>
     </nav>
   </div>
 
@@ -241,6 +243,30 @@
     pDlg.showModal();
   }
   })();
+    (() => {
+      // Menú móvil: abrir/cerrar lo maneja el script de cada página; aquí se ubica bajo el header
+      // (que se encoge al hacer scroll), se limita a la altura visible y se cierra con Esc o al tocar fuera.
+      const header = document.getElementById('site-header');
+      const menu = document.getElementById('mobile-menu');
+      const boton = document.getElementById('menu-open');
+      if (!header || !menu || !boton) return;
+      const ubicar = () => {
+        const alto = header.offsetHeight;
+        menu.style.top = (alto + 8) + 'px';
+        menu.style.maxHeight = `calc(100dvh - ${alto + 24}px)`;
+      };
+      new ResizeObserver(ubicar).observe(header);
+      ubicar();
+      const cerrar = () => menu.classList.remove('is-open');
+      new MutationObserver(() => boton.setAttribute('aria-expanded', String(menu.classList.contains('is-open'))))
+        .observe(menu, { attributes: true, attributeFilter: ['class'] });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+      document.addEventListener('click', (e) => {
+        if (!menu.classList.contains('is-open') || boton.contains(e.target)) return;
+        if (!menu.contains(e.target) || e.target.closest('a')) cerrar();
+      });
+      matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) cerrar(); });
+    })();
   </script>
 
   {% include '_ayuda_publica.html' %}

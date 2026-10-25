@@ -29,7 +29,7 @@ class FaseAdmin(admin.ModelAdmin):
 
 class ProyectoAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'empresa', 'cliente', 'empleado_encargado', 'estado', 'porcentaje_avance', 'archivado_en')
-    list_filter = ('estado', 'empresa')
+    list_filter = ('estado', 'en_portafolio', 'empresa')
     inlines = [FaseInline, DocumentoInline]
 
     def save_related(self, request, form, formsets, change):

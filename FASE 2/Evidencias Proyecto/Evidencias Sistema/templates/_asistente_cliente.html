@@ -1,8 +1,8 @@
 {# Burbuja del asistente IA del Portal de Clientes. Habla solo con /api/chat/cliente/ (la clave de Groq queda en el servidor). #}
 <div id="asis" class="fixed bottom-5 right-5 z-40 font-sans" data-url="{% url 'asistente:chat_cliente' %}" data-csrf="{{ csrf_token }}">
   <section id="asis-panel" role="dialog" aria-modal="false" aria-labelledby="asis-titulo" hidden
-    class="asis-panel absolute bottom-20 right-0 w-[min(390px,calc(100vw-2.5rem))] h-[min(600px,calc(100vh-8rem))] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/25">
-    <header class="flex items-center justify-between gap-3 bg-sinergi-dark px-4 py-3 text-white">
+    class="asis-panel absolute bottom-20 right-0 w-[min(390px,calc(100vw-2.5rem))] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/25">
+    <header class="shrink-0 flex items-center justify-between gap-3 bg-sinergi-dark px-4 py-3 text-white">
       <div class="flex items-center gap-3">
         <span class="relative flex h-9 w-9 items-center justify-center rounded-full bg-sinergi-red/90 font-mono text-xs font-bold">IA
           <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sinergi-dark bg-emerald-400"></span>
@@ -22,16 +22,16 @@
       </div>
     </header>
 
-    <div id="asis-mensajes" class="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4" aria-live="polite"></div>
+    <div id="asis-mensajes" class="flex-1 min-h-[3.5rem] space-y-3 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4" aria-live="polite"></div>
 
-    <div id="asis-sugerencias" class="flex flex-wrap gap-1.5 border-t border-slate-100 bg-slate-50 px-4 pb-3 pt-2">
+    <div id="asis-sugerencias" class="flex flex-wrap gap-1.5 max-h-28 min-h-0 overflow-y-auto border-t border-slate-100 bg-slate-50 px-4 pb-3 pt-2">
       <button type="button" class="asis-sug">¿En qué estado está mi proyecto?</button>
       <button type="button" class="asis-sug">¿Qué documentos tengo cargados?</button>
       <button type="button" class="asis-sug">¿Quién es mi encargado?</button>
       <button type="button" class="asis-sug">¿Cómo envío un documento?</button>
     </div>
 
-    <form id="asis-form" class="flex items-end gap-2 border-t border-slate-200 bg-white p-3">
+    <form id="asis-form" class="shrink-0 flex items-end gap-2 border-t border-slate-200 bg-white p-3">
       <label for="asis-texto" class="sr-only">Escribe tu pregunta</label>
       <textarea id="asis-texto" rows="1" maxlength="800" placeholder="Escribe tu pregunta…"
         class="max-h-28 min-h-[38px] flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sinergi-blue focus:ring-2 focus:ring-sinergi-blue/15"></textarea>
@@ -40,7 +40,7 @@
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </form>
-    <p class="bg-white px-4 pb-2 text-center text-[10px] text-slate-400">Respuestas generadas con IA. Confirma los datos importantes con tu encargado.</p>
+    <p class="shrink-0 bg-white px-4 pb-2 text-center text-[10px] text-slate-400">Respuestas generadas con IA. Confirma los datos importantes con tu encargado.</p>
   </section>
 
   <button type="button" id="asis-boton" aria-controls="asis-panel" aria-expanded="false" aria-label="Abrir asistente Sinergi"
@@ -55,6 +55,8 @@
   #asis-sugerencias[hidden] { display: none !important; }
   .asis-panel[hidden] { display: none !important; }
   #asis-boton[aria-expanded="true"] > span { display: none; }
+  /* Alto del panel: dvh descuenta las barras del navegador en celulares (vh queda de respaldo) */
+  .asis-panel { height: min(600px, calc(100vh - 8rem)); height: min(600px, calc(100dvh - 7rem)); }
   .asis-panel { transform-origin: bottom right; transition: opacity .18s ease, transform .18s ease; }
   .asis-panel.asis-oculto { opacity: 0; transform: translateY(8px) scale(.96); }
   .asis-sug { border: 1px solid #CBD5E1; background: #fff; border-radius: 9999px; padding: .3rem .7rem; font-size: 11px; color: #334155; transition: border-color .15s, background .15s; }

@@ -182,6 +182,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Hash de contraseñas: Argon2id (recomendado por OWASP). El primero de la lista se usa para
+# contraseñas nuevas; los demás solo verifican hashes antiguos (PBKDF2) y Django los
+# convierte a Argon2id automáticamente cuando ese usuario vuelve a iniciar sesión.
+# El hash se calcula en Python, así que funciona igual con PostgreSQL o SQLite.
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

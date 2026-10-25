@@ -6,14 +6,14 @@
 <!-- Formulario genérico del panel: alta/edición de proyectos y usuarios -->
 <div class="max-w-2xl mx-auto">
   <a href="{% if volver %}{{ volver }}{% else %}{% url 'dashboard' %}{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver</a>
-  <h1 class="text-2xl font-bold text-slate-900 mt-2">{{ titulo }}</h1>
+  <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mt-2">{{ titulo }}</h1>
   {% if subtitulo %}<p class="text-sm text-slate-500 mt-1">{{ subtitulo }}</p>{% endif %}
 
   {% for message in messages %}
     <div class="mt-4 px-4 py-3 rounded-md text-xs font-semibold border bg-amber-50 border-amber-300 text-amber-900">{{ message }}</div>
   {% endfor %}
 
-  <form method="POST" class="bg-white border border-slate-200 rounded-lg p-6 mt-6 space-y-4 shadow-sm">
+  <form method="POST" class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 mt-6 space-y-4 shadow-sm">
     {% csrf_token %}
     {% include '_campos_form.html' %}
 

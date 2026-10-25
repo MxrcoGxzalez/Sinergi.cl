@@ -1,0 +1,42 @@
+<!-- Comportamiento responsivo de los paneles por rol (cliente, empleado y admin):
+     - Menú lateral deslizable en móvil/tablet (botón #portal-menu-boton del header, aside #portal-menu).
+     - Etiquetas de columna (data-label) para que las .tabla-responsive se lean como tarjetas en celular. -->
+<div id="portal-menu-fondo" class="portal-menu-fondo" hidden></div>
+
+<script>
+  (() => {
+    const menu = document.getElementById('portal-menu');
+    const boton = document.getElementById('portal-menu-boton');
+    const fondo = document.getElementById('portal-menu-fondo');
+    if (menu && boton) {
+      const abrir = (si) => {
+        menu.classList.toggle('abierto', si);
+        fondo.hidden = !si;
+        boton.setAttribute('aria-expanded', String(si));
+        document.body.classList.toggle('menu-abierto', si);
+      };
+      boton.addEventListener('click', () => abrir(!menu.classList.contains('abierto')));
+      fondo.addEventListener('click', () => abrir(false));
+      // Al elegir una sección se cierra el menú y se vuelve al inicio del contenido
+      menu.addEventListener('click', (e) => {
+        if (!menu.classList.contains('abierto')) return;
+        if (e.target.closest('.nav-btn')) { abrir(false); window.scrollTo({ top: 0 }); }
+        else if (e.target.closest('a')) abrir(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menu.classList.contains('abierto')) { abrir(false); boton.focus(); }
+      });
+      matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) abrir(false); });
+    }
+
+    document.querySelectorAll('.tabla-responsive').forEach((tabla) => {
+      const titulos = [...tabla.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+      tabla.querySelectorAll('tbody tr').forEach((fila) => {
+        [...fila.children].forEach((celda, i) => {
+          // La primera columna identifica la fila (nombre, código, fecha): no necesita etiqueta
+          if (i > 0 && !celda.hasAttribute('colspan') && titulos[i]) celda.dataset.label = titulos[i];
+        });
+      });
+    });
+  })();
+</script>

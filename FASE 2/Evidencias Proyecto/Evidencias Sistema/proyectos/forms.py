@@ -117,6 +117,19 @@ class ProyectoForm(forms.ModelForm):
         return datos
 
 
+class PortafolioForm(forms.ModelForm):
+    """Textos con los que un proyecto Finalizado aparece en el portafolio público del sitio web."""
+
+    class Meta:
+        model = Proyecto
+        fields = ['portafolio_cliente', 'portafolio_descripcion']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = True
+
+
 RE_URL = re.compile(r'https?://|www\.|\[url', re.IGNORECASE)
 RE_TELEFONO = re.compile(r'^[0-9+()\-\s]{6,30}$')
 TIEMPO_MINIMO_SEG = 3            # un humano no completa el formulario en menos de esto

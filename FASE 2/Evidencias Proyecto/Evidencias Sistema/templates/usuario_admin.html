@@ -42,11 +42,11 @@
 <body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
   <!-- ==================== HEADER SUPERIOR ==================== -->
-  {% include '_header_portal.html' with etiqueta='Panel de Administración' %}
+  {% include '_header_portal.html' with etiqueta='Panel de Administración' menu=True %}
 
-  <div class="flex-1 flex flex-col md:flex-row">
+  <div class="flex-1 flex flex-col lg:flex-row">
     <!-- ==================== SIDEBAR LATERAL ==================== -->
-    <aside class="w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-6">
+    <aside id="portal-menu" class="portal-menu bg-white border-r border-slate-200 p-4 flex flex-col gap-6" aria-label="Menú del panel">
 
       <!-- Ficha del Administrador -->
       <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
@@ -126,7 +126,7 @@
     </aside>
 
     <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
-    <main class="flex-1 p-6 md:p-8 max-w-6xl">
+    <main class="flex-1 min-w-0 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
 
       {% include '_mensajes.html' %}
 
@@ -135,35 +135,35 @@
       <!-- ======================================================== -->
       <section id="view-perfil" class="tab-content block space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Perfil de Administración</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Perfil de Administración</h1>
           <p class="text-sm text-slate-500 mt-1">Configuración del dueño/administrador de Sinergi con privilegios de gestión total.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
-            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+          <div class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
               <span>Datos del Administrador</span>
               <span class="font-mono text-xs text-slate-400">ID: ROOT-{{ user.id|stringformat:"03d" }}</span>
             </h3>
 
             <div class="space-y-3 text-sm">
-              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100">
                 <span class="text-slate-500">Nombre:</span>
                 <span class="font-semibold text-slate-900">{{ user.get_full_name|default:user.username }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100">
                 <span class="text-slate-500">Correo Principal:</span>
-                <span class="font-mono text-slate-800 text-xs sm:text-sm">{{ user.email|default:"Sin correo asignado" }}</span>
+                <span class="font-mono text-slate-800 text-xs sm:text-sm break-all">{{ user.email|default:"Sin correo asignado" }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100">
                 <span class="text-slate-500">Usuario:</span>
                 <span class="font-mono text-slate-800">{{ user.username }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100">
                 <span class="text-slate-500">Rol en Plataforma:</span>
                 <span class="font-mono bg-red-50 text-sinergi-red font-semibold px-2.5 py-1 rounded text-xs border border-red-200">{{ user.get_role_display }}{% if user.is_superuser %} / Superusuario Django{% else %} Web{% endif %}</span>
               </div>
-              <div class="flex justify-between items-center py-2">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2">
                 <span class="text-slate-500">Último acceso:</span>
                 <span class="font-mono text-slate-700">{{ user.last_login|date:"d M Y H:i"|default:"—" }}</span>
               </div>
@@ -178,7 +178,7 @@
       <section id="view-usuarios" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
             <p class="text-sm text-slate-500 mt-1">Crea, edita o elimina cuentas de clientes, empleados y administradores de la página.</p>
           </div>
           <a href="{% url 'crear_usuario' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">
@@ -187,7 +187,7 @@
         </div>
 
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+          <table class="tabla-responsive w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                 <th class="p-3.5">Usuario / Nombre</th>
@@ -202,7 +202,7 @@
               <tr class="hover:bg-slate-50">
                 <td class="p-3.5">
                   <div class="font-semibold text-slate-900">{{ u.get_full_name|default:u.username }}</div>
-                  <div class="font-mono text-slate-400 text-[11px]">{{ u.email|default:u.username }}</div>
+                  <div class="font-mono text-slate-400 text-[11px] break-all">{{ u.email|default:u.username }}</div>
                 </td>
                 <td class="p-3.5 text-slate-700">{{ u.empresa|default:"Sinergi" }}</td>
                 <td class="p-3.5">
@@ -215,12 +215,14 @@
                   <span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactivo</span>
                   {% endif %}
                 </td>
-                <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+                <td class="p-3.5 text-right">
+                  <div class="flex flex-wrap items-center md:justify-end gap-1">
                   <a href="{% url 'editar_usuario' u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
                   <form method="POST" action="{% url 'eliminar_usuario' u.id %}" class="inline" onsubmit="return confirm('¿Eliminar la cuenta {{ u.username|escapejs }}? Esta acción no se puede deshacer.')">
                     {% csrf_token %}
                     <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</button>
                   </form>
+                  </div>
                 </td>
               </tr>
               {% empty %}
@@ -238,16 +240,16 @@
       <!-- ======================================================== -->
       <section id="view-solicitudes-proyectos" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Bandeja de Solicitudes de Proyectos</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Bandeja de Solicitudes de Proyectos</h1>
           <p class="text-sm text-slate-500 mt-1"><strong>Contacto web:</strong> sin cuenta, asigna un usuario cliente para aprobarla y luego registra el proyecto. <strong>Portal cliente:</strong> el cliente ya tiene cuenta, registra el proyecto directamente.</p>
         </div>
 
         <!-- Pendientes -->
         <h2 class="font-bold text-xs uppercase tracking-wider text-slate-900">Pendientes de revisión · {{ solicitudes_pendientes|length }}</h2>
         {% for sol in solicitudes_pendientes %}
-        <div class="bg-white border border-slate-200 border-l-4 border-l-sinergi-red rounded-lg shadow-sm p-5 space-y-3">
+        <div class="bg-white border border-slate-200 border-l-4 border-l-sinergi-red rounded-lg shadow-sm p-4 sm:p-5 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-            <div>
+            <div class="min-w-0 break-words">
               <span class="font-mono text-[10px] text-slate-400">{{ sol.codigo }} · {{ sol.fecha_creacion|date:"d M Y H:i" }}</span>
               <span class="ml-1 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded {% if sol.origen == 'PORTAL' %}bg-sky-100 text-sky-800{% else %}bg-slate-100 text-slate-600{% endif %}">{{ sol.get_origen_display|upper }}</span>
               <h3 class="font-bold text-slate-900">{% if sol.nombre_proyecto %}{{ sol.nombre_proyecto }} · {% endif %}{{ sol.empresa }}</h3>
@@ -258,15 +260,15 @@
             <span class="self-start bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded text-[11px]">{{ sol.get_estado_display }}</span>
           </div>
           <p class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-3 whitespace-pre-line">{{ sol.descripcion }}</p>
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
+          <div class="flex flex-col md:flex-row md:items-center gap-2 pt-1">
             {% if sol.origen == 'PORTAL' %}
             <a href="{% url 'proyectos:crear' %}?solicitud={{ sol.id }}" class="text-center bg-sinergi-blue hover:bg-sky-800 text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Crear Proyecto (cliente {{ sol.cliente.username }})</a>
             {% else %}
             <a href="{% url 'proyectos:asignar_solicitud' sol.id %}" class="text-center bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Asignar Cliente y Aprobar</a>
             {% endif %}
-            <form method="POST" action="{% url 'proyectos:rechazar_solicitud' sol.id %}" class="flex gap-2 flex-1" onsubmit="return confirm('¿Rechazar la solicitud SOL-{{ sol.id }}?')">
+            <form method="POST" action="{% url 'proyectos:rechazar_solicitud' sol.id %}" class="flex gap-2 flex-1 min-w-0" onsubmit="return confirm('¿Rechazar la solicitud SOL-{{ sol.id }}?')">
               {% csrf_token %}
-              <input type="text" name="nota" maxlength="1000" placeholder="Motivo del rechazo (opcional)" class="flex-1 text-xs border border-slate-300 rounded px-3 py-2 outline-none focus:border-sinergi-red">
+              <input type="text" name="nota" maxlength="1000" placeholder="Motivo del rechazo (opcional)" class="flex-1 min-w-0 text-xs border border-slate-300 rounded px-3 py-2 outline-none focus:border-sinergi-red">
               <button type="submit" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-3 py-2 rounded font-medium">Rechazar</button>
             </form>
             <form method="POST" action="{% url 'proyectos:archivo' 'solicitud' sol.id 'archivar' %}" onsubmit="return confirm('¿Archivar {{ sol.codigo }}? Podrás restaurarla durante {{ dias_archivo }} días.')">
@@ -288,7 +290,7 @@
             <span class="font-mono text-[11px] text-slate-500">{{ solicitudes_revisadas|length }} solicitud(es)</span>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="tabla-responsive w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                   <th class="px-5 py-3">Solicitud</th>
@@ -342,7 +344,7 @@
       <section id="view-supervision-hitos" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-900">Supervisión Maestra de Proyectos</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Supervisión Maestra de Proyectos</h1>
             <p class="text-sm text-slate-500 mt-1">Registra, edita y archiva obras. Entra al <strong>Control de Obra</strong> de cada proyecto para gestionar fases, subfases, avance y documentos, igual que el ingeniero a cargo.</p>
           </div>
           <a href="{% url 'proyectos:crear' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">
@@ -374,7 +376,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="tabla-responsive w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                   <th class="px-5 py-3">Proyecto</th>
@@ -406,13 +408,18 @@
                       <span class="font-mono text-[11px] font-bold">{{ proyecto.porcentaje_avance }}%</span>
                     </div>
                   </td>
-                  <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
-                    <a href="{% url 'proyectos:control' proyecto.id %}" class="text-xs text-white bg-sinergi-blue hover:bg-sky-800 px-2 py-1 rounded font-semibold">Control de Obra</a>
+                  <td class="px-5 py-3.5 text-right">
+                    <div class="flex flex-wrap items-center md:justify-end gap-1">
+                    <a href="{% url 'proyectos:control' proyecto.id %}" class="text-xs text-white bg-sinergi-blue hover:bg-sky-800 px-2 py-1 rounded font-semibold whitespace-nowrap">Control de Obra</a>
                     <a href="{% url 'proyectos:editar' proyecto.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+                    {% if proyecto.estado == 'Finalizado' %}
+                    <a href="{% url 'proyectos:control' proyecto.id %}#portafolio" class="text-xs px-2 py-1 rounded font-semibold whitespace-nowrap {% if proyecto.en_portafolio %}bg-emerald-50 border border-emerald-300 text-emerald-800{% else %}bg-emerald-700 hover:bg-emerald-800 text-white{% endif %}">{% if proyecto.en_portafolio %}✓ Portafolio{% else %}Mostrar en portafolio{% endif %}</a>
+                    {% endif %}
                     <form method="POST" action="{% url 'proyectos:archivo' 'proyecto' proyecto.id 'archivar' %}" class="inline" onsubmit="return confirm('¿Archivar {{ proyecto.codigo }}? Dejará de verse en los paneles y se eliminará en {{ dias_archivo }} días si no se restaura.')">
                       {% csrf_token %}
                       <button type="submit" class="text-xs text-slate-600 hover:bg-slate-100 border border-slate-300 px-2 py-1 rounded font-medium">Archivar</button>
                     </form>
+                    </div>
                   </td>
                 </tr>
                 {% empty %}
@@ -431,7 +438,7 @@
       <!-- ======================================================== -->
       <section id="view-documentos-admin" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Auditoría y Gestión Documental</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Auditoría y Gestión Documental</h1>
           <p class="text-sm text-slate-500 mt-1">Inspección de planos y memorias técnicas subidas por clientes y equipo técnico, con potestad de borrado.</p>
         </div>
 
@@ -446,14 +453,14 @@
             <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
               {% for doc in proyecto.documentos.all %}
               <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div class="flex items-start gap-3">
-                  <div class="p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
-                  <div>
-                    <div class="text-sm font-semibold text-slate-800">{{ doc.nombre_archivo }}</div>
+                <div class="flex items-start gap-3 min-w-0">
+                  <div class="shrink-0 p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-slate-800 break-words">{{ doc.nombre_archivo }}</div>
                     <div class="text-xs text-slate-400 font-mono mt-0.5">{{ doc.fecha_subida|date:"d M Y" }}</div>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 self-end sm:self-center">
+                <div class="flex flex-wrap items-center justify-end gap-2 self-end sm:self-center sm:shrink-0">
                   <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded font-medium">Descargar</a>
                   <button onclick="requestCorrection('{{ doc.nombre_archivo|escapejs }}', '{{ proyecto.id }}', '{{ doc.id }}')" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-medium">Observar</button>
                   <form method="POST" action="{% url 'eliminar_documento' doc.id %}" onsubmit="return confirm('¿Eliminar el documento {{ doc.nombre_archivo|escapejs }}?')">
@@ -486,13 +493,13 @@
       <section id="view-empresas" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-900">Empresas Mandantes</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Empresas Mandantes</h1>
             <p class="text-sm text-slate-500 mt-1">Registro de las empresas cliente. No se eliminan: se desactivan para conservar el historial de sus proyectos.</p>
           </div>
           <a href="{% url 'crear_empresa' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">+ Registrar Empresa</a>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="tabla-responsive w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                 <th class="px-4 py-3">Razón Social</th>
@@ -509,7 +516,7 @@
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3"><div class="font-bold text-slate-900">{{ e.razon_social }}</div>{% if e.giro %}<div class="text-[10px] text-slate-500">{{ e.giro }}</div>{% endif %}</td>
                 <td class="px-4 py-3 font-mono text-[11px]">{{ e.rut|default:"—" }}</td>
-                <td class="px-4 py-3 text-[11px] text-slate-600">{{ e.email|default:"" }}{% if e.telefono %}<div class="font-mono">{{ e.telefono }}</div>{% endif %}</td>
+                <td class="px-4 py-3 text-[11px] text-slate-600 break-all">{{ e.email|default:"" }}{% if e.telefono %}<div class="font-mono">{{ e.telefono }}</div>{% endif %}</td>
                 <td class="px-4 py-3 font-mono">{{ e.n_clientes }}</td>
                 <td class="px-4 py-3 font-mono">{{ e.n_proyectos }}</td>
                 <td class="px-4 py-3">{% if e.activa %}<span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activa</span>{% else %}<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactiva</span>{% endif %}</td>
@@ -528,7 +535,7 @@
       <!-- ======================================================== -->
       <section id="view-archivados" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Archivados</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Archivados</h1>
           <p class="text-sm text-slate-500 mt-1">Proyectos y solicitudes archivados. Se pueden restaurar; si no, se eliminan automáticamente a los {{ dias_archivo }} días. La eliminación definitiva manual exige escribir el código.</p>
         </div>
 
@@ -541,11 +548,11 @@
       <!-- ======================================================== -->
       <section id="view-actividad" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Registro de Actividad</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Registro de Actividad</h1>
           <p class="text-sm text-slate-500 mt-1">Quién hizo qué y cuándo (últimos 150 eventos). Se conserva aunque el proyecto, la solicitud o el usuario se eliminen.</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="tabla-responsive w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                 <th class="px-4 py-3">Fecha</th>
@@ -593,5 +600,6 @@
     if (tabInicial) switchAdminTab(tabInicial, document.querySelector(`.nav-btn[onclick*="'${CSS.escape(tabInicial)}'"]`));
 
   </script>
+{% include '_portal_responsivo.html' %}
 </body>
 </html>

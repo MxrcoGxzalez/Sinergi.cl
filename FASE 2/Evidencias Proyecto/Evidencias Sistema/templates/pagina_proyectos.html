@@ -46,13 +46,13 @@
           <div class="reveal flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between pb-10 border-b border-ink/15">
             <div class="flex flex-wrap items-center gap-3">
               <button type="button" data-filter="all" class="filter-btn rounded-full bg-ink px-5 py-2.5 text-xs font-semibold text-white transition shadow-sm">
-                Todos los proyectos (<span id="count-all">29</span>)
+                Todos los proyectos (<span id="count-all"></span>)
               </button>
               <button type="button" data-filter="proy" class="filter-btn rounded-full border border-ink/20 bg-white/70 px-5 py-2.5 text-xs font-semibold text-ink transition hover:border-ink">
-                Ingeniería de proyectos (<span id="count-proy">21</span>)
+                Ingeniería de proyectos (<span id="count-proy"></span>)
               </button>
               <button type="button" data-filter="tdd" class="filter-btn rounded-full border border-ink/20 bg-white/70 px-5 py-2.5 text-xs font-semibold text-ink transition hover:border-ink">
-                Technical Due Diligence (<span id="count-tdd">8</span>)
+                Technical Due Diligence (<span id="count-tdd"></span>)
               </button>
             </div>
 
@@ -83,7 +83,7 @@
           <!-- Lista completa de proyectos -->
           <div class="mt-8 rounded-3xl border border-ink/15 bg-white shadow-xl shadow-ink/5 overflow-hidden">
             <ul id="catalog-list" class="divide-y divide-ink/10">
-              <!-- Renderizado dinámico vía JavaScript con los 29 proyectos reales -->
+              <!-- Renderizado dinámico vía JavaScript: portafolio publicado desde el sistema + catálogo histórico -->
             </ul>
           </div>
 
@@ -116,6 +116,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
+  <!-- Proyectos finalizados publicados desde el panel ("Mostrar en portafolio") -->
+  {{ portafolio|json_script:"portafolio-data" }}
   <!-- JavaScript específico: se conserva para animaciones e interacciones de esta página -->
   <script>
     (() => {
@@ -161,7 +163,15 @@
         { c: 'CSJ Conversión de Vehículos San José', s: 'Auditoría de cumplimiento normativo SEC y sistemas de detección de faena.', d: [], type: 'tdd' }
       ];
 
-      const ALL_PROJECTS = [...PROYECTOS, ...TDD];
+      // Primero los finalizados publicados desde el sistema (más recientes), luego el histórico
+      const PORTAFOLIO = JSON.parse($('#portafolio-data').textContent);
+      const ALL_PROJECTS = [...PORTAFOLIO, ...PROYECTOS, ...TDD];
+      $('#count-all').textContent = ALL_PROJECTS.length;
+      $('#count-proy').textContent = ALL_PROJECTS.filter(p => p.type === 'proy').length;
+      $('#count-tdd').textContent = ALL_PROJECTS.filter(p => p.type === 'tdd').length;
+
+      // Los textos del portafolio los escribe el equipo en el panel: se escapan antes de usar innerHTML
+      const esc = t => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
       /* Header Shrink */
       const header = $('#site-header');
@@ -218,10 +228,11 @@
                 <span class="proj-tag inline-block rounded-full border border-ink/15 bg-paper px-3 py-0.5 text-[11px] font-semibold text-ink/70 mb-2">
                   ${p.type === 'proy' ? 'Ingeniería de Proyectos' : 'Technical Due Diligence'}
                 </span>
-                <h3 class="font-display text-xl sm:text-2xl font-bold tracking-tight">${p.c}</h3>
+                ${p.nuevo ? '<span class="inline-block rounded-full bg-brick px-3 py-0.5 text-[11px] font-semibold text-white mb-2">Finalizado recientemente</span>' : ''}
+                <h3 class="font-display text-xl sm:text-2xl font-bold tracking-tight">${esc(p.c)}</h3>
               </div>
               <div class="sm:col-span-7">
-                <p class="proj-desc text-sm sm:text-base leading-relaxed text-ink/70">${p.s}</p>
+                <p class="proj-desc text-sm sm:text-base leading-relaxed text-ink/70">${esc(p.s)}</p>
                 ${dots(p.d)}
               </div>
             </div>

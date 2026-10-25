@@ -42,11 +42,11 @@
 <body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
   <!-- ==================== HEADER SUPERIOR ==================== -->
-  {% include '_header_portal.html' with etiqueta='Portal de Clientes' %}
+  {% include '_header_portal.html' with etiqueta='Portal de Clientes' menu=True %}
 
-  <div class="flex-1 flex flex-col md:flex-row">
+  <div class="flex-1 flex flex-col lg:flex-row">
     <!-- ==================== SIDEBAR LATERAL ==================== -->
-    <aside class="w-full md:w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-6">
+    <aside id="portal-menu" class="portal-menu bg-white border-r border-slate-200 p-4 flex flex-col gap-6" aria-label="Menú del panel">
 
       <!-- Ficha de Usuario en Sidebar -->
       <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
@@ -100,7 +100,7 @@
     </aside>
 
     <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
-    <main class="flex-1 p-6 md:p-8 max-w-6xl">
+    <main class="flex-1 min-w-0 w-full max-w-6xl mx-auto p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24">
 
       {% include '_mensajes.html' %}
 
@@ -109,46 +109,46 @@
       <!-- ======================================================== -->
       <section id="view-perfil" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Perfil de Cliente</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Perfil de Cliente</h1>
           <p class="text-sm text-slate-500 mt-1">Datos corporativos registrados por la administración técnica de Sinergi.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Tarjeta Datos de Cuenta -->
-          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
-            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center justify-between">
+          <div class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm space-y-4">
+            <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
               <span>Datos de la Cuenta</span>
               <span class="font-mono text-xs text-slate-400">ID: CLI-{{ user.id|stringformat:"04d" }}</span>
             </h3>
 
             <div class="space-y-3">
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">Empresa:</span>
                 <span class="font-semibold text-slate-900 text-base">{{ user.empresa|default:"—" }}</span>
               </div>
               {% if user.empresa.rut %}
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">RUT Empresa:</span>
                 <span class="font-mono text-slate-800">{{ user.empresa.rut }}</span>
               </div>
               {% endif %}
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">Contacto Técnico:</span>
                 <span class="font-medium text-slate-800">{{ user.get_full_name|default:user.username }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">Correo Registrado:</span>
-                <span class="font-mono text-slate-800 text-xs sm:text-sm">{{ user.email|default:"Sin correo asignado" }}</span>
+                <span class="font-mono text-slate-800 text-xs sm:text-sm break-all">{{ user.email|default:"Sin correo asignado" }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">Usuario:</span>
                 <span class="font-mono text-slate-800">{{ user.username }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 border-b border-slate-100 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 border-b border-slate-100 text-sm">
                 <span class="text-slate-500">Rol asignado:</span>
                 <span class="font-mono bg-sky-50 text-sky-800 font-semibold px-2.5 py-1 rounded text-xs border border-sky-200">{{ user.get_role_display }}</span>
               </div>
-              <div class="flex justify-between items-center py-2 text-sm">
+              <div class="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 py-2 text-sm">
                 <span class="text-slate-500">Fecha de Alta:</span>
                 <span class="font-mono text-slate-700">{{ user.date_joined|date:"d M Y" }}</span>
               </div>
@@ -156,15 +156,15 @@
           </div>
 
           <!-- Tarjeta Proyectos Asociados y Privacidad -->
-          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+          <div class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm space-y-4">
             <h3 class="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
               Proyectos Vinculados a su Cuenta
             </h3>
 
             <div class="space-y-3">
               {% for proyecto in proyectos %}
-              <div class="flex justify-between items-center p-3 bg-slate-50 rounded-md border border-slate-200">
-                <div>
+              <div class="flex justify-between items-center gap-3 p-3 bg-slate-50 rounded-md border border-slate-200">
+                <div class="min-w-0 break-words">
                   <div class="font-mono text-xs text-slate-500">SNG-{{ proyecto.id }}</div>
                   <div class="font-semibold text-slate-900 text-sm">{{ proyecto.nombre }}</div>
                 </div>
@@ -185,7 +185,7 @@
       <section id="view-proyectos" class="tab-content block space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
-            <h1 class="text-2xl font-bold text-slate-900">Mis Proyectos</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Mis Proyectos</h1>
             <p class="text-sm text-slate-500 mt-1">Selecciona una obra para revisar su cronograma de hitos y desarrollo en terreno.</p>
           </div>
           <span class="text-xs font-mono text-slate-500">{{ proyectos|length }} obra(s) vinculada(s)</span>
@@ -212,7 +212,7 @@
 
         <!-- Detalle por proyecto -->
         {% for proyecto in proyectos %}
-        <div data-id="{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-6 shadow-sm {% if not forloop.first %}hidden{% endif %}">
+        <div data-id="{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm {% if not forloop.first %}hidden{% endif %}">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-2 mb-6">
             <div>
               <span class="font-mono text-xs text-sinergi-blue font-bold">DESGLOSE DE OBRA</span>
@@ -222,9 +222,9 @@
             <span class="estado self-start sm:self-auto" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
             <!-- Timeline de Hitos -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="xl:col-span-2 space-y-6">
               <h3 class="text-sm font-bold uppercase tracking-wider font-mono text-slate-500">Fases de la Obra</h3>
               {% include '_hitos_proyecto.html' %}
             </div>
@@ -262,7 +262,7 @@
       <!-- ======================================================== -->
       <section id="view-documentos" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
-          <h1 class="text-2xl font-bold text-slate-900">Documentos por Proyecto</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Documentos por Proyecto</h1>
           {% comment %} DESACTIVADO HASTA NUEVO AVISO: texto original con subida de archivos.
           <p class="text-sm text-slate-500 mt-1">Descarga o sube archivos organizados por faena técnica.</p>
           {% endcomment %}
@@ -283,14 +283,14 @@
             <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
               {% for doc in proyecto.documentos.all %}
               <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                <div class="flex items-start gap-3">
-                  <div class="p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
-                  <div>
-                    <div class="text-sm font-semibold text-slate-800">{{ doc.nombre_archivo }}</div>
+                <div class="flex items-start gap-3 min-w-0">
+                  <div class="shrink-0 p-2 bg-slate-100 text-slate-700 rounded text-xs font-bold font-mono">{{ doc.archivo.name|slice:"-4:"|cut:"."|upper }}</div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-slate-800 break-words">{{ doc.nombre_archivo }}</div>
                     <div class="text-xs text-slate-400 font-mono mt-0.5">Subido el {{ doc.fecha_subida|date:"d M Y" }}</div>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 self-end sm:self-center">
+                <div class="flex flex-wrap items-center justify-end gap-2 self-end sm:self-center sm:shrink-0">
                   <a href="{{ doc.archivo.url }}" download class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2.5 py-1.5 rounded">Descargar</a>
                   {% comment %} DESACTIVADO HASTA NUEVO AVISO: la gestión documental la realiza el equipo Sinergi; el cliente solo descarga.
                   <button onclick="openReplaceModal('{{ doc.nombre_archivo|escapejs }}', '{{ proyecto.id }}')" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded font-medium">Subir nueva versión</button>
@@ -337,14 +337,14 @@
       <section id="view-solicitudes" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-900">Mis Solicitudes de Proyecto</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Mis Solicitudes de Proyecto</h1>
             <p class="text-sm text-slate-500 mt-1">Pida una nueva obra con su cuenta. Sinergi la revisa y, al aprobarla, el proyecto aparece en "Mis Proyectos".</p>
           </div>
           <a href="{% url 'proyectos:solicitar' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm uppercase tracking-wider">+ Solicitar Nuevo Proyecto</a>
         </div>
 
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
+          <table class="tabla-responsive w-full text-left border-collapse text-xs">
             <thead>
               <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
                 <th class="px-4 py-3">Solicitud</th>
@@ -454,5 +454,6 @@
     }
   </script>
   {% include '_asistente_cliente.html' %}
+{% include '_portal_responsivo.html' %}
 </body>
 </html>

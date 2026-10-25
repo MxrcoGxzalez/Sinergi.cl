@@ -451,7 +451,7 @@
 
               <div class="mt-8 pt-6 border-t border-ink/10">
                 <a href="{% url 'proyectos' %}" class="inline-flex items-center text-sm font-semibold text-brick hover:underline">
-                  Ver catálogo completo de proyectos (29) →
+                  Ver catálogo completo de proyectos ({{ total_proyectos }}) →
                 </a>
               </div>
             </div>
@@ -478,11 +478,11 @@
             <p class="mt-2 text-ink/70">Artículos técnicos, novedades de la industria y cambios normativos aplicados.</p>
           </div>
           <div class="reveal">
-            <a href="#noticias" class="text-sm font-semibold underline decoration-brick decoration-2 underline-offset-4">Ver más artículos →</a>
+            <a href="#noticias" class="text-sm font-semibold underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Ver más artículos →</a>
           </div>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-3 mt-4">
+        <div class="grid gap-6 lg:grid-cols-3 mt-4">
           <article class="reveal rounded-3xl border border-ink/10 bg-white p-7 transition hover:shadow-lg">
             <span class="rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink/70">Technical Due Diligence</span>
             <h3 class="mt-5 font-display text-xl font-bold leading-snug">Qué verificar en una inspección técnica antes de adquirir o arrendar un edificio</h3>

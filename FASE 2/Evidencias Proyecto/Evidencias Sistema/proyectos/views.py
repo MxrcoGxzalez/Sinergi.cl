@@ -15,7 +15,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from usuarios.forms import ClienteExistenteForm, ClienteNuevoForm
 from usuarios.models import CustomUser, Empresa
-from .forms import DocumentoForm, FaseForm, PeticionForm, ProyectoForm, SolicitudPortalForm, SubfaseForm
+from .forms import (DocumentoForm, FaseForm, PeticionForm, PortafolioForm, ProyectoForm, SolicitudPortalForm,
+                    SubfaseForm)
 from .models import Documento, Fase, Peticion, Proyecto, RegistroActividad, SolicitudProyecto, Subfase
 
 log = logging.getLogger('sinergi.seguridad')
@@ -427,6 +428,37 @@ def control_proyecto(request, proyecto_id):
         'proyecto': proyecto,
         'fases': proyecto.fases.prefetch_related('subfases'),
     })
+
+
+@login_required(login_url='login')
+@require_POST
+def portafolio_proyecto(request, proyecto_id):
+    """Publica (o quita) un proyecto Finalizado en el portafolio público de /proyectos/."""
+    proyecto = get_object_or_404(_proyectos_editables(request.user), id=proyecto_id)
+    etiqueta = f'{proyecto.codigo} {proyecto.nombre}'
+
+    if request.POST.get('accion') == 'quitar':
+        proyecto.en_portafolio = False
+        proyecto.save(update_fields=['en_portafolio', 'actualizado_en'])
+        RegistroActividad.anotar('EDITAR', etiqueta, 'Quitado del portafolio web', request)
+        messages.success(request, f'{proyecto.codigo} ya no se muestra en la página web.')
+        return _volver_control(proyecto.id)
+
+    if proyecto.estado != 'Finalizado':
+        messages.error(request, 'Solo los proyectos finalizados se pueden mostrar en el portafolio.')
+        return _volver_control(proyecto.id)
+
+    form = PortafolioForm(request.POST, instance=proyecto)
+    if not form.is_valid():
+        messages.error(request, 'Completa el cliente y el alcance que se mostrarán en la página web.')
+        return _volver_control(proyecto.id)
+    proyecto = form.save(commit=False)
+    if not proyecto.en_portafolio:
+        proyecto.en_portafolio, proyecto.portafolio_publicado_en = True, timezone.now()
+    proyecto.save()
+    RegistroActividad.anotar('EDITAR', etiqueta, 'Publicado en el portafolio web', request)
+    messages.success(request, f'{proyecto.codigo} publicado en la página web (sección Proyectos).')
+    return _volver_control(proyecto.id)
 
 
 @login_required(login_url='login')

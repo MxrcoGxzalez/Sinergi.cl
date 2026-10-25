@@ -9,6 +9,7 @@ urlpatterns = [
     # Control de obra (empleado a cargo y admin)
     path('<int:proyecto_id>/control/', views.control_proyecto, name='control'),
     path('<int:proyecto_id>/diagrama/', views.diagrama_proyecto, name='diagrama'),
+    path('<int:proyecto_id>/portafolio/', views.portafolio_proyecto, name='portafolio'),
     path('<int:proyecto_id>/fases/nueva/', views.fase_form, name='fase_nueva'),
     path('<int:proyecto_id>/fases/<int:fase_id>/editar/', views.fase_form, name='fase_editar'),
     path('<int:proyecto_id>/fases/estandar/', views.cargar_fases_estandar, name='fases_estandar'),

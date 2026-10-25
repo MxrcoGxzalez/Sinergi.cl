@@ -1,7 +1,7 @@
 <!-- Bandeja de peticiones (cliente, empleado y admin). Requiere `peticiones` (con `no_leida`). -->
 <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
   <div>
-    <h1 class="text-2xl font-bold text-slate-900">Peticiones & Chat</h1>
+    <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Peticiones & Chat</h1>
     <p class="text-sm text-slate-500 mt-1">
       {% if user.role == 'CLIENTE' %}Consultas, solicitudes y reclamos con el equipo Sinergi. Cada petición guarda toda la conversación.
       {% elif user.role == 'EMPLEADO' %}Conversaciones con los clientes de las obras a tu cargo.
@@ -35,13 +35,13 @@
       {% for p in grupo.list %}
       <li class="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-slate-50 {% if p.no_leida %}bg-sky-50/60{% endif %}">
         <div class="min-w-0">
-          <a href="{% url 'proyectos:peticion' p.id %}" class="text-xs font-bold text-slate-900 hover:text-sinergi-blue hover:underline">{{ p.asunto }}</a>
+          <a href="{% url 'proyectos:peticion' p.id %}" class="break-words text-xs font-bold text-slate-900 hover:text-sinergi-blue hover:underline">{{ p.asunto }}</a>
           {% if p.no_leida %}<span class="badge-nuevo ml-1">NUEVO MENSAJE</span>{% endif %}
           <div class="font-mono text-[10px] text-slate-400">
             {{ p.codigo }} · {{ p.get_tipo_display }}{% if user.role != 'CLIENTE' %} · {{ p.cliente.empresa|default:p.cliente.username }}{% endif %} · {{ p.ultima_actividad|date:"d M Y H:i" }}
           </div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
           {% if user.role == 'CLIENTE' %}
           <span class="pet-estado" data-estado="{{ p.estado }}">{{ p.get_estado_display }}</span>
           {% else %}

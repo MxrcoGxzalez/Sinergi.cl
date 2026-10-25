@@ -1,8 +1,8 @@
 {# Burbuja de ayuda del sitio público: preguntas frecuentes, sin IA. Se incluye en base_paginas.html #}
 <div id="ayuda" class="fixed bottom-5 right-5 z-40 font-sans">
   <section id="ayuda-panel" role="dialog" aria-modal="false" aria-labelledby="ayuda-titulo" hidden
-    class="ayuda-panel absolute bottom-20 right-0 w-[min(380px,calc(100vw-2.5rem))] max-h-[min(620px,calc(100vh-8rem))] flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white text-ink shadow-2xl shadow-ink/30">
-    <header class="bg-ink px-5 pt-5 pb-4 text-white">
+    class="ayuda-panel absolute bottom-20 right-0 w-[min(380px,calc(100vw-2.5rem))] flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white text-ink shadow-2xl shadow-ink/30">
+    <header class="shrink-0 bg-ink px-5 pt-5 pb-4 text-white">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-brick-light">Centro de ayuda</p>
@@ -19,7 +19,7 @@
       </label>
     </header>
 
-    <div class="flex-1 overflow-y-auto overscroll-contain px-3 py-3" id="ayuda-lista">
+    <div class="flex-1 min-h-[4rem] overflow-y-auto overscroll-contain px-3 py-3" id="ayuda-lista">
       <details class="ayuda-item group rounded-xl px-3 open:bg-paper">
         <summary class="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-semibold">¿Qué hace Sinergi?<span class="ayuda-chev" aria-hidden="true"></span></summary>
         <p class="pb-3 text-sm leading-relaxed text-ink/70">Desde 2006 somos contraparte técnica del dueño de un edificio o instalación. Desarrollamos ingeniería de especialidades y realizamos Technical Due Diligence, con proyectos en Chile y México.</p>
@@ -59,7 +59,7 @@
       <p id="ayuda-vacio" hidden class="px-3 py-6 text-center text-sm text-ink/50">No encontramos esa pregunta. Contáctenos y le ayudamos.</p>
     </div>
 
-    <footer class="border-t border-ink/10 bg-paper/60 px-4 py-3">
+    <footer class="shrink-0 border-t border-ink/10 bg-paper/60 px-4 py-3">
       <p class="mb-2 text-xs text-ink/60">¿No encontró su respuesta?</p>
       <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
         <a href="tel:+56222390951" class="flex items-center justify-center gap-1.5 rounded-full bg-brick px-3 py-2 text-white transition hover:bg-brick-dark">
@@ -81,6 +81,10 @@
 
 <style>
   .ayuda-panel[hidden] { display: none !important; }
+  /* Abierta, la ayuda queda sobre el header del sitio (z-50) y usa el alto visible real (dvh en celulares) */
+  #ayuda:has(#ayuda-boton[aria-expanded="true"]) { z-index: 60; }
+  .ayuda-panel { max-height: min(620px, calc(100vh - 7.5rem)); max-height: min(620px, calc(100dvh - 7.5rem)); }
+  @media (max-height: 520px) { .ayuda-panel header { padding-top: .75rem; padding-bottom: .75rem; } .ayuda-panel header label { margin-top: .5rem; } }
   #ayuda-boton[aria-expanded="true"] > span { display: none; }
   .ayuda-panel { transform-origin: bottom right; transition: opacity .18s ease, transform .18s ease; }
   .ayuda-panel.ayuda-oculto { opacity: 0; transform: translateY(8px) scale(.96); }
