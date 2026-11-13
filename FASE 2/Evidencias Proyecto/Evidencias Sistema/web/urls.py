@@ -7,4 +7,5 @@ urlpatterns = [
     path('servicios/', views.servicios, name='servicios'),
     path('contacto/', views.contacto, name='contacto'),
     path('proyectos/', views.proyectos, name='proyectos'),
+    path('api/noticias/', views.NoticiasAPI.as_view(), name='api_noticias'),
 ]

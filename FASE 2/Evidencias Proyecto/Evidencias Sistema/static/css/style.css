@@ -85,9 +85,10 @@
 .leer-mas:hover { color: #AA0000; }
 .leer-mas:hover::before { transform: rotate(90deg); }
 
-/* Engranajes del logo: giran en sentidos opuestos (sinergia). El chico tiene 1/3 de los dientes: gira 3 veces más rápido */
+/* Engranajes del logo: giran en sentidos opuestos (sinergia). Mismo paso de diente: el de 8 dientes gira 2 veces y el de 6, 16/6 veces más rápido */
 .engranaje { transform-box: fill-box; transform-origin: center; animation: girar 60s linear infinite; }
-.engranaje.inverso { animation-duration: 20s; animation-direction: reverse; }
+.engranaje.inverso { animation-duration: 30s; animation-direction: reverse; }
+.engranaje.mini { animation-duration: 22.5s; } /* 6 dientes: 16/6 vueltas por cada vuelta del grande */
 @keyframes girar { to { transform: rotate(360deg); } }
 
 /* Frases rotativas del hero (los textos del slider de sinergi.cl) */

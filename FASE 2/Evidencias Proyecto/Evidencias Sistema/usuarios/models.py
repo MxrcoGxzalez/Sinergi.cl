@@ -4,6 +4,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.urls import reverse
 from django.utils import timezone
 
 
@@ -52,7 +53,30 @@ def nombre_usuario_ocupado(username, excluir=None):
     return any(qs.exists() for qs in ocupado)
 
 
-class CustomUser(AbstractUser):
+class Perfil(models.Model):
+    """Campos de "Mi perfil" comunes al personal y a los clientes (ver usuarios/perfil.py)."""
+    # Siempre JPEG cuadrado reprocesado con nombre aleatorio; se sirve solo con sesión (perfil.foto)
+    foto = models.ImageField('Foto de perfil', upload_to='fotos_perfil/', blank=True, editable=False)
+    # El dueño confirmó el correo abriendo el enlace firmado. Cambiar el correo lo desmarca.
+    email_verificado = models.BooleanField('Correo verificado', default=False, editable=False)
+    # Doble factor opcional (ver usuarios/dos_factores.py). Vacío = desactivado. Se activa desde
+    # "Mi perfil" y, si se pierde el celular, el admin lo reinicia.
+    totp_secreto = models.CharField('Secreto 2FA', max_length=32, blank=True, editable=False)
+    totp_ultimo_paso = models.PositiveBigIntegerField(default=0, editable=False)  # anti reutilización de códigos
+
+    class Meta:
+        abstract = True
+
+    @property
+    def tiene_2fa(self):
+        return bool(self.totp_secreto)
+
+    @property
+    def foto_url(self):
+        return reverse('foto_perfil', args=[self.foto.name.rsplit('/', 1)[-1]]) if self.foto else ''
+
+
+class CustomUser(Perfil, AbstractUser):
     """Personal de Sinergi (empleados y administradores) y superusuario Django.
     Los clientes NO están aquí: tienen su propia tabla (Cliente)."""
     ROLE_CHOICES = (
@@ -101,7 +125,7 @@ class ClienteManager(BaseUserManager):
         return cliente
 
 
-class Cliente(AbstractBaseUser):
+class Cliente(Perfil, AbstractBaseUser):
     """Usuarios de la página web (clientes de las empresas mandantes). Tabla propia, separada
     del personal de Sinergi. La contraseña usa el mismo hash (Argon2id) y el mismo login."""
     username = models.CharField('Nombre de usuario', max_length=150, unique=True,

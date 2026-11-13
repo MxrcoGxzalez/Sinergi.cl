@@ -1,5 +1,7 @@
+import time
+
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, load_backend, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
@@ -14,13 +16,19 @@ from proyectos.models import Proyecto, Documento, RegistroActividad, SolicitudPr
 from proyectos.forms import DocumentoClienteForm
 from proyectos.views import _bandeja, _proyectos_editables
 from .forms import ClienteCrearForm, ClienteEditarForm, EmpresaForm, PersonalCrearForm, PersonalEditarForm
+from . import dos_factores
 from .models import Cliente, CustomUser, Empresa
 from sinergi.seguridad import ip_cliente, log, registrar, superado
 
 # Fuerza bruta: tras N fallos se bloquea el login desde esa IP durante la ventana.
 MAX_FALLOS_USUARIO = 5    # por IP + usuario
 MAX_FALLOS_IP = 20        # por IP, contra cualquier usuario (credential stuffing)
+MAX_FALLOS_2FA = 5        # códigos de 6 dígitos incorrectos por cuenta
 VENTANA_BLOQUEO = 60 * 15  # segundos
+
+# Login en dos pasos (solo con 2FA activado): contraseña correcta -> datos en la sesión -> código
+SESION_2FA = '2fa_pendiente'
+VENCE_2FA = 60 * 5  # segundos para ingresar el código
 
 
 def vista_login(request):
@@ -48,10 +56,13 @@ def vista_login(request):
         user = authenticate(request, username=usuario, password=clave)
 
         if user is not None:
-            login(request, user)  # rota el ID de sesión (anti session fixation)
             cache.delete(clave_usuario)
-            log.info('Login correcto: usuario=%s ip=%s', user.username, ip)
-            return redirect('dashboard')
+            if not user.tiene_2fa:
+                return _iniciar_sesion(request, user, user.backend)
+            # Con 2FA activado la sesión NO se abre hasta validar el código de 6 dígitos (vista_2fa).
+            # Mientras tanto no está autenticado: ninguna vista ni /admin/ lo deja pasar.
+            request.session[SESION_2FA] = {'backend': user.backend, 'id': user.pk, 'vence': time.time() + VENCE_2FA}
+            return redirect('login_2fa')
         else:
             registrar(clave_usuario, VENTANA_BLOQUEO)
             registrar(clave_ip, VENTANA_BLOQUEO)
@@ -64,6 +75,43 @@ def vista_login(request):
 
     # GET a /login/ (p. ej. sesión expirada o @login_required): inicio con el modal de acceso abierto
     return redirect(f"{reverse('inicio')}?login=1")
+
+
+def _iniciar_sesion(request, user, backend):
+    login(request, user, backend)  # rota el ID de sesión (anti session fixation)
+    log.info('Login correcto: usuario=%s ip=%s', user.username, ip_cliente(request))
+    return redirect('dashboard')
+
+
+def vista_2fa(request):
+    """Paso 2 del login de quien activó el 2FA en su perfil: código de 6 dígitos de la app."""
+    pendiente = request.session.get(SESION_2FA)
+    user = None
+    if pendiente and time.time() < pendiente['vence']:
+        # Mismo backend (misma tabla) que validó la contraseña. None si la cuenta se desactivó.
+        user = load_backend(pendiente['backend']).get_user(pendiente['id'])
+    if user is None or not user.tiene_2fa:
+        request.session.pop(SESION_2FA, None)
+        messages.error(request, 'La verificación expiró. Ingresa nuevamente tu usuario y contraseña.')
+        return redirect('login')
+
+    clave_fallos = dos_factores.clave_fallos(user)  # por cuenta: con la contraseña no se prueban códigos sin fin
+    if superado(clave_fallos, MAX_FALLOS_2FA):
+        request.session.pop(SESION_2FA, None)
+        log.warning('2FA bloqueado por fuerza bruta: usuario=%s ip=%s', user.username, ip_cliente(request))
+        return render(request, 'bloqueo.html', {'minutos': VENTANA_BLOQUEO // 60}, status=429)
+
+    error = None
+    if request.method == 'POST':
+        if dos_factores.usar_codigo(user, request.POST.get('codigo', '')):
+            del request.session[SESION_2FA]
+            cache.delete(clave_fallos)
+            return _iniciar_sesion(request, user, pendiente['backend'])
+        registrar(clave_fallos, VENTANA_BLOQUEO)
+        log.warning('Código 2FA incorrecto: usuario=%s ip=%s', user.username, ip_cliente(request))
+        error = 'Código incorrecto o vencido. Ingresa el código que muestra la app en este momento.'
+
+    return render(request, 'login_2fa.html', {'error': error})
 
 @login_required(login_url='login')
 def dashboard(request):
@@ -249,6 +297,7 @@ def eliminar_usuario(request, tipo, user_id):
     usuario = get_object_or_404(_usuarios_gestionables(request.user, tipo), pk=user_id)
     try:
         usuario.delete()
+        usuario.foto.delete(save=False)
         RegistroActividad.anotar('ELIMINAR', f'Usuario {usuario.username}', usuario.get_role_display(), request)
         messages.warning(request, f'Usuario "{usuario.username}" eliminado.')
     except ProtectedError:

@@ -14,6 +14,8 @@ from pathlib import Path
 import environ
 import os
 
+from celery.schedules import crontab
+
 
 # 1. Primero BASE_DIR (esto ya lo trae Django por defecto)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,20 +51,38 @@ LLM_BASE_URL = env('LLM_BASE_URL', default='https://api.groq.com/openai/v1')
 LLM_MODEL = env('LLM_MODEL', default='openai/gpt-oss-120b')
 LLM_TIMEOUT = env.int('LLM_TIMEOUT', default=25)
 
+# Correo saliente (verificación de correo en "Mi perfil"). Sin EMAIL_HOST el correo NO sale a internet:
+# se imprime en la terminal de runserver (solo desarrollo). Ej. Gmail: smtp.gmail.com + "contraseña de
+# aplicación"; Brevo: smtp-relay.brevo.com. Ver .env.example.
+EMAIL_HOST = env('EMAIL_HOST', default='')
+EMAIL_BACKEND = ('django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST
+                 else 'django.core.mail.backends.console.EmailBackend')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_TIMEOUT = 15  # segundos: un SMTP caído no deja la página colgada
+# Gmail exige que el remitente sea la misma cuenta que inicia sesión
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='') or f'Sinergi <{EMAIL_HOST_USER or "no-responder@sinergi.cl"}>'
+
 # Antivirus de documentos subidos (ClamAV, servicio "clamav"). Vacío = desactivado (solo para tests).
 CLAMAV_HOST = env('CLAMAV_HOST', default='clamav')
 CLAMAV_PORT = env.int('CLAMAV_PORT', default=3310)
 CLAMAV_TIMEOUT = env.int('CLAMAV_TIMEOUT', default=30)
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/0')
+# True = las tareas se ejecutan en el mismo proceso (sin worker ni Redis); en Docker siempre False
+CELERY_TASK_ALWAYS_EAGER = env.bool('CELERY_TASK_ALWAYS_EAGER', default=False)
 CELERY_TIMEZONE = 'America/Santiago'
 
 # Proyectos y solicitudes archivados se eliminan definitivamente tras estos días
 DIAS_ARCHIVO = env.int('DIAS_ARCHIVO', default=60)
+# Horarios fijos de reloj (hora de Chile), no "cada N horas desde que arrancó beat": en producción beat no
+# guarda su estado, y con intervalos cada reinicio o despliegue volvía a contar desde cero.
 CELERY_BEAT_SCHEDULE = {
-    'purgar-archivados': {'task': 'proyectos.tasks.purgar_archivados', 'schedule': 60 * 60 * 24},
-    'actualizar-noticias': {'task': 'web.tasks.actualizar_noticias', 'schedule': 60 * 60 * 6},
+    'purgar-archivados': {'task': 'proyectos.tasks.purgar_archivados', 'schedule': crontab(hour=3, minute=30)},
+    'actualizar-noticias': {'task': 'web.tasks.actualizar_noticias', 'schedule': crontab(hour='*/6', minute=0)},
 }
 
 

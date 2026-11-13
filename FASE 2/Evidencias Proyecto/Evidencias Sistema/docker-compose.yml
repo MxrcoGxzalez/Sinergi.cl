@@ -28,6 +28,7 @@ services:
       - .:/app
     env_file: .env
     depends_on: [redis, db]
+    restart: unless-stopped  # tareas automáticas (noticias, purga): si se cae, vuelve solo
 
   celery-beat:
     build: .
@@ -36,6 +37,7 @@ services:
       - .:/app
     env_file: .env
     depends_on: [redis, db]
+    restart: unless-stopped  # tareas automáticas (noticias, purga): si se cae, vuelve solo
 
   # Antivirus de los documentos subidos (proyectos/antivirus.py). Al arrancar descarga las firmas
   # de virus (unos minutos la primera vez); mientras no responde, las subidas se rechazan.

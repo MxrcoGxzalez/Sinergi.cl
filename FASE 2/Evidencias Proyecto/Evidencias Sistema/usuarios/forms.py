@@ -76,6 +76,24 @@ class EmpresaClienteMixin:
         return cliente
 
 
+class EdicionCuentaMixin:
+    """Si cambia el correo, deja de estar verificado. `reiniciar_2fa` (solo el admin) lo desactiva:
+    celular perdido; la persona lo vuelve a activar desde su perfil."""
+
+    def save(self, commit=True):
+        if 'email' in self.changed_data:
+            self.instance.email_verificado = False
+        if self.cleaned_data.get('reiniciar_2fa'):
+            self.instance.totp_secreto = ''
+        return super().save(commit)
+
+
+def _campo_reiniciar_2fa():
+    return forms.BooleanField(
+        label='Reiniciar 2FA', required=False,
+        help_text='Si perdió o cambió su celular: se desactiva y podrá activarlo de nuevo desde su perfil.')
+
+
 class NuevaPasswordMixin:
     """Edición: contraseña opcional. Se guarda con el hash configurado (Argon2id)."""
 
@@ -134,8 +152,9 @@ class ClienteCrearForm(UsuarioUnicoMixin, EmpresaClienteMixin, UserCreationForm)
 ClienteNuevoForm = ClienteCrearForm  # cuenta creada por el admin a partir de una solicitud de proyecto
 
 
-class PersonalEditarForm(UsuarioUnicoMixin, NuevaPasswordMixin, forms.ModelForm):
+class PersonalEditarForm(EdicionCuentaMixin, UsuarioUnicoMixin, NuevaPasswordMixin, forms.ModelForm):
     nueva_password = _campo_nueva_password()
+    reiniciar_2fa = _campo_reiniciar_2fa()
 
     class Meta:
         model = CustomUser
@@ -147,8 +166,9 @@ class PersonalEditarForm(UsuarioUnicoMixin, NuevaPasswordMixin, forms.ModelForm)
         _estilizar(self)
 
 
-class ClienteEditarForm(UsuarioUnicoMixin, EmpresaClienteMixin, NuevaPasswordMixin, forms.ModelForm):
+class ClienteEditarForm(EdicionCuentaMixin, UsuarioUnicoMixin, EmpresaClienteMixin, NuevaPasswordMixin, forms.ModelForm):
     nueva_password = _campo_nueva_password()
+    reiniciar_2fa = _campo_reiniciar_2fa()
 
     class Meta:
         model = Cliente
@@ -169,4 +189,32 @@ class ClienteExistenteForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        _estilizar(self)
+
+
+# ==================== MI PERFIL (usuarios/perfil.py) ====================
+
+class FotoPerfilForm(forms.Form):
+    foto = forms.ImageField(label='Nueva foto', help_text='JPG, PNG o WEBP, máximo 5 MB.')
+
+    def clean_foto(self):
+        foto = self.cleaned_data['foto']
+        if foto.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('La foto no puede superar los 5 MB.')
+        if foto.image.format not in ('JPEG', 'PNG', 'WEBP'):  # contenido real, no la extensión
+            raise forms.ValidationError('Formato no permitido. Usa JPG, PNG o WEBP.')
+        return foto
+
+
+class DatosPerfilForm(EdicionCuentaMixin, UsuarioUnicoMixin, forms.ModelForm):
+    """Datos propios. Empleado: solo su nombre. Admin: también usuario y correo."""
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.es_admin:
+            del self.fields['username'], self.fields['email']
         _estilizar(self)

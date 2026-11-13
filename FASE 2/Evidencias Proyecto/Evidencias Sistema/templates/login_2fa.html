@@ -1,0 +1,19 @@
+{% extends 'base_usuarios.html' %}
+
+{% block title %}Verificación en dos pasos | Sinergi{% endblock %}
+
+{% block content %}
+<!-- Paso 2 del login de quien activó el 2FA en su perfil (usuarios.views.vista_2fa) -->
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 mt-4 sm:mt-10 border-t-4 border-[#C52222]">
+  <h1 class="text-xl sm:text-2xl font-bold text-[#0d1117] text-center">Verificación en dos pasos</h1>
+  <p class="text-sm text-gray-600 mt-3 text-center">Abre tu app de autenticación (Microsoft o Google Authenticator) e ingresa el código de 6 dígitos de <strong>Sinergi</strong>.</p>
+
+  {% if error %}
+    <div class="mt-5 px-4 py-3 rounded-md text-xs font-semibold border bg-red-50 border-red-300 text-red-800">{{ error }}</div>
+  {% endif %}
+
+  {% include '_codigo_2fa.html' with boton='Verificar' %}
+  <p class="text-[11px] text-gray-500 text-center mt-4">¿Perdiste o cambiaste tu celular? Contacta al administrador de Sinergi para reiniciar tu 2FA.</p>
+  <a href="{% url 'inicio' %}" class="block text-center text-xs text-slate-500 hover:underline mt-3">Cancelar</a>
+</div>
+{% endblock %}

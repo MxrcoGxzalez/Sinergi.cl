@@ -2,6 +2,10 @@ import logging
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from proyectos.forms import SolicitudPublicaForm
 from proyectos.models import ESPECIALIDADES, Proyecto
@@ -26,7 +30,9 @@ PUNTOS_ESPECIALIDAD = {
 
 def inicio(request):
     total = PROYECTOS_HISTORICOS + Proyecto.portafolio_publico().count()
-    return render(request, 'pagina_inicio.html', {'total_proyectos': total, 'noticias': noticias.recientes()})
+    return render(request, 'pagina_inicio.html', {
+        'total_proyectos': total, 'noticias': noticias.recientes(), 'noticias_actualizado': noticias.actualizado(),
+    })
 
 def nosotros(request):
     return render(request, 'pagina_nosotros.html')
@@ -79,3 +85,43 @@ def proyectos(request):
         for p in Proyecto.portafolio_publico()
     ]
     return render(request, 'pagina_proyectos.html', {'portafolio': portafolio})
+
+
+# ==================== API PÚBLICA DE NOTICIAS ====================
+
+class NoticiasAPI(APIView):
+    """
+    GET /api/noticias/              -> todas (Ley Chile, SEC y NFPA), de la más reciente a la más antigua
+    GET /api/noticias/?fuente=nfpa  -> solo una fuente: leychile, sec o nfpa
+
+    Pública y de solo lectura: lee la caché que llena la tarea `actualizar_noticias` (web/noticias.py),
+    nunca consulta las fuentes durante la petición.
+    """
+    authentication_classes = []  # pública: no lee la sesión, así no exige CSRF ni expone datos del usuario
+    permission_classes = [AllowAny]
+    LIMITE_POR_MINUTO = 60
+
+    def get(self, request):
+        clave = f'api:noticias:{ip_cliente(request)}'
+        if superado(clave, self.LIMITE_POR_MINUTO):
+            return Response({'detail': 'Demasiadas solicitudes. Intenta en un minuto.'},
+                            status=status.HTTP_429_TOO_MANY_REQUESTS)
+        registrar(clave, 60)
+
+        fuente = request.query_params.get('fuente', '').lower()
+        if fuente and fuente not in noticias.FUENTES:
+            return Response({'detail': f'Fuente desconocida. Usa una de: {", ".join(noticias.FUENTES)}.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        lista = [n for n in noticias.todas() if not fuente or n['codigo'] == fuente]
+        ultima = noticias.actualizado()
+        return Response({
+            'actualizado': ultima.isoformat() if ultima else None,  # se renueva solo cada 6 horas
+            'total': len(lista),
+            'fuentes': noticias.FUENTES,
+            'noticias': [{
+                'fuente': n['fuente'], 'codigo': n['codigo'], 'etiqueta': n['etiqueta'],
+                'titulo': n['titulo'], 'titulo_original': n.get('titulo_original', n['titulo']),
+                'bajada': n.get('bajada', ''), 'idioma': n.get('idioma', 'es'),
+                'fecha': n['fecha'].isoformat(), 'url': n['url'],
+            } for n in lista],
+        })

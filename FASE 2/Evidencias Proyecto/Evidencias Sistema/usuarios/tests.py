@@ -1,6 +1,18 @@
+import io
+import re
+import tempfile
+import time
+from unittest import mock
+
+import pyotp
+from django.core.cache import cache
+from django.core import mail
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from sinergi.pruebas import TestCase
 from django.urls import reverse
+from PIL import Image
 
 from proyectos.models import Proyecto
 from .models import Cliente, CustomUser, Empresa, normalizar_rut
@@ -128,6 +140,7 @@ class SeparacionClientesPersonalTests(TestCase):
     """Clientes y personal en tablas separadas, un solo login y contraseñas con Argon2id."""
 
     def setUp(self):
+        cache.clear()  # contadores de intentos de otros tests
         self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO')
         self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'))
 
@@ -138,7 +151,7 @@ class SeparacionClientesPersonalTests(TestCase):
         self.assertRedirects(self.entrar('cli'), reverse('dashboard'), fetch_redirect_response=False)
         self.assertTemplateUsed(self.client.get(reverse('dashboard')), 'usuario_cliente.html')
         self.client.post(reverse('logout'))
-        self.entrar('ing')
+        self.assertRedirects(self.entrar('ing'), reverse('dashboard'), fetch_redirect_response=False)
         self.assertTemplateUsed(self.client.get(reverse('dashboard')), 'usuario_empresa.html')
         self.client.post(reverse('logout'))
         self.assertNotEqual(self.entrar('cli', 'clave-mala')['Location'], reverse('dashboard'))
@@ -180,3 +193,224 @@ class SeparacionClientesPersonalTests(TestCase):
         self.assertEqual(self.client.get(reverse('proyectos:control', args=[obra.id])).status_code, 403)
         self.assertEqual(self.client.get(reverse('proyectos:diagrama', args=[obra.id])).status_code, 404)
         self.assertNotContains(self.client.get(reverse('dashboard')), 'Obra del empleado')
+
+
+class DosFactoresTests(TestCase):
+    """2FA (TOTP) opcional para todos: se activa desde Mi perfil y desde ahí se exige al entrar."""
+
+    def setUp(self):
+        cache.clear()  # contadores de intentos de otros tests
+        self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'))
+
+    def entrar(self, usuario='ing', clave='Clave-segura-123'):
+        return self.client.post(reverse('login'), {'username': usuario, 'password': clave})
+
+    def codigo(self, secreto, desfase=0):
+        return pyotp.TOTP(secreto).at(time.time() + desfase)
+
+    def activar(self, cuenta):
+        """Activa el 2FA desde el perfil, como lo haría la persona. Devuelve el secreto."""
+        self.client.force_login(cuenta)
+        r = self.client.get(reverse('activar_2fa'))
+        self.assertContains(r, '<svg')
+        secreto = self.client.session['2fa_nuevo']
+        self.assertContains(r, secreto)  # clave para ingresarla a mano
+        self.client.post(reverse('activar_2fa'), {'codigo': self.codigo(secreto)})
+        self.client.post(reverse('logout'))
+        cuenta.refresh_from_db()
+        self.assertEqual(cuenta.totp_secreto, secreto)
+        return secreto
+
+    def test_sin_2fa_se_entra_solo_con_contrasena(self):
+        for usuario in ('ing', 'cli'):
+            self.assertRedirects(self.entrar(usuario), reverse('dashboard'), fetch_redirect_response=False)
+            self.client.post(reverse('logout'))
+
+    def test_codigo_incorrecto_no_activa(self):
+        self.client.force_login(self.emp)
+        self.client.get(reverse('activar_2fa'))
+        secreto = self.client.session['2fa_nuevo']
+        malo = '000000' if self.codigo(secreto) != '000000' else '111111'
+        self.assertContains(self.client.post(reverse('activar_2fa'), {'codigo': malo}), 'Código incorrecto')
+        self.emp.refresh_from_db()
+        self.assertFalse(self.emp.tiene_2fa)
+
+    def test_con_2fa_la_contrasena_sola_no_abre_sesion(self):
+        for cuenta in (self.emp, self.cli):  # personal y clientes por igual
+            secreto = self.activar(cuenta)
+            self.assertRedirects(self.entrar(cuenta.username), reverse('login_2fa'), fetch_redirect_response=False)
+            self.assertNotIn('_auth_user_id', self.client.session)
+            self.assertEqual(self.client.get(reverse('dashboard')).status_code, 302)  # aún no autenticado
+            r = self.client.post(reverse('login_2fa'), {'codigo': self.codigo(secreto, 30)})
+            self.assertRedirects(r, reverse('dashboard'), fetch_redirect_response=False)
+            self.assertEqual(self.client.get(reverse('dashboard')).status_code, 200)
+            self.client.post(reverse('logout'))
+
+    def test_codigo_no_reutilizable(self):
+        secreto = self.activar(self.emp)
+        self.entrar()
+        r = self.client.post(reverse('login_2fa'), {'codigo': self.codigo(secreto)})  # el mismo de la activación
+        self.assertContains(r, 'Código incorrecto')
+
+    def test_bloqueo_por_codigos_incorrectos(self):
+        self.activar(self.emp)
+        self.entrar()
+        for _ in range(5):
+            self.client.post(reverse('login_2fa'), {'codigo': 'abcdef'})
+        self.assertEqual(self.client.post(reverse('login_2fa'), {'codigo': 'abcdef'}).status_code, 429)
+        self.assertNotIn('2fa_pendiente', self.client.session)  # debe volver a ingresar la contraseña
+
+    def test_verificacion_vence(self):
+        self.activar(self.emp)
+        self.entrar()
+        with mock.patch('usuarios.views.time.time', return_value=time.time() + 60 * 6):
+            r = self.client.get(reverse('login_2fa'))
+        self.assertRedirects(r, reverse('login'), fetch_redirect_response=False)
+        self.assertNotIn('2fa_pendiente', self.client.session)
+
+    def test_sin_pasar_por_la_contrasena_no_hay_paso_2(self):
+        self.assertRedirects(self.client.get(reverse('login_2fa')), reverse('login'), fetch_redirect_response=False)
+
+    def test_desactivar_exige_el_codigo_actual(self):
+        secreto = self.activar(self.emp)
+        self.client.force_login(self.emp)
+        self.client.post(reverse('desactivar_2fa'), {'codigo': 'abcdef'})
+        self.emp.refresh_from_db()
+        self.assertTrue(self.emp.tiene_2fa)
+        self.client.post(reverse('desactivar_2fa'), {'codigo': self.codigo(secreto, 30)})
+        self.emp.refresh_from_db()
+        self.assertFalse(self.emp.tiene_2fa)
+
+    def test_django_admin_no_tiene_login_propio(self):
+        CustomUser.objects.create_superuser('root', 'root@x.cl', 'Clave-segura-123')
+        r = self.client.post('/admin/login/', {'username': 'root', 'password': 'Clave-segura-123'})
+        self.assertRedirects(r, reverse('login'), fetch_redirect_response=False)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_admin_web_reinicia_2fa(self):
+        self.activar(self.emp)
+        self.activar(self.cli)
+        admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN')
+        self.client.force_login(admin)
+        self.client.post(reverse('editar_usuario', args=['personal', self.emp.id]), {
+            'username': 'ing', 'role': 'EMPLEADO', 'is_active': 'on', 'reiniciar_2fa': 'on'})
+        self.client.post(reverse('editar_usuario', args=['cliente', self.cli.id]), {
+            'username': 'cli', 'empresa': self.cli.empresa_id, 'is_active': 'on', 'reiniciar_2fa': 'on'})
+        for cuenta in (self.emp, self.cli):
+            cuenta.refresh_from_db()
+            self.assertFalse(cuenta.tiene_2fa)
+
+
+def imagen(formato='PNG', tamano=(400, 300)):
+    salida = io.BytesIO()
+    Image.new('RGB', tamano, 'red').save(salida, formato)
+    return SimpleUploadedFile(f'foto.{formato.lower()}', salida.getvalue())
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class PerfilTests(TestCase):
+    """Mi perfil: lo que cada rol puede cambiar, foto, verificación de correo y contraseña del cliente."""
+
+    def setUp(self):
+        cache.clear()
+        self.admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN', email='jefa@x.cl')
+        self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO', email='ing@x.cl')
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'), email='cli@x.cl')
+
+    def enlace_del_correo(self):
+        return re.search(r'https?://\S+', mail.outbox[-1].body).group()
+
+    def test_permisos_por_rol(self):
+        self.client.force_login(self.emp)
+        r = self.client.get(reverse('perfil'))
+        self.assertContains(r, 'MUY RECOMENDABLE')
+        self.assertContains(r, 'name="first_name"')
+        self.assertNotContains(r, 'name="username"')  # el empleado no cambia usuario ni correo
+        self.assertContains(r, 'name="old_password"')
+        # Aunque los envíe a mano, el empleado no cambia su usuario
+        self.client.post(reverse('perfil'), {'accion': 'datos', 'first_name': 'Ana', 'last_name': 'Pérez', 'username': 'otro'})
+        self.emp.refresh_from_db()
+        self.assertEqual((self.emp.first_name, self.emp.username), ('Ana', 'ing'))
+
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('perfil')), 'name="username"')
+
+        self.client.force_login(self.cli)
+        r = self.client.get(reverse('perfil'))
+        self.assertNotContains(r, 'name="first_name"')
+        self.assertNotContains(r, 'name="old_password"')
+        self.assertNotContains(r, 'MUY RECOMENDABLE')
+        self.assertContains(r, 'Solicitar cambio de contraseña')
+        self.client.post(reverse('perfil'), {'accion': 'password', 'old_password': 'Clave-segura-123',
+                                             'new_password1': 'Otra-clave-456', 'new_password2': 'Otra-clave-456'})
+        self.cli.refresh_from_db()
+        self.assertTrue(self.cli.check_password('Clave-segura-123'))  # el cliente no la cambia él mismo
+
+    def test_admin_cambia_su_correo_y_queda_sin_verificar(self):
+        CustomUser.objects.filter(pk=self.admin.pk).update(email_verificado=True)
+        self.client.force_login(self.admin)
+        self.client.post(reverse('perfil'), {'accion': 'datos', 'username': 'jefa', 'email': 'nueva@x.cl'})
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, 'nueva@x.cl')
+        self.assertFalse(self.admin.email_verificado)
+
+    def test_cambio_de_contrasena_del_personal(self):
+        self.client.force_login(self.emp)
+        self.client.post(reverse('perfil'), {'accion': 'password', 'old_password': 'Clave-segura-123',
+                                             'new_password1': 'Otra-clave-456', 'new_password2': 'Otra-clave-456'})
+        self.emp.refresh_from_db()
+        self.assertTrue(self.emp.check_password('Otra-clave-456'))
+        self.assertEqual(self.client.get(reverse('perfil')).status_code, 200)  # la sesión sigue abierta
+
+    def test_foto_reprocesada_y_protegida(self):
+        self.client.force_login(self.cli)
+        self.client.post(reverse('perfil'), {'accion': 'foto', 'foto': imagen()})
+        self.cli.refresh_from_db()
+        self.assertRegex(self.cli.foto.name, r'^fotos_perfil/[0-9a-f]{32}\.jpg$')
+        with Image.open(self.cli.foto.path) as guardada:
+            self.assertEqual((guardada.format, guardada.size), ('JPEG', (256, 256)))
+        url = self.cli.foto_url
+        self.assertEqual(self.client.get(url)['Content-Type'], 'image/jpeg')
+        self.client.post(reverse('logout'))
+        self.assertEqual(self.client.get(url).status_code, 302)  # sin sesión no se ve
+
+    def test_foto_rechaza_lo_que_no_es_imagen(self):
+        self.client.force_login(self.emp)
+        r = self.client.post(reverse('perfil'), {'accion': 'foto', 'foto': SimpleUploadedFile('x.png', b'<script>')})
+        self.assertEqual(r.status_code, 200)
+        self.emp.refresh_from_db()
+        self.assertFalse(self.emp.foto)
+
+    def test_verificacion_de_correo(self):
+        self.client.force_login(self.cli)
+        self.client.post(reverse('enviar_verificacion'))
+        self.assertEqual(mail.outbox[0].to, ['cli@x.cl'])
+        enlace = self.enlace_del_correo()
+        self.client.post(reverse('logout'))
+        self.client.get(enlace)  # funciona sin sesión (ej. abierto en el celular)
+        self.cli.refresh_from_db()
+        self.assertTrue(self.cli.email_verificado)
+
+    def test_enlace_de_correo_viejo_o_alterado_no_verifica(self):
+        self.client.force_login(self.emp)
+        self.client.post(reverse('enviar_verificacion'))
+        enlace = self.enlace_del_correo()
+        self.client.get(enlace[:-4] + 'abc/')  # firma alterada
+        CustomUser.objects.filter(pk=self.emp.pk).update(email='otro@x.cl')  # cambió el correo después
+        self.client.get(enlace)
+        self.emp.refresh_from_db()
+        self.assertFalse(self.emp.email_verificado)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+    def test_sin_smtp_avisa_que_el_correo_no_salio(self):
+        self.client.force_login(self.emp)
+        with mock.patch('sys.stdout'):  # el backend de consola imprime el correo
+            r = self.client.post(reverse('enviar_verificacion'), follow=True)
+        self.assertContains(r, 'el correo NO se envió de verdad')
+
+    def test_limite_de_correos(self):
+        self.client.force_login(self.emp)
+        for _ in range(5):
+            self.client.post(reverse('enviar_verificacion'))
+        self.assertEqual(len(mail.outbox), 3)

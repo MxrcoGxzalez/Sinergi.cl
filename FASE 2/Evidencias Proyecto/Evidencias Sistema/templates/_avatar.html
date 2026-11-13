@@ -1,0 +1,6 @@
+<!-- Foto de perfil o, si no tiene, sus iniciales. `clases`: tamaño y texto (ej. "w-8 h-8 text-[10px]"). -->
+{% if cuenta.foto %}
+  <img src="{{ cuenta.foto_url }}" alt="" class="{{ clases }} rounded-full object-cover shrink-0">
+{% else %}
+  <span class="{{ clases }} rounded-full bg-[#1B222C] text-white font-bold flex items-center justify-center shrink-0" aria-hidden="true">{{ cuenta.first_name|default:cuenta.username|slice:":2"|upper }}</span>
+{% endif %}

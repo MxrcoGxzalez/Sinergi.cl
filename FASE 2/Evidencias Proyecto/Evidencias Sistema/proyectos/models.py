@@ -403,6 +403,7 @@ class Peticion(models.Model):
         ('DOCUMENTO', 'Solicitud / observación de documento'),
         ('VISITA', 'Coordinación de visita'),
         ('RECLAMO', 'Reclamo'),
+        ('CUENTA', 'Cuenta / cambio de contraseña'),  # el cliente no cambia su contraseña: la pide
         ('OTRO', 'Otro'),
     ]
     ABIERTA, EN_PROCESO, CERRADA = 'ABIERTA', 'EN_PROCESO', 'CERRADA'

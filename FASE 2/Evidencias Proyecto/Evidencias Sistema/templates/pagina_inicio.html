@@ -16,17 +16,15 @@
       >
       <div class="absolute inset-0 -z-10 bg-gradient-to-r from-ink-900 via-ink-900/90 to-ink-900/40"></div>
 
-      <!-- Engranajes del logo Sinergi, engranados: mismo paso de diente (24 y 8 dientes), el chico gira 3 veces más rápido (decorativo) -->
-      <svg aria-hidden="true" viewBox="0 0 600 640" class="pointer-events-none absolute -right-48 top-1/2 -z-10 w-[min(120vw,780px)] -translate-y-1/2 opacity-25 sm:-right-32 xl:right-[-4%] xl:opacity-100">
-        <g class="engranaje" fill="none" stroke="#FF0000">
-          <circle cx="330" cy="290" r="205" stroke-width="34" stroke-dasharray="20 33.669" stroke-dashoffset="10"/>
-          <circle cx="330" cy="290" r="176" stroke-width="24"/>
-          <circle cx="330" cy="290" r="110" stroke-width="1.5" stroke-dasharray="3 9" opacity=".7"/>
-        </g>
-        <g class="engranaje inverso" fill="none" stroke="#FFFFFF" opacity=".55">
-          <circle cx="136.724" cy="96.724" r="68.333" stroke-width="34" stroke-dasharray="20 33.669" stroke-dashoffset="36.835"/>
-          <circle cx="136.724" cy="96.724" r="44" stroke-width="14"/>
-        </g>
+      <!-- Engranajes del logo Sinergi, engranados: mismo paso de diente (16, 8 y 6 dientes); el chico gira 2 veces y el
+           mini 16/6 veces más rápido que el grande (decorativo). Cuerpo macizo y dientes cortos trapezoidales; en todo el giro
+           queda holgura entre dientes (no se traslapan). Van DEBAJO del degradado (-z-[15]): el degradado los oscurece detrás
+           del texto en cualquier ancho, así no hace falta cambiar su opacidad por breakpoint (antes saltaba en 1280 px).
+           Posición continua: right = min(16vw − 256px, −4vw) → −194 px en 390, −4 % desde 1280 px, sin saltos. -->
+      <svg aria-hidden="true" viewBox="0 0 600 640" class="pointer-events-none absolute right-[min(calc(16vw_-_256px),-4vw)] top-1/2 -z-[15] w-[min(120vw,780px)] -translate-y-1/2">
+        <path class="engranaje" fill="#FF0000" fill-rule="evenodd" d="M230.5 231.2L220.2 204.9A182 182 0 0 1 238.0 193.0L258.3 212.6A155 155 0 0 1 283.6 202.1L284.0 173.9A182 182 0 0 1 305.1 169.7L316.3 195.6A155 155 0 0 1 343.7 195.6L354.9 169.7A182 182 0 0 1 376.0 173.9L376.4 202.1A155 155 0 0 1 401.7 212.6L422.0 193.0A182 182 0 0 1 439.8 204.9L429.5 231.2A155 155 0 0 1 448.8 250.5L475.1 240.2A182 182 0 0 1 487.0 258.0L467.4 278.3A155 155 0 0 1 477.9 303.6L506.1 304.0A182 182 0 0 1 510.3 325.1L484.4 336.3A155 155 0 0 1 484.4 363.7L510.3 374.9A182 182 0 0 1 506.1 396.0L477.9 396.4A155 155 0 0 1 467.4 421.7L487.0 442.0A182 182 0 0 1 475.1 459.8L448.8 449.5A155 155 0 0 1 429.5 468.8L439.8 495.1A182 182 0 0 1 422.0 507.0L401.7 487.4A155 155 0 0 1 376.4 497.9L376.0 526.1A182 182 0 0 1 354.9 530.3L343.7 504.4A155 155 0 0 1 316.3 504.4L305.1 530.3A182 182 0 0 1 284.0 526.1L283.6 497.9A155 155 0 0 1 258.3 487.4L238.0 507.0A182 182 0 0 1 220.2 495.1L230.5 468.8A155 155 0 0 1 211.2 449.5L184.9 459.8A182 182 0 0 1 173.0 442.0L192.6 421.7A155 155 0 0 1 182.1 396.4L153.9 396.0A182 182 0 0 1 149.7 374.9L175.6 363.7A155 155 0 0 1 175.6 336.3L149.7 325.1A182 182 0 0 1 153.9 304.0L182.1 303.6A155 155 0 0 1 192.6 278.3L173.0 258.0A182 182 0 0 1 184.9 240.2L211.2 250.5A155 155 0 0 1 230.5 231.2ZM414.0 350.0A84 84 0 1 0 246.0 350.0A84 84 0 1 0 414.0 350.0Z"/>
+        <path class="engranaje inverso" fill="#FFFFFF" fill-rule="evenodd" opacity=".55" d="M208.6 207.4L225.9 229.7A97 97 0 0 1 209.7 245.9L187.4 228.6A70 70 0 0 1 164.7 238.1L161.1 266.0A97 97 0 0 1 138.3 266.0L134.7 238.1A70 70 0 0 1 111.9 228.6L89.6 245.9A97 97 0 0 1 73.5 229.7L90.7 207.4A70 70 0 0 1 81.3 184.7L53.4 181.1A97 97 0 0 1 53.4 158.3L81.3 154.7A70 70 0 0 1 90.7 131.9L73.5 109.6A97 97 0 0 1 89.6 93.5L111.9 110.7A70 70 0 0 1 134.7 101.3L138.3 73.4A97 97 0 0 1 161.1 73.4L164.7 101.3A70 70 0 0 1 187.4 110.7L209.7 93.5A97 97 0 0 1 225.9 109.6L208.6 131.9A70 70 0 0 1 218.1 154.7L246.0 158.3A97 97 0 0 1 246.0 181.1L218.1 184.7A70 70 0 0 1 208.6 207.4ZM187.7 169.7A38 38 0 1 0 111.7 169.7A38 38 0 1 0 187.7 169.7Z"/>
+        <path class="engranaje inverso mini" fill="#FFFFFF" fill-rule="evenodd" opacity=".35" d="M188.0 472.4L209.2 454.0A75.75 75.75 0 0 1 226.0 470.8L207.6 492.0A48.75 48.75 0 0 1 213.4 514.0L240.0 523.2A75.75 75.75 0 0 1 233.9 546.1L206.3 540.8A48.75 48.75 0 0 1 190.2 556.9L195.5 584.5A75.75 75.75 0 0 1 172.6 590.6L163.4 564.0A48.75 48.75 0 0 1 141.5 558.1L120.2 576.6A75.75 75.75 0 0 1 103.4 559.8L121.9 538.5A48.75 48.75 0 0 1 116.0 516.6L89.4 507.4A75.75 75.75 0 0 1 95.5 484.5L123.1 489.8A48.75 48.75 0 0 1 139.2 473.7L133.9 446.1A75.75 75.75 0 0 1 156.8 440.0L166.0 466.6A48.75 48.75 0 0 1 188.0 472.4ZM190.7 515.3A26 26 0 1 0 138.7 515.3A26 26 0 1 0 190.7 515.3Z"/>
       </svg>
 
       <div class="mx-auto w-full max-w-shell px-6 pb-14 pt-36 sm:px-10 lg:px-12">
@@ -425,26 +423,36 @@
           <div class="reveal">
             <span class="font-grotesk text-xs font-bold uppercase tracking-[.2em] text-brick">Actualidad</span>
             <h2 class="mt-2 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">Noticias y normativa</h2>
-            <p class="mt-2 text-ink/70">Leyes recientes que afectan a los proyectos y novedades de la SEC, desde las fuentes oficiales.</p>
+            <p class="mt-2 max-w-2xl text-ink/70">Leyes recientes que afectan a los proyectos, novedades de la SEC y artículos técnicos internacionales de NFPA sobre protección contra incendio, electricidad y edificación.</p>
+            {% if noticias_actualizado %}
+            <p class="mt-3 flex items-center gap-2 text-xs text-ink/50">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+              Se actualizan solas cada 6 horas · Última actualización: <time datetime="{{ noticias_actualizado|date:'c' }}">{{ noticias_actualizado|date:"j M Y, H:i" }}</time>
+            </p>
+            {% endif %}
           </div>
           <div class="reveal flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
             <a href="https://www.bcn.cl/leychile" target="_blank" rel="noopener noreferrer" class="underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Ley Chile →</a>
             <a href="https://www.sec.cl/" target="_blank" rel="noopener noreferrer" class="underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">Sitio SEC →</a>
+            <a href="https://www.nfpa.org/news-blogs-and-articles" target="_blank" rel="noopener noreferrer" class="underline decoration-brick decoration-2 underline-offset-4 whitespace-nowrap">NFPA →</a>
           </div>
         </div>
 
         {% if noticias %}
-        <!-- Se actualizan cada 6 horas (web/noticias.py). Se muestran 3 y el resto con "Ver más". -->
+        <!-- Se actualizan cada 6 horas (web/noticias.py). Primero una por fuente; se muestran 3 y el resto con "Ver más".
+             Las mismas noticias, en JSON: /api/noticias/ -->
         <div id="noticias-lista" class="grid gap-6 lg:grid-cols-3 mt-4">
           {% for n in noticias %}
           <article class="noticia reveal tarjeta-roja overflow-hidden rounded-xl border border-black/5 bg-white p-7 transition hover:shadow-lg flex flex-col{% if forloop.counter > 3 %} hidden{% endif %}">
             <div class="flex flex-wrap items-center gap-2 text-xs">
-              <span class="rounded-full {% if n.fuente == 'SEC' %}bg-amber-50 text-amber-800{% else %}bg-paper text-ink/70{% endif %} px-3 py-1 font-semibold">{{ n.etiqueta }}</span>
+              <span class="rounded-full {% if n.fuente == 'SEC' %}bg-amber-50 text-amber-800{% elif n.fuente == 'NFPA' %}bg-red-50 text-brick{% else %}bg-paper text-ink/70{% endif %} px-3 py-1 font-semibold">{{ n.etiqueta }}</span>
+              {% if n.fuente == 'NFPA' %}<span class="font-semibold uppercase tracking-wider text-ink/50">Internacional</span>{% endif %}
               <time datetime="{{ n.fecha|date:'Y-m-d' }}" class="text-ink/50">{{ n.fecha|date:"d M Y" }}</time>
             </div>
-            <h3 class="mt-5 font-display text-lg font-bold leading-snug">{{ n.titulo }}</h3>
+            <h3 class="mt-5 font-display text-lg font-bold leading-snug"{% if n.idioma == 'en' %} lang="en"{% endif %}>{{ n.titulo }}</h3>
+            {% if n.bajada %}<p class="mt-3 text-sm leading-relaxed text-ink/60 line-clamp-3"{% if n.idioma == 'en' %} lang="en"{% endif %}>{{ n.bajada }}</p>{% endif %}
             <a href="{{ n.url }}" target="_blank" rel="noopener noreferrer" class="mt-auto pt-6 inline-block text-xs font-bold uppercase tracking-wider text-brick">
-              {% if n.fuente == 'SEC' %}Leer en sec.cl{% else %}Ver norma en Ley Chile{% endif %} →<span class="sr-only"> (se abre en otra pestaña)</span>
+              {% if n.fuente == 'SEC' %}Leer en sec.cl{% elif n.fuente == 'NFPA' %}Leer en nfpa.org (en inglés){% else %}Ver norma en Ley Chile{% endif %} →<span class="sr-only"> (se abre en otra pestaña)</span>
             </a>
           </article>
           {% endfor %}

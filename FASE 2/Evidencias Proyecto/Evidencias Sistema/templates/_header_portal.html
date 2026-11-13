@@ -17,13 +17,14 @@
 
   <div class="flex items-center gap-3 text-xs shrink-0">
     {% if user.is_authenticated %}
-    <span class="hidden md:flex items-center gap-2 text-slate-600">
-      <span class="w-8 h-8 rounded-full bg-[#1B222C] text-white text-[10px] font-bold flex items-center justify-center">{{ user.first_name|default:user.username|slice:":2"|upper }}</span>
-      <span class="leading-tight">
+    <!-- Avatar: lleva a Mi perfil (foto, datos, correo, contraseña y 2FA) -->
+    <a href="{% url 'perfil' %}" title="Mi perfil" class="flex items-center gap-2 text-slate-600 rounded-full md:rounded hover:bg-slate-50 md:pr-2">
+      {% include '_avatar.html' with cuenta=user clases="w-8 h-8 text-[10px]" %}
+      <span class="hidden md:block leading-tight">
         <strong class="block text-slate-900">{{ user.get_full_name|default:user.username }}</strong>
-        <span class="text-[10px] text-slate-400">{{ user.empresa|default:user.get_role_display }}</span>
+        <span class="text-[10px] text-slate-400">Mi perfil · {{ user.empresa|default:user.get_role_display }}</span>
       </span>
-    </span>
+    </a>
     <form method="POST" action="{% url 'logout' %}">{% csrf_token %}
       <button type="submit" class="border border-slate-300 hover:border-[#C52222] hover:text-[#C52222] text-slate-700 font-semibold px-3 py-1.5 rounded transition-colors whitespace-nowrap"><span class="sm:hidden">Salir</span><span class="hidden sm:inline">Cerrar Sesión</span></button>
     </form>
