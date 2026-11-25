@@ -11,8 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from usuarios.models import Cliente, CustomUser, Empresa
-from .models import Documento, Peticion, Proyecto, RegistroActividad, SolicitudProyecto
-from .tasks import purgar_archivados
+from .models import Documento, MensajePeticion, Peticion, Proyecto, RegistroActividad, SolicitudProyecto
+from .tasks import purgar_archivados, purgar_chats
 
 CLAVE = 'Clave-segura-123'
 
@@ -193,6 +193,37 @@ class ArchivadoTests(TestCase):
         self.assertTrue(RegistroActividad.objects.filter(accion='ELIMINAR', usuario_nombre='sistema').exists())
 
 
+class BorradoChatsTests(TestCase):
+    """Peticiones & Chat: se eliminan solas tras DIAS_CHAT días sin actividad (proyectos.tasks.purgar_chats)."""
+
+    def test_se_borra_la_conversacion_sin_actividad_con_sus_mensajes(self):
+        cli = Cliente.objects.create_user('cli', password=CLAVE)
+        vieja = Peticion.objects.create(cliente=cli, asunto='Vieja')
+        vieja.mensajes.create(de_cliente=True, texto='hola')
+        vieja.mensajes.create(de_cliente=False, texto='respuesta')
+        activa = Peticion.objects.create(cliente=cli, asunto='Activa')  # empezó hace mucho, pero sigue con actividad
+        activa.mensajes.create(de_cliente=True, texto='antiguo')
+        Peticion.objects.filter(pk=vieja.pk).update(ultima_actividad=timezone.now() - timedelta(days=61))
+        Peticion.objects.filter(pk=activa.pk).update(fecha_creacion=timezone.now() - timedelta(days=200),
+                                                     ultima_actividad=timezone.now() - timedelta(days=59))
+
+        self.assertEqual(purgar_chats(), 1)
+        self.assertFalse(Peticion.objects.filter(pk=vieja.pk).exists())
+        self.assertFalse(MensajePeticion.objects.filter(peticion_id=vieja.pk).exists())
+        self.assertEqual(Peticion.objects.get().asunto, 'Activa')
+        self.assertEqual(MensajePeticion.objects.count(), 1)
+        registro = RegistroActividad.objects.get(accion='ELIMINAR')
+        self.assertEqual((registro.usuario_nombre, registro.objeto), ('sistema', f'PET-{vieja.pk} Vieja'))
+        self.assertIn('60 días sin actividad (2 mensajes)', registro.detalle)
+
+    def test_el_aviso_se_muestra_en_la_bandeja_y_en_la_conversacion(self):
+        cli = Cliente.objects.create_user('cli', password=CLAVE)
+        pet = Peticion.objects.create(cliente=cli, asunto='Aviso')
+        self.client.force_login(cli)
+        self.assertContains(self.client.get(reverse('dashboard')), 'sin actividad por 60 días se eliminan automáticamente')
+        self.assertContains(self.client.get(reverse('proyectos:peticion', args=[pet.id])), 'Si pasa 60 días sin mensajes nuevos')
+
+
 class SolicitudPortalTests(TestCase):
     """Cliente con cuenta pide otro proyecto desde su portal: el admin lo crea directo."""
 
@@ -275,16 +306,16 @@ class PeticionesTests(TestCase):
 
         r = self.client.post(reverse('proyectos:peticion', args=[pet.id]), {'texto': 'El martes.'}, HTTP_ACCEPT='application/json')
         self.assertEqual(r.json(), {'ok': True, 'error': None})
-        self.client.post(reverse('proyectos:peticion', args=[pet.id]), {'texto': 'Cliente con pago pendiente', 'interno': '1'})
+        self.client.post(reverse('proyectos:peticion', args=[pet.id]), {'texto': 'Le envío el plano.', 'correo': '1'})
         pet.refresh_from_db()
         self.assertEqual(pet.estado, 'EN_PROCESO')
 
-        # Cliente: recibe la respuesta, nunca la nota interna, y ve que Sinergi leyó su mensaje
+        # Cliente: recibe ambas respuestas (la marcada "por correo" también queda en el chat) y ve que Sinergi leyó su mensaje
         self.client.force_login(self.cli)
         self.assertEqual(self.no_leidas(), 1)
         datos = self.mensajes(pet)
-        self.assertEqual([m['texto'] for m in datos['mensajes']], ['¿Cuándo instalan el tablero?', 'El martes.'])
-        self.assertEqual([m['propio'] for m in datos['mensajes']], [True, False])
+        self.assertEqual([m['texto'] for m in datos['mensajes']], ['¿Cuándo instalan el tablero?', 'El martes.', 'Le envío el plano.'])
+        self.assertEqual([m['propio'] for m in datos['mensajes']], [True, False, False])
         self.assertIsNotNone(datos['leida_otro'])
         self.assertEqual(self.mensajes(pet, desde=datos['mensajes'][-1]['id'])['mensajes'], [])  # solo lo nuevo
         self.assertEqual(self.no_leidas(), 0)
@@ -380,10 +411,229 @@ class PeticionesTests(TestCase):
         self.client.force_login(self.cli)
         self.assertEqual(self.client.get(reverse('proyectos:peticion', args=[pet.id])).status_code, 404)
 
+    def test_chat_y_nueva_peticion_se_abren_en_ventana_del_panel(self):
+        """Solo estas dos páginas se pueden enmarcar, y solo desde el mismo sitio; el panel sigue sin poder."""
+        pet = Peticion.objects.create(cliente=self.cli, proyecto=self.p, asunto='En ventana')
+        self.client.force_login(self.cli)
+        for url in (reverse('proyectos:peticion', args=[pet.id]), reverse('proyectos:nueva_peticion')):
+            r = self.client.get(url)
+            self.assertEqual(r['X-Frame-Options'], 'SAMEORIGIN')
+            self.assertIn("frame-ancestors 'self'", r['Content-Security-Policy'])
+            self.assertNotIn("frame-ancestors 'none'", r['Content-Security-Policy'])
+        r = self.client.get(reverse('dashboard'))
+        self.assertEqual(r['X-Frame-Options'], 'DENY')
+        self.assertIn("frame-ancestors 'none'", r['Content-Security-Policy'])
+        html = r.content.decode()
+        self.assertIn(f'href="{reverse("proyectos:peticion", args=[pet.id])}" data-ventana="lateral"', html)
+        self.assertIn(f'href="{reverse("proyectos:nueva_peticion")}" data-ventana', html)
+        self.assertIn('data-vivo="bandeja-peticiones"', html)
+        self.assertIn('id="ventana-marco"', html)
+        # Sin sesión: redirige al login (que no se puede enmarcar: la ventana se cierra y recarga el panel)
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('proyectos:peticion', args=[pet.id])).status_code, 302)
+
+    def test_al_enviar_desde_la_ventana_la_peticion_nueva_sigue_en_la_ventana(self):
+        """Petición nueva enviada desde la ventana: redirige a su chat, que también va en ventana."""
+        self.client.force_login(self.cli)
+        r = self.client.post(reverse('proyectos:nueva_peticion'), {
+            'proyecto': self.p.id, 'tipo': 'CONSULTA', 'asunto': 'Desde ventana', 'mensaje': 'Hola', '_ventana': '1'})
+        self.assertRedirects(r, reverse('proyectos:peticion', args=[Peticion.objects.get().id]))
+
     def test_asunto_escapado(self):
         Peticion.objects.create(cliente=self.cli, asunto='<script>alert(1)</script>')
         self.client.force_login(self.cli)
         self.assertNotContains(self.client.get(reverse('dashboard')), '<script>alert(1)</script>')
+
+
+class VentanaFormulariosTests(TestCase):
+    """Formularios del panel en la ventana sobrepuesta (templates/_ventana.html, ventana_interna)."""
+
+    def setUp(self):
+        self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
+        self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        self.p = Proyecto.objects.create(nombre='Obra', cliente=self.cli, empleado_encargado=self.emp)
+        self.fase = self.p.fases.create(nombre='Ingeniería')
+
+    def test_las_pantallas_se_pueden_enmarcar_solo_desde_el_mismo_sitio(self):
+        sol = SolicitudProyecto.objects.create(nombre_contacto='Ana Paz', empresa='ACME', email='ana@acme.cl',
+                                               nombre_proyecto='Torre', descripcion='x')
+        pantallas = {
+            self.cli: [reverse('proyectos:solicitar')],
+            self.admin: [reverse('proyectos:asignar_solicitud', args=[sol.id]), reverse('crear_usuario', args=['cliente']),
+                         reverse('editar_usuario', args=['personal', self.emp.id]), reverse('crear_empresa'),
+                         reverse('editar_empresa', args=[self.cli.empresa_id])],
+            self.emp: [reverse('proyectos:fase_editar', args=[self.p.id, self.fase.id]),
+                       reverse('proyectos:subfase_nueva', args=[self.fase.id])],
+        }
+        for usuario, urls in pantallas.items():
+            self.client.force_login(usuario)
+            for url in urls:
+                r = self.client.get(url)
+                self.assertEqual((url, r.status_code, r['X-Frame-Options']), (url, 200, 'SAMEORIGIN'))
+                self.assertIn("frame-ancestors 'self'", r['Content-Security-Policy'])
+        self.client.force_login(self.admin)
+        html = self.client.get(reverse('dashboard')).content.decode()
+        for url in (reverse('crear_usuario', args=['cliente']), reverse('crear_empresa'),
+                    reverse('proyectos:asignar_solicitud', args=[sol.id])):
+            self.assertRegex(html, rf'href="{url}[^"]*" data-ventana')
+        self.client.force_login(self.emp)
+        html = self.client.get(reverse('proyectos:control', args=[self.p.id])).content.decode()
+        self.assertIn(f'href="{reverse("proyectos:subfase_nueva", args=[self.fase.id])}" data-ventana', html)
+        self.assertIn('id="ventana-marco"', html)
+
+    def test_al_guardar_desde_la_ventana_el_panel_va_al_destino(self):
+        self.client.force_login(self.emp)
+        url = reverse('proyectos:subfase_nueva', args=[self.fase.id])
+        datos = {'nombre': 'Planos', 'descripcion': '', 'estado': 'EN_CURSO'}
+        r = self.client.post(url, {**datos, '_ventana': '1'})
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, 'ventana_cerrar.html')
+        self.assertContains(r, f'"{reverse("proyectos:control", args=[self.p.id])}"')  # destino en JSON
+        self.assertEqual(r['X-Frame-Options'], 'SAMEORIGIN')
+        self.assertTrue(self.fase.subfases.filter(nombre='Planos').exists())
+        # El aviso de "guardado" no se gasta en la ventana: lo muestra el panel al llegar
+        self.assertContains(self.client.get(reverse('proyectos:control', args=[self.p.id])), 'Subfase &quot;Planos&quot; guardada')
+        # Fuera de la ventana (página completa) sigue redirigiendo como siempre
+        r = self.client.post(url, {**datos, 'nombre': 'Memoria'})
+        self.assertRedirects(r, reverse('proyectos:control', args=[self.p.id]), fetch_redirect_response=False)
+
+    def test_con_errores_el_formulario_se_queda_en_la_ventana(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse('crear_empresa'), {'_ventana': '1'})
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, 'panel_form.html')
+        self.assertTemplateNotUsed(r, 'ventana_cerrar.html')
+
+
+class MensajesComoWhatsAppTests(TestCase):
+    """Editar / eliminar mensajes (para todos o para mí) y eliminar el chat solo para uno mismo."""
+
+    def setUp(self):
+        self.admin = CustomUser.objects.create_user('jefa', password=CLAVE, role='ADMIN')
+        self.emp = CustomUser.objects.create_user('ing', password=CLAVE, role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password=CLAVE, empresa=empresa('ACME'))
+        self.p = Proyecto.objects.create(nombre='Obra Chat', cliente=self.cli, empleado_encargado=self.emp)
+        self.pet = Peticion.objects.create(cliente=self.cli, proyecto=self.p, asunto='Tablero')
+        self.del_cliente = self.pet.mensajes.create(de_cliente=True, texto='¿Cuándo instalan?')
+        self.del_ing = self.pet.mensajes.create(autor=self.emp, texto='El martes.')
+
+    def mensajes(self, **params):
+        return self.client.get(reverse('proyectos:mensajes_peticion', args=[self.pet.id]), params).json()
+
+    def textos(self, usuario):
+        self.client.force_login(usuario)
+        return [m['texto'] for m in self.mensajes()['mensajes']]
+
+    def editar(self, mensaje, texto):
+        return self.client.post(reverse('proyectos:editar_mensaje', args=[mensaje.id]), {'texto': texto}).json()
+
+    def eliminar(self, mensaje, para):
+        return self.client.post(reverse('proyectos:eliminar_mensaje', args=[mensaje.id]), {'para': para}).json()
+
+    def envejecer(self, mensaje, **tiempo):
+        MensajePeticion.objects.filter(pk=mensaje.pk).update(fecha=timezone.now() - timedelta(**tiempo))
+
+    def bandeja(self, usuario):
+        self.client.force_login(usuario)
+        return self.client.get(reverse('dashboard')).content.decode()
+
+    # ---------- Editar ----------
+
+    def test_editar_mensaje_propio_y_el_otro_lado_lo_ve_editado(self):
+        self.client.force_login(self.cli)
+        antes = self.mensajes()
+        self.assertEqual(antes['mensajes'][0]['mio'], True)
+        self.assertEqual(self.editar(self.del_cliente, '¿Cuándo instalan el tablero?'), {'ok': True, 'error': None})
+        # El chat abierto recibe el cambio en su próxima consulta (cambiados)
+        cambios = self.mensajes(desde=self.del_ing.id, cambios=antes['ahora'])
+        self.assertEqual([(m['texto'], m['editado']) for m in cambios['cambiados']], [('¿Cuándo instalan el tablero?', True)])
+        self.client.force_login(self.emp)
+        primero = self.mensajes()['mensajes'][0]
+        self.assertEqual((primero['texto'], primero['editado'], primero['mio']), ('¿Cuándo instalan el tablero?', True, False))
+
+    def test_solo_el_autor_edita_y_dentro_de_15_minutos(self):
+        self.client.force_login(self.emp)
+        self.assertFalse(self.editar(self.del_cliente, 'hackeado')['ok'])  # mensaje del cliente
+        self.client.force_login(self.admin)
+        self.assertFalse(self.editar(self.del_ing, 'otro')['ok'])  # de otra persona del personal
+        self.client.force_login(self.emp)
+        self.envejecer(self.del_ing, minutes=16)
+        r = self.editar(self.del_ing, 'tarde')
+        self.assertFalse(r['ok'])
+        self.assertIn('15 minutos', r['error'])
+        self.assertEqual(MensajePeticion.objects.get(pk=self.del_ing.pk).texto, 'El martes.')
+
+    # ---------- Eliminar para todos ----------
+
+    def test_eliminar_para_todos_borra_el_texto_para_ambos(self):
+        self.client.force_login(self.emp)
+        self.assertTrue(self.eliminar(self.del_ing, 'todos')['ok'])
+        self.assertEqual(MensajePeticion.objects.get(pk=self.del_ing.pk).texto, '')
+        self.client.force_login(self.cli)
+        ultimo = self.mensajes()['mensajes'][-1]
+        self.assertEqual((ultimo['texto'], ultimo['eliminado']), ('', True))
+        self.assertFalse(self.eliminar(self.del_ing, 'todos')['ok'])  # el cliente no puede con mensajes ajenos
+
+    def test_eliminar_para_todos_solo_dentro_de_48_horas(self):
+        self.envejecer(self.del_cliente, hours=49)
+        self.client.force_login(self.cli)
+        r = self.eliminar(self.del_cliente, 'todos')
+        self.assertFalse(r['ok'])
+        self.assertIn('48 horas', r['error'])
+        self.assertTrue(self.eliminar(self.del_cliente, 'mi')['ok'])  # para mí: siempre se puede
+
+    # ---------- Eliminar para mí ----------
+
+    def test_eliminar_para_mi_solo_lo_oculta_a_quien_lo_elimina(self):
+        self.client.force_login(self.cli)
+        self.assertTrue(self.eliminar(self.del_ing, 'mi')['ok'])  # un mensaje ajeno, solo para mí
+        self.assertEqual(self.textos(self.cli), ['¿Cuándo instalan?'])
+        self.assertEqual(self.textos(self.emp), ['¿Cuándo instalan?', 'El martes.'])
+        self.client.force_login(self.admin)
+        self.assertTrue(self.eliminar(self.del_cliente, 'mi')['ok'])
+        self.assertEqual(self.textos(self.admin), ['El martes.'])
+        self.assertEqual(self.textos(self.emp), ['¿Cuándo instalan?', 'El martes.'])  # el resto del personal no cambia
+
+    def test_peticion_cerrada_no_se_edita_pero_si_se_oculta_para_mi(self):
+        Peticion.objects.filter(pk=self.pet.pk).update(estado=Peticion.CERRADA)
+        self.client.force_login(self.emp)
+        self.assertFalse(self.editar(self.del_ing, 'x')['ok'])
+        self.assertFalse(self.eliminar(self.del_ing, 'todos')['ok'])
+        self.assertTrue(self.eliminar(self.del_ing, 'mi')['ok'])
+
+    def test_el_cliente_no_alcanza_las_notas_internas(self):
+        nota = self.pet.mensajes.create(autor=self.emp, texto='interno', interno=True)
+        self.client.force_login(self.cli)
+        self.assertEqual(self.client.post(reverse('proyectos:eliminar_mensaje', args=[nota.id]), {'para': 'mi'}).status_code, 404)
+
+    # ---------- Eliminar chat (solo para mí) ----------
+
+    def test_eliminar_chat_solo_para_mi_y_reaparece_con_lo_nuevo(self):
+        self.client.force_login(self.cli)
+        r = self.client.post(reverse('proyectos:borrar_peticion', args=[self.pet.id]))
+        self.assertRedirects(r, f"{reverse('dashboard')}?tab=chat", fetch_redirect_response=False)
+        self.assertNotIn('Tablero', self.bandeja(self.cli))
+        self.assertIn('Tablero', self.bandeja(self.emp))  # el otro lado la sigue viendo completa
+        self.assertIn('Tablero', self.bandeja(self.admin))
+        self.assertEqual(self.textos(self.cli), [])
+        self.assertEqual(self.textos(self.emp), ['¿Cuándo instalan?', 'El martes.'])
+        # Llega un mensaje nuevo de Sinergi: reaparece para el cliente, solo con lo nuevo y como no leído
+        self.client.force_login(self.emp)
+        self.client.post(reverse('proyectos:peticion', args=[self.pet.id]), {'texto': 'Confirmado para el martes.'})
+        self.client.force_login(self.cli)
+        self.assertEqual(self.client.get(reverse('proyectos:peticiones_no_leidas')).json()['no_leidas'], 1)
+        self.assertIn('Tablero', self.bandeja(self.cli))
+        self.assertEqual(self.textos(self.cli), ['Confirmado para el martes.'])
+
+    def test_eliminar_chat_del_personal_es_por_persona(self):
+        self.client.force_login(self.emp)
+        self.client.post(reverse('proyectos:borrar_peticion', args=[self.pet.id]))
+        self.assertNotIn('Tablero', self.bandeja(self.emp))
+        self.assertIn('Tablero', self.bandeja(self.admin))
+        self.assertIn('Tablero', self.bandeja(self.cli))
+        self.assertTrue(Peticion.objects.filter(pk=self.pet.pk).exists())  # nunca se borra de la base por esto
+        self.assertEqual(MensajePeticion.objects.filter(peticion=self.pet).count(), 2)
 
 
 class BitacoraTests(TestCase):

@@ -102,7 +102,8 @@ class NoticiasTests(TestCase):
         self.actualizar()
         _, descargar = self.actualizar()
         self.assertEqual({c.args[0] for c in descargar.call_args_list},
-                         {noticias.URL_LEYCHILE, noticias.URL_SEC, noticias.URL_NFPA_SITEMAP})
+                         {noticias.URL_LEYCHILE, noticias.URL_SEC, noticias.URL_NFPA_SITEMAP,
+                          *(datos['url'] for datos in noticias.FUENTES_RSS.values())})  # los RSS son una sola página
 
     def test_traduccion_al_espanol(self):
         self.completar.side_effect = None
@@ -203,3 +204,119 @@ class ActualizacionAutomaticaTests(TestCase):
         for _ in range(5):
             self.assertEqual(len(noticias.todas()), 1)  # mientras tanto se sigue mostrando lo guardado
         self.encolar.assert_called_once()
+
+
+class CuraduriaNoticiasTests(TestCase):
+    """El admin oculta noticias del feed: no salen en la portada ni en la API, pero sí en su panel."""
+
+    def setUp(self):
+        from usuarios.models import Cliente, CustomUser
+        cache.clear()
+        encolar = mock.patch('web.tasks.actualizar_noticias.delay')
+        encolar.start()
+        self.addCleanup(encolar.stop)
+        hoy = timezone.now().date()
+        self.feed = [
+            {'fuente': 'SEC', 'codigo': 'sec', 'etiqueta': 'Superintendencia SEC', 'titulo': 'Noticia útil',
+             'fecha': hoy, 'url': 'https://www.sec.cl/util/'},
+            {'fuente': 'SEC', 'codigo': 'sec', 'etiqueta': 'Superintendencia SEC', 'titulo': 'Noticia que sobra',
+             'fecha': hoy, 'url': 'https://www.sec.cl/sobra/'},
+        ]
+        cache.set_many({noticias.CLAVE_CACHE: self.feed, noticias.CLAVE_ACTUALIZADO: timezone.now()})
+        self.admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN')
+        self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123')
+
+    def curar(self, accion, url='https://www.sec.cl/sobra/', **extra):
+        return self.client.post(reverse('curar_noticia'), {'accion': accion, 'url': url}, **extra)
+
+    def test_ocultar_y_volver_a_mostrar(self):
+        from proyectos.models import RegistroActividad
+        self.client.force_login(self.admin)
+        r = self.curar('ocultar', follow=True)  # sigue al panel: ahí se muestra (y se consume) el aviso
+        self.assertRedirects(r, f"{reverse('dashboard')}?tab=noticias")
+
+        self.assertNotContains(self.client.get(reverse('inicio')), 'Noticia que sobra')
+        self.assertContains(self.client.get(reverse('inicio')), 'Noticia útil')
+        api = self.client.get(reverse('api_noticias')).json()
+        self.assertEqual([n['titulo'] for n in api['noticias']], ['Noticia útil'])
+        panel = self.client.get(reverse('dashboard'))
+        self.assertContains(panel, 'Noticia que sobra')   # el admin la sigue viendo, para poder restaurarla
+        self.assertContains(panel, 'Mostrar otra vez')
+        self.assertTrue(RegistroActividad.objects.filter(objeto__contains='Noticia que sobra').exists())
+
+        self.curar('mostrar')
+        self.assertContains(self.client.get(reverse('inicio')), 'Noticia que sobra')
+
+    def test_solo_el_admin_puede_curar(self):
+        for usuario in (self.emp, self.cli):
+            self.client.force_login(usuario)
+            self.assertEqual(self.curar('ocultar').status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.curar('ocultar').status_code, 302)  # sin sesión: al login
+        self.assertEqual(noticias.ocultas(), set())
+
+    def test_no_se_ocultan_urls_que_no_estan_en_el_feed(self):
+        self.client.force_login(self.admin)
+        self.curar('ocultar', url='https://sitio-cualquiera.com/')
+        self.assertEqual(noticias.ocultas(), set())
+
+
+def rss_wordpress(*articulos):
+    """RSS como el de WordPress (CSE y CIBSE Journal): (título, bajada, fecha RFC 822, enlace)."""
+    items = ''.join(
+        f'<item><title>{t}</title><link>{u}</link><pubDate>{f}</pubDate><category><![CDATA[mechanical engineer]]></category>'
+        f'<description><![CDATA[<p>{b}</p>\n<p>The post <a href="{u}">{t}</a> appeared first on <a href="https://x">Revista</a>.</p>]]>'
+        f'</description></item>' for t, b, f, u in articulos)
+    return f'<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>{items}</channel></rss>'.encode()
+
+
+CSE_RSS = rss_wordpress(
+    ('Strategies for heat recovery chiller design', 'Chilled water plants can recover heat &amp; save energy.',
+     'Wed, 23 Sep 2026 10:00:00 +0000', 'https://www.csemag.com/heat-recovery-chiller/'),
+    ('Understand the updates to NFPA 70-2026', 'Healthcare electrical systems.',  # eléctrico: ya lo cubre NFPA
+     'Tue, 10 Nov 2026 10:00:00 +0000', 'https://www.csemag.com/nfpa-70/'),
+    ('New program celebrates women in building engineering', 'Award for HVAC engineers.',  # premio: fuera
+     'Wed, 14 Oct 2026 10:00:00 +0000', 'https://www.csemag.com/award/'),
+)
+CIBSE_RSS = rss_wordpress(
+    ('An intricate challenge: transition from gas boilers to heat pumps', 'Existing heating coils and water flowrates.',
+     'Tue, 27 Oct 2026 10:00:00 +0000', 'https://www.cibsejournal.com/general/heat-pumps/'),
+)
+
+
+class FuentesHvacSanitariaTests(TestCase):
+    """CSE y CIBSE Journal: solo HVAC y sanitaria, con la bajada limpia y el enlace al sitio original."""
+
+    def setUp(self):
+        cache.clear()
+        sin_ia = mock.patch.object(llm, 'completar', side_effect=llm.LLMNoConfigurado)
+        sin_ia.start()
+        self.addCleanup(sin_ia.stop)
+        encolar = mock.patch('web.tasks.actualizar_noticias.delay')
+        encolar.start()
+        self.addCleanup(encolar.stop)
+        paginas = {noticias.FUENTES_RSS['cse']['url']: CSE_RSS, noticias.FUENTES_RSS['cibse']['url']: CIBSE_RSS}
+
+        def descargar(url):
+            if url not in paginas:
+                raise OSError('sin red')
+            return paginas[url]
+        with mock.patch.object(noticias, '_descargar', side_effect=descargar):
+            noticias.actualizar()
+
+    def test_filtra_temas_y_limpia_la_bajada(self):
+        lista = cache.get(noticias.CLAVE_CACHE)
+        self.assertEqual([n['url'] for n in lista], ['https://www.cibsejournal.com/general/heat-pumps/',
+                                                     'https://www.csemag.com/heat-recovery-chiller/'])
+        cse = lista[1]
+        self.assertEqual((cse['codigo'], cse['etiqueta'], cse['idioma']), ('cse', 'Consulting-Specifying Engineer', 'en'))
+        self.assertEqual(cse['bajada'], 'Chilled water plants can recover heat & save energy.')  # sin "The post..."
+        self.assertEqual(str(cse['fecha']), '2026-09-23')
+
+    def test_portada_y_api(self):
+        r = self.client.get(reverse('inicio'))
+        self.assertContains(r, 'Leer en csemag.com (en inglés)')
+        self.assertContains(r, 'Leer en cibsejournal.com (en inglés)')
+        api = self.client.get(reverse('api_noticias'), {'fuente': 'cibse'}).json()
+        self.assertEqual([n['codigo'] for n in api['noticias']], ['cibse'])

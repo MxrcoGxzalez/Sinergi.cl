@@ -414,3 +414,120 @@ class PerfilTests(TestCase):
         for _ in range(5):
             self.client.post(reverse('enviar_verificacion'))
         self.assertEqual(len(mail.outbox), 3)
+
+
+class InicioPortalTests(TestCase):
+    """Pestaña Inicio de los tres portales (templates/_inicio.html): es la que abre por defecto."""
+
+    def setUp(self):
+        self.admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN', first_name='Jefa')
+        self.emp = CustomUser.objects.create_user('ing', password='Clave-segura-123', role='EMPLEADO', email='ing@sinergi.cl')
+        self.emp2 = CustomUser.objects.create_user('ing2', password='Clave-segura-123', role='EMPLEADO')
+        self.cli = Cliente.objects.create_user('cli', password='Clave-segura-123', empresa=empresa('ACME'), first_name='Ana')
+        self.otro = Cliente.objects.create_user('otro', password='Clave-segura-123', empresa=empresa('Otra'))
+        self.mia = Proyecto.objects.create(nombre='Obra Propia', cliente=self.cli, empleado_encargado=self.emp)
+        self.ajena = Proyecto.objects.create(nombre='Obra Ajena', cliente=self.otro, empleado_encargado=self.emp2, estado='Pausado')
+
+    def inicio(self, usuario):
+        self.client.force_login(usuario)
+        html = self.client.get(reverse('dashboard')).content.decode()
+        return html[html.index('id="view-inicio"'):html.index('</section>', html.index('id="view-inicio"'))]
+
+    def test_cada_rol_ve_inicio_por_defecto_con_su_perfil_y_sus_proyectos(self):
+        casos = [(self.cli, 'Bienvenido, Ana', ['Obra Propia'], ['Obra Ajena']),
+                 (self.emp, 'Bienvenido, ing', ['Obra Propia'], ['Obra Ajena']),
+                 (self.admin, 'Bienvenido, Jefa', ['Obra Propia', 'Obra Ajena'], [])]
+        for usuario, saludo, ve, no_ve in casos:
+            with self.subTest(usuario=usuario.username):
+                self.client.force_login(usuario)
+                html = self.client.get(reverse('dashboard')).content.decode()
+                self.assertIn('id="view-inicio" class="tab-content block', html)  # abre en Inicio
+                self.assertIn('data-inicio onclick=', html)
+                self.assertEqual(html.count('nav-btn tab-active'), 1)
+                inicio = self.inicio(usuario)
+                self.assertIn(saludo, inicio)
+                self.assertIn(f'href="{reverse("perfil")}"', inicio)  # la tarjeta de perfil lleva a Mi perfil
+                for nombre in ve:
+                    self.assertIn(nombre, inicio)
+                for nombre in no_ve:
+                    self.assertNotIn(nombre, inicio)
+        self.assertIn('ing@sinergi.cl', self.inicio(self.emp))
+
+    def test_con_tab_en_la_url_sigue_abriendo_esa_pestana(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse('actualizar_proyecto', args=[self.mia.id]), {'estado': 'Pausado'})
+        self.assertRedirects(r, f"{reverse('dashboard')}?tab=supervision-hitos")
+
+
+class SuperAdminDemoTests(TestCase):
+    """SuperAdmin de demostración (usuarios/superadmin.py): una sesión, tres vistas, solo para esa cuenta."""
+
+    CLAVE = 'Demo-segura-2026'
+
+    def setUp(self):
+        from django.core.management import call_command
+        call_command('crear_superadmin', password=self.CLAVE, proyecto_demo=True, stdout=io.StringIO())
+
+    def entrar(self, usuario='superadmin', clave=None):
+        return self.client.post(reverse('login'), {'username': usuario, 'password': clave or self.CLAVE})
+
+    def test_crea_las_tres_cuentas_y_solo_la_principal_tiene_contrasena(self):
+        principal = CustomUser.objects.get(username='superadmin')
+        empleado = CustomUser.objects.get(username='superadmin_empleado')
+        cliente = Cliente.objects.get(username='superadmin_cliente')
+        self.assertEqual((principal.role, principal.is_superuser, empleado.role), ('ADMIN', False, 'EMPLEADO'))
+        self.assertTrue(principal.check_password(self.CLAVE))
+        self.assertFalse(empleado.has_usable_password())
+        self.assertFalse(cliente.has_usable_password())
+        obra = Proyecto.objects.get()
+        self.assertEqual((obra.cliente, obra.empleado_encargado), (cliente, empleado))
+        self.assertTrue(obra.fases.exists())
+        # Las cuentas vinculadas no pueden iniciar sesión directo (ni con contraseña vacía)
+        for usuario in ('superadmin_empleado', 'superadmin_cliente'):
+            self.client.post(reverse('login'), {'username': usuario, 'password': ''})
+            self.assertNotIn('_auth_user_id', self.client.session)
+        # Repetir el comando no duplica nada
+        from django.core.management import call_command
+        call_command('crear_superadmin', proyecto_demo=True, stdout=io.StringIO())
+        self.assertEqual((CustomUser.objects.count(), Cliente.objects.count(), Proyecto.objects.count()), (2, 1, 1))
+
+    def test_cambia_entre_las_tres_vistas_sin_cerrar_sesion(self):
+        self.assertRedirects(self.entrar(), reverse('dashboard'), fetch_redirect_response=False)
+        r = self.client.get(reverse('dashboard'))
+        self.assertTemplateUsed(r, 'usuario_admin.html')
+        self.assertContains(r, 'SuperAdmin · Vista')
+        for rol, plantilla in (('CLIENTE', 'usuario_cliente.html'), ('EMPLEADO', 'usuario_empresa.html'),
+                               ('ADMIN', 'usuario_admin.html'), ('CLIENTE', 'usuario_cliente.html')):
+            self.assertRedirects(self.client.post(reverse('cambiar_vista', args=[rol])), reverse('dashboard'),
+                                 fetch_redirect_response=False)
+            r = self.client.get(reverse('dashboard'))
+            self.assertTemplateUsed(r, plantilla)
+            self.assertContains(r, 'SuperAdmin · Vista')
+            self.assertContains(r, 'Obra de demostración')  # cada vista ve la obra demo con sus propios permisos
+        # La vista Cliente es un cliente de verdad: no entra a lo del personal
+        self.assertEqual(self.client.get(reverse('proyectos:control', args=[Proyecto.objects.get().id])).status_code, 403)
+        # Cerrar sesión borra la marca
+        self.client.post(reverse('logout'))
+        self.assertNotIn('superadmin_id', self.client.session)
+
+    def test_nadie_mas_puede_cambiar_de_vista(self):
+        otro_admin = CustomUser.objects.create_user('jefa', password='Clave-segura-123', role='ADMIN')
+        cliente = Cliente.objects.create_user('cli', password='Clave-segura-123')
+        for usuario in (otro_admin, cliente):
+            self.client.force_login(usuario)
+            self.assertNotContains(self.client.get(reverse('dashboard')), 'SuperAdmin · Vista')
+            for rol in ('ADMIN', 'EMPLEADO', 'CLIENTE'):
+                self.assertEqual(self.client.post(reverse('cambiar_vista', args=[rol])).status_code, 403)
+        # Ni siquiera la cuenta superadmin_cliente si se le abriera sesión por otro camino (sin la marca)
+        self.client.force_login(Cliente.objects.get(username='superadmin_cliente'))
+        self.assertEqual(self.client.post(reverse('cambiar_vista', args=['ADMIN'])).status_code, 403)
+        # Solo por POST (un enlace o <img> de otro sitio no puede cambiar la vista)
+        self.entrar()
+        self.assertEqual(self.client.get(reverse('cambiar_vista', args=['CLIENTE'])).status_code, 405)
+
+    def test_si_se_desactiva_el_superadmin_la_sesion_pierde_el_selector(self):
+        self.entrar()
+        self.client.post(reverse('cambiar_vista', args=['CLIENTE']))
+        CustomUser.objects.filter(username='superadmin').update(is_active=False)
+        self.assertNotContains(self.client.get(reverse('dashboard')), 'SuperAdmin · Vista')
+        self.assertEqual(self.client.post(reverse('cambiar_vista', args=['ADMIN'])).status_code, 403)

@@ -1,16 +1,22 @@
 import logging
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from proyectos.forms import SolicitudPublicaForm
-from proyectos.models import ESPECIALIDADES, Proyecto
+from proyectos.models import ESPECIALIDADES, Proyecto, RegistroActividad
 from sinergi.seguridad import ip_cliente, registrar, superado
 from . import noticias
+from .models import NoticiaOculta
 
 log = logging.getLogger('sinergi.seguridad')
 
@@ -87,12 +93,44 @@ def proyectos(request):
     return render(request, 'pagina_proyectos.html', {'portafolio': portafolio})
 
 
+# ==================== CURADURÍA DE NOTICIAS (solo ADMIN) ====================
+
+@login_required(login_url='login')
+@require_POST
+def curar_noticia(request):
+    """Oculta o vuelve a mostrar una noticia del feed automático en la portada y en la API pública.
+    Solo se pueden ocultar noticias que están en el feed actual (no URLs arbitrarias)."""
+    if request.user.role != 'ADMIN':
+        raise PermissionDenied
+    url, accion = request.POST.get('url', ''), request.POST.get('accion')
+    if accion == 'ocultar':
+        noticia = next((n for n in noticias.todas() if n['url'] == url), None)
+        if noticia is None:
+            messages.error(request, 'Esa noticia ya no está en el feed (se renueva cada 6 horas).')
+        else:
+            _, creada = NoticiaOculta.objects.get_or_create(url=url, defaults={
+                'titulo': noticia['titulo'][:300], 'fuente': noticia['fuente'], 'oculta_por': request.user})
+            if creada:
+                RegistroActividad.anotar('EDITAR', f"Noticia: {noticia['titulo']}"[:255], 'Oculta de la portada y la API', request)
+            messages.warning(request, f"Noticia oculta: «{noticia['titulo']}». Ya no se muestra en la página.")
+    elif accion == 'mostrar':
+        oculta = NoticiaOculta.objects.filter(url=url).first()
+        if oculta:
+            oculta.delete()
+            RegistroActividad.anotar('RESTAURAR', f'Noticia: {oculta}'[:255], 'Vuelve a mostrarse', request)
+            messages.success(request, f'Noticia visible otra vez: «{oculta}».')
+    else:
+        raise Http404
+    return redirect(f"{reverse('dashboard')}?tab=noticias")
+
+
 # ==================== API PÚBLICA DE NOTICIAS ====================
 
 class NoticiasAPI(APIView):
     """
-    GET /api/noticias/              -> todas (Ley Chile, SEC y NFPA), de la más reciente a la más antigua
-    GET /api/noticias/?fuente=nfpa  -> solo una fuente: leychile, sec o nfpa
+    GET /api/noticias/              -> todas (Ley Chile, SEC, NFPA, CSE y CIBSE Journal), de la más reciente
+                                       a la más antigua, sin las que el admin ocultó
+    GET /api/noticias/?fuente=nfpa  -> solo una fuente: leychile, sec, nfpa, cse o cibse
 
     Pública y de solo lectura: lee la caché que llena la tarea `actualizar_noticias` (web/noticias.py),
     nunca consulta las fuentes durante la petición.
@@ -112,7 +150,7 @@ class NoticiasAPI(APIView):
         if fuente and fuente not in noticias.FUENTES:
             return Response({'detail': f'Fuente desconocida. Usa una de: {", ".join(noticias.FUENTES)}.'},
                             status=status.HTTP_400_BAD_REQUEST)
-        lista = [n for n in noticias.todas() if not fuente or n['codigo'] == fuente]
+        lista = [n for n in noticias.visibles() if not fuente or n['codigo'] == fuente]  # sin lo oculto por el admin
         ultima = noticias.actualizado()
         return Response({
             'actualizado': ultima.isoformat() if ultima else None,  # se renueva solo cada 6 horas

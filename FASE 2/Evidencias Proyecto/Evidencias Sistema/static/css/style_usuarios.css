@@ -162,6 +162,32 @@ body {
 }
 .pet-leido { color: #059669; font-weight: 600; }
 
+/* Menú ⋯ de cada mensaje (editar / eliminar para todos / eliminar para mí) */
+.pet-msg { position: relative; }
+.pet-msg-autor { padding-right: 1.5rem; }
+.pet-msg-menu-btn {
+    position: absolute; top: 0.25rem; right: 0.25rem; width: 1.5rem; height: 1.5rem;
+    display: flex; align-items: center; justify-content: center; border-radius: 0.25rem;
+    color: #64748b; background: rgba(255, 255, 255, 0.85); opacity: 0; transition: opacity .1s;
+}
+.pet-msg-menu-btn:hover { color: #1D5B8A; background: #fff; }
+.pet-msg:hover .pet-msg-menu-btn, .pet-msg:focus-within .pet-msg-menu-btn, .pet-msg-menu-btn[aria-expanded] { opacity: 1; }
+@media (hover: none) { .pet-msg-menu-btn { opacity: 0.85; } }  /* táctil: siempre visible */
+.pet-msg-menu {
+    position: absolute; top: 1.9rem; right: 0.25rem; z-index: 10; min-width: 11rem; padding: 0.25rem;
+    display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+    box-shadow: 0 10px 24px -8px rgba(15, 23, 42, 0.25);
+}
+.pet-msg-menu.pet-msg-menu-arriba { top: auto; bottom: 1.9rem; }
+.pet-msg-menu button { text-align: left; padding: 0.4rem 0.6rem; font-size: 0.75rem; border-radius: 0.25rem; color: #1e293b; }
+.pet-msg-menu button:hover, .pet-msg-menu button:focus-visible { background: #f1f5f9; outline: none; }
+.pet-msg-menu .pet-peligro { color: #b91c1c; }
+.pet-msg-eliminado p { font-style: italic; color: #94a3b8; }
+.pet-msg-editor { display: block; width: 100%; min-width: 14rem; font-size: 0.75rem; padding: 0.4rem; border: 1px solid #1D5B8A; border-radius: 0.25rem; outline: none; resize: vertical; background: #fff; }
+.pet-msg-editor-botones { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.6875rem; font-weight: 600; }
+.pet-msg-editor-botones button { padding: 0.2rem 0.6rem; border-radius: 0.25rem; color: #475569; }
+.pet-msg-editor-botones .pet-msg-guardar { background: #1D5B8A; color: #fff; }
+
 /* ==================== FASES Y SUBFASES (control de obra) ==================== */
 .etapa-estado {
     display: inline-block;
@@ -431,3 +457,56 @@ main a, main button, .portal-contenido a, .portal-contenido button {
 
 /* Títulos de sección un poco más compactos */
 main h1.text-2xl { letter-spacing: -0.01em; }
+
+/* ==================== VENTANA SOBREPUESTA (templates/_ventana.html) ==================== */
+/* Conversación de una petición: panel lateral derecho. Formularios: ventana centrada (pantalla completa en móvil). */
+.ventana { position: fixed; inset: 0; z-index: 60; }
+.ventana[hidden] { display: none; }
+.ventana-fondo { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); animation: ventana-aparece .15s ease-out; }
+.ventana-caja { position: absolute; display: flex; flex-direction: column; background: #E9EDF2; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); overflow: hidden; }
+.ventana-caja[data-tipo="lateral"] { top: 0; right: 0; bottom: 0; width: 100%; max-width: 42rem; animation: ventana-desliza .2s ease-out; }
+.ventana-caja[data-tipo="centrada"], .ventana-caja[data-tipo="ancha"] { inset: 0; animation: ventana-aparece .15s ease-out; }
+@media (min-width: 640px) {
+    .ventana-caja[data-tipo="centrada"], .ventana-caja[data-tipo="ancha"] { inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 2rem); max-width: 44rem; height: min(90vh, 52rem); border-radius: 0.5rem; }
+    .ventana-caja[data-tipo="ancha"] { max-width: 68rem; }
+}
+.ventana-barra { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 3rem; padding: 0 0.75rem 0 1rem; flex-shrink: 0; background: #fff; border-top: 3px solid #C52222; border-bottom: 1px solid #e2e8f0; }
+.ventana-boton { display: inline-flex; padding: 0.4rem; border-radius: 0.25rem; color: #64748b; }
+.ventana-boton:hover { background: #f1f5f9; color: #1D5B8A; }
+.ventana-marco { flex: 1; width: 100%; border: 0; background: #E9EDF2; }
+.ventana-cargando .ventana-marco { visibility: hidden; }
+@keyframes ventana-aparece { from { opacity: 0; } }
+@keyframes ventana-desliza { from { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .ventana-fondo, .ventana-caja { animation: none; } }
+
+/* La página mostrada DENTRO de la ventana: sin barra superior, pie ni enlaces "Volver" (la ventana tiene su X) */
+.en-ventana .portal-header, .en-ventana body > footer, .en-ventana [data-fuera-ventana] { display: none !important; }
+.en-ventana .portal-contenido { padding: 1rem; }
+.en-ventana #pet-mensajes { height: max(240px, calc(100vh - 21rem)); }
+
+/* ==================== INICIO DEL PORTAL (templates/_inicio.html) ==================== */
+.inicio-cabecera { border-top: 3px solid #C52222; }
+/* Accesos rápidos: tantas columnas como quepan; se reacomodan solos según cuántas opciones tenga el menú */
+.inicio-accesos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
+.inicio-acceso {
+    position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem;
+    min-height: 8rem; padding: 1rem 1.1rem; text-align: left;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    font-size: 0.8125rem; font-weight: 600; color: #1e293b; line-height: 1.3;
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.inicio-acceso:hover, .inicio-acceso:focus-visible { border-color: #1D5B8A; box-shadow: 0 8px 18px -10px rgba(29, 91, 138, 0.5); transform: translateY(-2px); }
+.inicio-acceso-icono { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: #EBF3FA; color: #1D5B8A; font-size: 1.25rem; font-weight: 700; }
+.inicio-acceso-icono svg { width: 1.25rem; height: 1.25rem; }
+.inicio-acceso-pie { margin-top: auto; font-size: 0.6875rem; font-weight: 500; color: #94a3b8; }
+.inicio-acceso:hover .inicio-acceso-pie { color: #1D5B8A; }
+.inicio-acceso .badge-nuevo, .inicio-acceso-contador { position: absolute; top: 0.75rem; right: 0.75rem; }
+.inicio-acceso-contador { font-family: "IBM Plex Mono", monospace; font-size: 0.625rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
+.inicio-acceso-destacado { background: #C52222; border-color: #C52222; color: #fff; }
+.inicio-acceso-destacado .inicio-acceso-icono { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.inicio-acceso-destacado .inicio-acceso-pie, .inicio-acceso-destacado:hover .inicio-acceso-pie { color: rgba(255, 255, 255, 0.8); }
+.inicio-acceso-destacado:hover { border-color: #A71D1D; background: #A71D1D; }
+/* Proyecto elegido desde Inicio: se resalta un momento en su pestaña */
+.inicio-resaltar { animation: inicio-resaltar 1.8s ease-out; }
+@keyframes inicio-resaltar { 0%, 45% { box-shadow: 0 0 0 3px #1D5B8A; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .inicio-acceso, .inicio-resaltar { transition: none; animation: none; } }

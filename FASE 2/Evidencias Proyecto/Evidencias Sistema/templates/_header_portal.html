@@ -10,12 +10,27 @@
     </button>
     {% endif %}
     <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'inicio' %}{% endif %}" class="flex items-center gap-3 min-w-0">
-      <img src="{% static 'sinergi-logo.png' %}" alt="Sinergi Engineering & Consultancy" width="135" height="35" class="h-7 sm:h-9 w-auto shrink-0">
+      <img src="{% static 'sinergi-logo.png' %}" alt="Sinergi Engineering & Consultancy" width="135" height="35" class="h-7 sm:h-9 w-auto shrink-0 {% if superadmin_vistas %}hidden sm:block{% endif %}">
       {% if etiqueta %}<span class="hidden md:inline-block text-[11px] font-mono font-semibold uppercase tracking-widest text-slate-500 pl-3 border-l border-slate-200 truncate">{{ etiqueta }}</span>{% endif %}
     </a>
   </div>
 
   <div class="flex items-center gap-3 text-xs shrink-0">
+    {% if superadmin_vistas %}
+    <!-- Selector de vistas: SOLO en la sesión SuperAdmin de demostración (usuarios/superadmin.py) -->
+    <div class="flex items-center gap-1.5" role="group" aria-label="Cambiar de vista (SuperAdmin)">
+      <span class="hidden xl:inline font-mono text-[10px] font-bold uppercase tracking-wider text-[#C52222]">SuperAdmin · Vista</span>
+      <div class="flex rounded border border-[#C52222]/40 bg-red-50 p-0.5">
+        {% for rol, nombre in superadmin_vistas %}
+        <form method="POST" action="{% url 'cambiar_vista' rol %}">{% csrf_token %}
+          <button type="submit" {% if rol == superadmin_vista_actual %}aria-current="true" disabled{% endif %}
+                  class="px-2 sm:px-2.5 py-1 rounded font-semibold whitespace-nowrap transition-colors {% if rol == superadmin_vista_actual %}bg-[#C52222] text-white shadow-sm cursor-default{% else %}text-[#C52222] hover:bg-white{% endif %}"
+                  title="Ver el portal como {{ nombre }}">{{ nombre }}</button>
+        </form>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
     {% if user.is_authenticated %}
     <!-- Avatar: lleva a Mi perfil (foto, datos, correo, contraseña y 2FA) -->
     <a href="{% url 'perfil' %}" title="Mi perfil" class="flex items-center gap-2 text-slate-600 rounded-full md:rounded hover:bg-slate-50 md:pr-2">

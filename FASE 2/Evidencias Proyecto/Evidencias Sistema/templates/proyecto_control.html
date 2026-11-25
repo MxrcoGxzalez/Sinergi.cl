@@ -93,7 +93,7 @@
                   {% if fase.estado != 'COMPLETADA' %}{% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='COMPLETADA' texto='✓ Completar' clase='etapa-btn etapa-btn-ok' %}
                   {% else %}{% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='EN_CURSO' texto='Reabrir' %}{% endif %}
                 {% endif %}
-                <a href="{% url 'proyectos:fase_editar' proyecto.id fase.id %}" class="etapa-btn">Editar</a>
+                <a href="{% url 'proyectos:fase_editar' proyecto.id fase.id %}" data-ventana class="etapa-btn">Editar</a>
                 {% include '_boton_etapa.html' with tipo='fase' obj_id=fase.id accion='eliminar' texto='Eliminar' clase='etapa-btn etapa-btn-peligro' confirmar='¿Eliminar la fase y todas sus subfases? El avance del proyecto se recalculará.' %}
               </div>
             </div>
@@ -112,13 +112,13 @@
                   {% if sub.estado == 'PENDIENTE' %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='EN_CURSO' texto='Iniciar' %}{% endif %}
                   {% if sub.estado != 'COMPLETADA' %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='COMPLETADA' texto='✓ Completar' clase='etapa-btn etapa-btn-ok' %}
                   {% else %}{% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='EN_CURSO' texto='Reabrir' %}{% endif %}
-                  <a href="{% url 'proyectos:subfase_editar' fase.id sub.id %}" class="etapa-btn">Editar</a>
+                  <a href="{% url 'proyectos:subfase_editar' fase.id sub.id %}" data-ventana class="etapa-btn">Editar</a>
                   {% include '_boton_etapa.html' with tipo='subfase' obj_id=sub.id accion='eliminar' texto='×' titulo='Eliminar' clase='etapa-btn etapa-btn-peligro' confirmar='¿Eliminar esta subfase?' %}
                 </div>
               </li>
               {% endfor %}
               <li class="px-4 py-2">
-                <a href="{% url 'proyectos:subfase_nueva' fase.id %}" class="text-xs font-semibold text-[#1D5B8A] hover:underline">+ Agregar subfase</a>
+                <a href="{% url 'proyectos:subfase_nueva' fase.id %}" data-ventana class="text-xs font-semibold text-[#1D5B8A] hover:underline">+ Agregar subfase</a>
               </li>
             </ul>
           </div>

@@ -1,3 +1,6 @@
+{% comment %} La actualización automática del panel (_en_vivo.html) pide la página en segundo plano con la
+cabecera X-En-Vivo: ahí no se leen los mensajes, para no "gastar" uno que el usuario aún no ve. {% endcomment %}
+{% if request.headers.x_en_vivo != '1' %}
 {% for message in messages %}
   <div class="mb-4 px-4 py-3 rounded-md text-xs font-semibold border
     {% if message.tags == 'error' %}bg-red-50 border-red-300 text-red-800
@@ -6,6 +9,7 @@
     {{ message }}
   </div>
 {% endfor %}
+{% endif %}
 {% if form.errors %}
   <div class="mb-4 px-4 py-3 rounded-md text-xs font-semibold border bg-red-50 border-red-300 text-red-800">
     {% for field, errores in form.errors.items %}{% for error in errores %}<p>{{ error }}</p>{% endfor %}{% endfor %}

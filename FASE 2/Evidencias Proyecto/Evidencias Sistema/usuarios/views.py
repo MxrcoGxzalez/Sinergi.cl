@@ -18,7 +18,8 @@ from proyectos.views import _bandeja, _proyectos_editables
 from .forms import ClienteCrearForm, ClienteEditarForm, EmpresaForm, PersonalCrearForm, PersonalEditarForm
 from . import dos_factores
 from .models import Cliente, CustomUser, Empresa
-from sinergi.seguridad import ip_cliente, log, registrar, superado
+from sinergi.seguridad import ip_cliente, log, registrar, superado, ventana_interna
+from web import noticias
 
 # Fuerza bruta: tras N fallos se bloquea el login desde esa IP durante la ventana.
 MAX_FALLOS_USUARIO = 5    # por IP + usuario
@@ -192,6 +193,11 @@ def dashboard(request):
             'peticiones_no_leidas': sum(p.no_leida for p in peticiones),
             'actividad': RegistroActividad.objects.all()[:150],
         }
+        # Curaduría del feed de noticias: todo lo guardado, marcando lo que el admin ocultó
+        ocultas = noticias.ocultas()
+        contexto['noticias_feed'] = [{**n, 'oculta': n['url'] in ocultas} for n in noticias.todas()]
+        contexto['noticias_ocultas'] = sum(n['oculta'] for n in contexto['noticias_feed'])
+        contexto['noticias_actualizado'] = noticias.actualizado()
         return render(request, 'usuario_admin.html', contexto)
 
     raise PermissionDenied
@@ -214,7 +220,8 @@ def actualizar_proyecto(request, proyecto_id):
             proyecto.cambio_de_estado(request.user)
             messages.success(request, f'Proyecto "{proyecto.nombre}": {estado} ({proyecto.porcentaje_avance}%).')
 
-    return redirect('dashboard')
+    # Vuelve a la pestaña de proyectos (sin ?tab= el panel abre en Inicio)
+    return redirect(f"{reverse('dashboard')}?tab={'supervision-hitos' if request.user.role == 'ADMIN' else 'proyectos'}")
 
 @login_required(login_url='login')
 def eliminar_documento(request, doc_id):
@@ -254,6 +261,7 @@ def _volver_usuarios():
     return redirect(f"{reverse('dashboard')}?tab=usuarios")
 
 
+@ventana_interna
 @login_required(login_url='login')
 def crear_usuario(request, tipo):
     _usuarios_gestionables(request.user, tipo)
@@ -272,6 +280,7 @@ def crear_usuario(request, tipo):
     })
 
 
+@ventana_interna
 @login_required(login_url='login')
 def editar_usuario(request, tipo, user_id):
     usuario = get_object_or_404(_usuarios_gestionables(request.user, tipo), pk=user_id)
@@ -308,6 +317,7 @@ def eliminar_usuario(request, tipo, user_id):
 # ==================== EMPRESAS (ADMIN DE LA PÁGINA) ====================
 # No se eliminan: tienen usuarios y proyectos asociados (PROTECT). Se desactivan.
 
+@ventana_interna
 @login_required(login_url='login')
 def gestionar_empresa(request, empresa_id=None):
     _usuarios_gestionables(request.user)  # solo ADMIN

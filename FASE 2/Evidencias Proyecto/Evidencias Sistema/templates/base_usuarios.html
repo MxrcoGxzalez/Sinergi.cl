@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dentro de la ventana sobrepuesta del panel (_ventana.html) se oculta la barra superior y el pie -->
+    <script>if (window.top !== window.self) document.documentElement.classList.add('en-ventana');</script>
     <title>{% block title %}Sinergi — Plataforma de Proyectos{% endblock %}</title>
 
     <!-- Tipografías técnicas: IBM Plex Sans + IBM Plex Mono -->
@@ -15,7 +17,7 @@
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 
     <!-- CSS del panel de usuarios -->
-    <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}?v={{ VERSION_CSS }}">
     {% block extra_head %}{% endblock %}
     <link rel="icon" type="image/png" href="{% static 'loader.png' %}">
 </head>
@@ -39,5 +41,37 @@
     </footer>
 
     {% block extra_scripts %}{% endblock %}
+
+    {% include '_ventana.html' %}
+    <script>
+      // Página abierta dentro de la ventana sobrepuesta (_ventana.html):
+      // - Esc, "Cancelar" (data-cerrar-ventana) o un enlace de vuelta al panel la cierran.
+      // - Los formularios POST llevan _ventana=1: al guardar, la vista responde ventana_cerrar.html (ver
+      //   ventana_interna en sinergi/seguridad.py) y el panel completo va al destino con su aviso.
+      (function () {
+        if (window.top === window.self) return;
+        const PANEL = "{% url 'dashboard' %}";
+        const cerrar = () => parent.postMessage('sinergi:cerrar-ventana', location.origin);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+        document.addEventListener('click', e => {
+          const a = e.target.closest('a[href], [data-cerrar-ventana]');
+          if (!a) return;
+          const alPanel = a.href && !a.target && new URL(a.href).origin === location.origin && new URL(a.href).pathname === PANEL;
+          if (a.hasAttribute('data-cerrar-ventana') || alPanel) {
+            e.preventDefault();
+            cerrar();
+          }
+        });
+        document.addEventListener('submit', e => {
+          const form = e.target;
+          if (form.method.toLowerCase() !== 'post' || form.querySelector('input[name="_ventana"]')) return;
+          const campo = document.createElement('input');
+          campo.type = 'hidden';
+          campo.name = '_ventana';
+          campo.value = '1';
+          form.appendChild(campo);
+        }, true);
+      })();
+    </script>
 </body>
 </html>

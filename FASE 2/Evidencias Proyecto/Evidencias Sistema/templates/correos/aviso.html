@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ titulo }}</title>
+</head>
+<!-- Correo: solo tablas y estilos en línea (Gmail y Outlook ignoran <style> y CSS moderno) -->
+<body style="margin:0;padding:0;background:#E9EDF2;font-family:Arial,Helvetica,sans-serif;color:#11151B;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#E9EDF2;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #d5dce4;">
+        <tr><td style="background:#11151B;padding:18px 24px;border-bottom:4px solid #C52222;">
+          <span style="color:#ffffff;font-size:18px;font-weight:bold;letter-spacing:1px;">SINERGI</span>
+          <span style="color:#9aa5b1;font-size:12px;"> · Engineering &amp; Consultancy</span>
+        </td></tr>
+        <tr><td style="padding:24px;">
+          <h1 style="margin:0 0 16px;font-size:20px;color:#11151B;">{{ titulo }}</h1>
+          {% for p in parrafos %}
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#334155;white-space:pre-line;">{{ p }}</p>
+          {% endfor %}
+          {% if detalle %}
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 16px;border-left:3px solid #1D5B8A;background:#EBF3FA;">
+            {% for fecha, texto in detalle %}
+            <tr><td style="padding:6px 12px;font-size:13px;color:#334155;">
+              <span style="font-family:'Courier New',monospace;font-size:11px;color:#64748b;">{{ fecha }}</span><br>{{ texto }}
+            </td></tr>
+            {% endfor %}
+          </table>
+          {% endif %}
+          {% if boton %}
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 4px;">
+            <tr><td style="background:#C52222;border-radius:4px;">
+              <a href="{{ boton.1 }}" style="display:inline-block;padding:11px 22px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;">{{ boton.0 }}</a>
+            </td></tr>
+          </table>
+          {% endif %}
+        </td></tr>
+        <tr><td style="padding:14px 24px;background:#f6f8fa;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;line-height:1.5;">
+          Aviso automático de la plataforma Sinergi (<a href="{{ sitio }}" style="color:#1D5B8A;">{{ sitio }}</a>). No respondas este correo: escríbenos desde la plataforma.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

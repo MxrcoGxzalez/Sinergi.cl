@@ -1,8 +1,12 @@
 """Utilidades de seguridad compartidas: límite de intentos, IP del cliente y cabeceras HTTP."""
 import logging
+from functools import wraps
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.core.cache import cache
+from django.shortcuts import render
+from django.urls import Resolver404, resolve
 
 log = logging.getLogger('sinergi.seguridad')
 
@@ -20,6 +24,37 @@ CSP = '; '.join([
     "form-action 'self'",
     "frame-ancestors 'none'",
 ])
+
+
+# Páginas que el propio panel muestra en su ventana sobrepuesta (templates/_ventana.html): se permite
+# mostrarlas en un iframe, pero solo del mismo sitio. El resto del sitio sigue sin poder enmarcarse.
+CSP_VENTANA = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+
+
+def _abre_en_ventana(url):
+    try:
+        return getattr(resolve(urlsplit(url).path).func, 'ventana_interna', False)
+    except Resolver404:
+        return False
+
+
+def ventana_interna(vista):
+    """Decorador: la vista se puede abrir en la ventana sobrepuesta del panel (iframe del mismo origen).
+    Si un formulario enviado DESDE la ventana (campo _ventana=1, lo agrega base_usuarios.html) termina en una
+    redirección a una página que no va en ventana (el panel, el control de obra...), en vez de redirigir el
+    iframe se responde ventana_cerrar.html: la ventana se cierra y el panel completo va a ese destino (y
+    muestra ahí el aviso de "guardado")."""
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        response = vista(request, *args, **kwargs)
+        if (request.method == 'POST' and request.POST.get('_ventana') == '1'
+                and response.status_code in (301, 302, 303) and not _abre_en_ventana(response['Location'])):
+            response = render(request, 'ventana_cerrar.html', {'destino': response['Location']})
+        response['X-Frame-Options'] = 'SAMEORIGIN'  # XFrameOptionsMiddleware no lo sobrescribe
+        response['Content-Security-Policy'] = CSP_VENTANA
+        return response
+    envoltura.ventana_interna = True
+    return envoltura
 
 
 def cabeceras_seguridad(get_response):

@@ -37,6 +37,14 @@
 
 **[Parte 10 — Rediseño estético de prueba: colores, textos y portada de sinergi.cl (25-10-2026)](#parte-10--rediseño-estético-de-prueba-colores-textos-y-portada-de-sinergicl)**
 
+**[Parte 11 — Entorno local sin Docker y verificación en dos pasos (2FA) (30-10-2026)](#parte-11--entorno-local-sin-docker-y-verificación-en-dos-pasos-2fa)**
+
+**[Parte 12 — Mi perfil por rol, verificación de correo, foto de perfil y engranaje del hero (30-10-2026)](#parte-12--mi-perfil-por-rol-verificación-de-correo-foto-de-perfil-y-engranaje-del-hero)**
+
+**[Parte 13 — Noticias internacionales (NFPA), filtro por temas de Sinergi y API pública de noticias (30-10-2026)](#parte-13--noticias-internacionales-nfpa-filtro-por-temas-de-sinergi-y-api-pública-de-noticias)**
+
+**[Parte 14 — Avisos por correo, paneles en vivo, curaduría de noticias, fuentes HVAC/sanitaria y engranajes (16-11-2026)](#parte-14--avisos-por-correo-paneles-en-vivo-curaduría-de-noticias-fuentes-hvacsanitaria-y-engranajes)**
+
 ---
 
 ## 1. Separación Admin de la página / Superusuario Django
@@ -1415,3 +1423,596 @@ Si se aprueba, se puede borrar la carpeta `respaldo_diseno_anterior/`.
   - 69/69 tests;
   - prueba en Edge: header `rgb(255, 255, 255)` al bajar en las 5 páginas, catálogo 8 → 24 → 8, sin errores de JavaScript.
 - **Archivos:** `templates/pagina_inicio.html`, `templates/pagina_proyectos.html`, el script del header en `pagina_servicios.html`, `pagina_nosotros.html` y `pagina_contacto.html`, y `static/css/style.css`.
+
+
+---
+---
+
+# Parte 11 — Entorno local sin Docker y verificación en dos pasos (2FA)
+
+**Fecha:** 30-10-2026
+**Motivo:** Docker no funcionaba en uno de los equipos del grupo. Hacía falta poder correr el proyecto directamente con Python.
+**Verificación (local, sin Docker, SQLite):**
+- 86/87 tests aprobados al cierre de la Parte 12. La falla se explica en P11.1.
+- Migraciones completas aplicadas sobre una base limpia.
+- Portada y Django Admin responden 200.
+
+## P11.1 Desarrollo local sin Docker
+
+Cada servicio de Docker tiene un reemplazo local:
+
+| Servicio en Docker | Reemplazo local |
+|---|---|
+| PostgreSQL | **SQLite** (`db.sqlite3` en la carpeta del proyecto; no se instala nada) |
+| Redis (caché y límites de intentos) | Caché en memoria del proceso |
+| Celery worker / beat | Tareas ejecutadas **en el mismo proceso** (`CELERY_TASK_ALWAYS_EAGER=True`) |
+| ClamAV | **Desactivado** (`CLAMAV_HOST=` vacío). Las subidas no se analizan; solo sirve para desarrollo. |
+
+- **Nuevo `.env.local.example`:** la configuración local. Se copia como `.env`.
+- **Nuevo `iniciar_local.ps1`:** crea el `venv` si no existe, instala `requirements.txt`, crea el `.env` si falta, aplica las migraciones y levanta `runserver`.
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\iniciar_local.ps1
+  .\venv\Scripts\python.exe manage.py createsuperuser   # una sola vez, en otra terminal
+  ```
+
+- **`sinergi/settings.py`:**
+  - `CELERY_BROKER_URL` y `CELERY_RESULT_BACKEND` ahora se leen del `.env`.
+  - Nuevo `CELERY_TASK_ALWAYS_EAGER`.
+  - Con Docker no cambia nada: los valores por defecto son los de antes.
+- **Diferencias con Docker:**
+  - La purga diaria de archivados no corre sola, porque no hay `celery beat`.
+  - La base local es independiente de la de Docker.
+- **Test que falla solo en SQLite:** `test_mismo_id_en_ambas_tablas_no_da_acceso`.
+  - SQLite reinicia los ids en cada test, así que el cliente "gemelo" del test termina **sobrescribiendo** al cliente dueño de la obra (mismo id).
+  - En PostgreSQL las secuencias no se reinician y el test no choca. No es una falla de la aplicación.
+
+## P11.2 Verificación en dos pasos (2FA) con TOTP
+
+- **Estándar TOTP (RFC 6238):** funciona con **Microsoft Authenticator**, Google Authenticator, Authy, Bitwarden, etc.
+  - La app y el servidor comparten un secreto, entregado una sola vez por QR.
+  - Cada 30 segundos ambos calculan el mismo código de 6 dígitos a partir de la hora.
+  - Es gratuito y local: sin SMS ni APIs externas.
+- **Librerías:** `pyotp` (cálculo de los códigos) y `qrcode` (QR como `<svg>` insertado en la página, sin imágenes ni Pillow).
+- **Diferencias con la especificación `Sistema_2FA_Sinergi.md`:**
+  - Se usa `pyotp` en vez de `django-otp`, y el limitador de intentos propio (`sinergi/seguridad.py`) en vez de `django-axes`.
+  - `django-otp` protege con un middleware y un decorador `otp_required` que hay que poner en cada vista. Basta olvidar uno para que una vista quede abierta solo con la contraseña.
+  - Aquí la sesión no existe hasta validar el código (P11.3). `django-axes` duplicaría el bloqueo que ya existe.
+  - **Política final:** el 2FA quedó **opcional para todos los roles** (decisión del equipo, ver Parte 12), no obligatorio para Admin y Empleado como dice la especificación. Esto debe quedar registrado en la matriz de control de cambios.
+
+## P11.3 Flujo de inicio de sesión
+
+```
+Usuario + contraseña correctos
+        │
+        ├── sin 2FA activado ──────────► sesión abierta ─► panel
+        │
+        └── con 2FA activado ──► datos "pendientes" en la sesión (5 min, SIN iniciar sesión)
+                                        │
+                                        ▼
+                               /usuarios/login/2fa/  código de 6 dígitos
+                                        │ válido
+                                        ▼
+                                 sesión abierta ─► panel
+```
+
+- **La sesión no se abre hasta validar el código.** Mientras tanto la persona no está autenticada. Ninguna vista con `@login_required`, ni la API, ni Django Admin la dejan pasar, sin tener que proteger cada vista por separado.
+- Funciona igual para el personal y para los clientes. La sesión recuerda qué backend (qué tabla) validó la contraseña.
+
+## P11.4 Protecciones
+
+| Riesgo | Protección |
+|---|---|
+| Probar códigos al azar | 5 códigos incorrectos por cuenta → bloqueo de 15 minutos (HTTP 429). Hay que volver a ingresar la contraseña. |
+| Reutilizar un código visto (*replay*) | Se guarda el último paso de tiempo usado (`totp_ultimo_paso`). Un código aceptado no sirve de nuevo aunque siga dentro de sus 30 s. |
+| Dos envíos simultáneos del mismo código | El código se marca como usado con un `UPDATE` condicional atómico: solo uno de los dos pasa. |
+| Reloj del celular desfasado | Se acepta ±1 paso (±30 s). |
+| Entrar por el login propio de Django Admin (pedía solo la contraseña) | `admin.site.login` redirige al login del sitio. |
+| Comparación de códigos | `hmac.compare_digest` (tiempo constante). |
+| Celular perdido | El admin reinicia el 2FA (P12.6). |
+
+---
+---
+
+# Parte 12 — Mi perfil por rol, verificación de correo, foto de perfil y engranaje del hero
+
+**Fecha:** 30-10-2026
+**Verificación (local, SQLite):**
+- **87/88 tests** aprobados, **19 de ellos nuevos** (10 de 2FA y 9 de perfil). La única falla es la de SQLite explicada en P11.1.
+- `makemigrations --check` sin cambios pendientes.
+- **Revisión responsiva con Microsoft Edge (Playwright):**
+  - las 5 páginas públicas en 360, 390, 768, 1024 y 1440 px de ancho;
+  - "Mi perfil" (empleado y cliente), "Activar 2FA" y el panel del empleado en 390 y 1440 px;
+  - sin scroll horizontal, sin elementos fuera de pantalla y sin errores de JavaScript.
+
+## P12.1 Mi perfil (`/usuarios/perfil/`)
+
+- Se entra desde el **avatar del header**, que ahora es un enlace y se ve también en móvil.
+- Lo que puede cambiar cada rol:
+
+| Rol | Foto | Nombre | Usuario y correo | Contraseña | Verificar correo | 2FA |
+|---|:-:|:-:|:-:|---|:-:|---|
+| **Cliente** | ✅ | ❌ | ❌ | **Solicitud al administrador** (P12.4) | ✅ | ✅ opcional ("Recomendada") |
+| **Empleado** | ✅ | ✅ | ❌ (los gestiona el admin) | ✅ | ✅ | ✅ opcional, con aviso **"MUY RECOMENDABLE"** |
+| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ opcional, con aviso **"MUY RECOMENDABLE"** |
+
+- Las reglas se aplican **en el servidor**, no solo ocultando campos:
+  - el formulario del empleado no tiene los campos `username` ni `email`, así que aunque alguien los envíe a mano se ignoran;
+  - el cliente no recibe formularios de datos ni de contraseña.
+- **Cambio de contraseña (personal):** pide la contraseña actual y aplica las mismas reglas de siempre (mínimo 10 caracteres, no común, no solo números). La sesión actual sigue abierta y **las demás sesiones se cierran**.
+- Cambiar el correo (admin) lo deja **sin verificar**.
+- Los cambios quedan en el **registro de actividad**: datos, contraseña, 2FA activado y 2FA desactivado.
+- En el login, **el cliente entra como siempre**. El 2FA y la verificación de correo son opciones dentro de su perfil.
+
+## P12.2 Verificación en dos pasos desde el perfil
+
+- **2FA opcional para todos.** Ya no se fuerza al iniciar sesión, como en la primera versión de la Parte 11.
+- Para el personal la tarjeta queda **destacada en rojo** con **"MUY RECOMENDABLE PARA LA SEGURIDAD"**, porque tiene acceso a proyectos, documentos y datos de clientes. Al cliente se le muestra como "Recomendada".
+- **Activar** (`/usuarios/perfil/2fa/`):
+  - se muestran el QR y la clave para escribirla a mano si la cámara no lee el QR;
+  - el secreto vive en la sesión y **solo se guarda cuando el primer código de la app es correcto**. Un QR escaneado a medias no deja la cuenta inutilizable.
+- **Desactivar:** exige **el código actual de la app**. Quien encuentre una sesión abierta en un equipo ajeno no puede quitar el 2FA.
+- Mismo límite de intentos que el login.
+
+## P12.3 Verificación de correo electrónico
+
+- Botón **"Enviar correo de verificación"** en el perfil. Llega un enlace firmado que vale **48 horas**.
+- **Seguridad del enlace:**
+  - firmado con `SECRET_KEY` (`django.core.signing`): no se puede inventar ni modificar;
+  - incluye el correo: si la cuenta lo cambia después, el enlace viejo ya no verifica nada;
+  - **no exige sesión**, porque puede abrirse en el celular; el token firmado es la prueba;
+  - máximo **3 correos por hora** por cuenta.
+- **Configuración** (variables `EMAIL_*` en `.env`; ver `.env.example`):
+  - **sin `EMAIL_HOST`** (entorno local, sin Docker): el correo **no sale a internet**. Se imprime en la terminal del servidor y la página lo advierte con "Modo desarrollo: el correo NO se envió de verdad".
+  - **Gmail:** `EMAIL_HOST=smtp.gmail.com`, la cuenta en `EMAIL_HOST_USER` y una **contraseña de aplicación** (16 letras, sin espacios) en `EMAIL_HOST_PASSWORD`. Requiere la verificación en 2 pasos de Google.
+  - **Brevo (producción):** `EMAIL_HOST=smtp-relay.brevo.com`, con el usuario y la clave SMTP del panel de Brevo.
+  - Puerto 587 con TLS por defecto. Hay un tiempo límite de 15 s: un SMTP caído no deja la página colgada.
+  - Si el SMTP falla, se avisa al usuario y queda en el log.
+  - Prueba rápida de la configuración: `python manage.py sendtestemail tu@correo.cl`.
+  - Al principio la configuración era una sola variable `EMAIL_URL` (`smtp+tls://usuario:clave@host:587`). Se cambió a variables separadas porque obligaba a escribir la `@` del usuario como `%40` y era fácil equivocarse.
+- Si el cliente no tiene correo registrado, puede **solicitar su registro** al administrador.
+
+## P12.4 Contraseña del cliente: solicitud al administrador
+
+- Nuevo tipo de petición **"Cuenta / cambio de contraseña"** (`Peticion.TIPOS`, migración `proyectos/0014`).
+- El botón **"Solicitar cambio de contraseña"** abre una petición ya preparada (tipo y asunto). Le llega al admin en su bandeja de peticiones.
+- El admin cambia la contraseña desde **Gestión de Usuarios → Editar** y responde en la misma conversación.
+
+## P12.5 Foto de perfil
+
+- **JPG, PNG o WEBP, máximo 5 MB.** Se valida el **contenido real** con Pillow, no la extensión: un `<script>` renombrado a `.png` se rechaza.
+- **Nunca se guarda el archivo subido.** Se genera una imagen nueva:
+  - JPEG cuadrado de 256×256;
+  - orientación corregida;
+  - **sin metadatos EXIF** (por ejemplo, la ubicación GPS de una foto de celular).
+- Nombre aleatorio (`fotos_perfil/<uuid>.jpg`). Al cambiarla se borra la anterior, y al eliminar la cuenta se borra su foto.
+- **Protegida:** se sirve en `/usuarios/foto/<nombre>.jpg` **solo con sesión iniciada**. Las rutas de `/media/` siguen sin servir nada que no sea un documento autorizado.
+- Se muestra en el header y en el perfil. Sin foto, se ven las iniciales como antes (`templates/_avatar.html`).
+
+## P12.6 Reinicio del 2FA (celular perdido)
+
+- **Panel web del admin:** casilla **"Reiniciar 2FA"** al editar una cuenta de personal o de cliente.
+- **Django Admin:** columna "2FA" y acción **"Reiniciar 2FA"** en Personal y en Clientes.
+- La persona vuelve a entrar solo con su contraseña y puede activarlo de nuevo desde su perfil.
+
+## P12.7 Base de datos
+
+Nuevo modelo abstracto `Perfil` (`usuarios/models.py`), heredado por **`CustomUser` y `Cliente`**. Las dos tablas tienen los mismos campos:
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `foto` | ImageField (`fotos_perfil/`) | Foto reprocesada; vacío = iniciales |
+| `email_verificado` | Boolean | El dueño abrió el enlace de verificación |
+| `totp_secreto` | Char(32) | Secreto del 2FA; vacío = desactivado |
+| `totp_ultimo_paso` | PositiveBigInteger | Último código usado (anti *replay*) |
+
+- Ningún campo es editable en los formularios genéricos (`editable=False`): solo cambian por sus flujos propios.
+- **Migraciones:** `usuarios/0010_dos_factores` (2FA del personal), `usuarios/0011_perfil_foto_correo_2fa_clientes` y `proyectos/0014_peticion_tipo_cuenta`.
+
+## P12.8 Engranaje del hero: más chico y más robusto
+
+- **Antes:** dibujado con trazos (`stroke-dasharray`), con anillo delgado y dientes largos ("palos"), de 24 y 8 dientes.
+- **Ahora:** engranajes **macizos** como en la referencia, con agujero central:
+
+  | | Grande | Chico |
+  |---|---|---|
+  | Dientes | 16 | 8 |
+  | Radio de paso | 170 (antes 205) | 85 |
+  | Alto del diente | 27 (antes 34 y delgado) | 27 |
+  | Cuerpo (raíz − agujero) | 71 | 32 |
+  | Vuelta completa | 60 s, horario | **30 s**, antihorario |
+
+- **Dientes trapezoidales cortos.** El ancho de cada diente es una **fracción del paso en cada radio** (55 % en la raíz y 30 % en la punta). Así el diente del grande cabe en los huecos del chico, que son más angostos.
+- **Engranan de verdad:**
+  - mismo paso de diente, por eso el chico gira **2 veces más rápido**;
+  - centros a 255, la suma de los radios de paso;
+  - fase ajustada para que en el punto de contacto un diente quede frente a un hueco.
+  - Se verificó renderizando **12 posiciones de un paso completo**: siempre queda holgura y **nunca se traslapan**.
+- Se movieron más abajo dentro del dibujo, porque el header tapaba la punta del chico. En escritorio (≥1280 px) la opacidad bajó de 100 % a 60 %: relleno al 100 %, competía con el titular. Bajo 1280 px sigue al 25 %.
+- Los paths se generaron con un script que calcula la geometría, por eso las coordenadas son exactas.
+- `style.css` pasó a `?v=4`.
+
+## P12.9 Ajustes del hero tras la revisión del usuario (30-10-2026)
+
+- **El color de la tuerca cambiaba justo entre 1279 y 1280 px.**
+  - **Causa:** el SVG tenía `opacity-25 … xl:opacity-60`, y en Tailwind `xl` es "desde 1280 px". Bajo ese ancho la opacidad caía de golpe del 60 % al 25 %.
+  - Venía del rediseño (P10.4): bajo 1280 px el engranaje queda detrás del titular y se oscureció para que el texto se pudiera leer.
+  - **Corrección:** el SVG pasó **debajo del degradado oscuro** del hero (`-z-[15]`, entre la foto y el degradado), sin opacidad por ancho. El degradado va de negro a la izquierda (texto) a transparente a la derecha, así que protege el texto en cualquier ancho y el color ya no salta.
+- **También saltaba la posición en 1280 px** (`sm:-right-32` → `xl:right-[-4%]`: 76 px de golpe).
+  - Ahora es una sola fórmula continua: `right: min(16vw − 256px, −4vw)`. Da −194 px en 390 px y −4 % desde 1280 px.
+  - Medido en Edge: el centro del engranaje se mueve **1 px entre 1279 y 1280** (antes 76 px). La opacidad calculada es 1 en todos los anchos.
+- **Tercera tuerca, chiquitita**, para llenar el espacio vacío abajo a la izquierda del grupo en pantallas grandes:
+
+  | | Grande | Chico | Mini (nueva) |
+  |---|---|---|---|
+  | Dientes | 16 | 8 | 6 |
+  | Radio de paso | 170 | 85 | 63,75 |
+  | Posición | — | arriba a la izquierda | abajo a la izquierda |
+  | Vuelta completa | 60 s, horario | 30 s, antihorario | **22,5 s**, antihorario |
+  | Color | rojo | blanco 55 % | blanco 35 % |
+
+  - Mismo paso de diente que las otras dos. Engrana con la grande en un hueco existente (a 135°, 12 pasos de la fase de la grande).
+  - Se verificó en 12 posiciones de un paso completo: **no se traslapa**.
+- **Verificación:**
+  - capturas en 390, 1024, 1279, 1280, 1440 y 1920 px sin scroll horizontal;
+  - tests de `web` aprobados;
+  - `style.css` pasó a `?v=5`.
+- **Archivos:** `templates/pagina_inicio.html`, `static/css/style.css` (`.engranaje.mini`), `templates/base_paginas.html`.
+
+## P12.10 Tests nuevos (19)
+
+- **`DosFactoresTests` (10):**
+  - sin 2FA se entra solo con contraseña;
+  - un código incorrecto no activa el 2FA;
+  - con 2FA, la contraseña sola no abre sesión, para personal y para clientes;
+  - un código no se puede reutilizar;
+  - bloqueo tras 5 códigos incorrectos;
+  - el paso 2 vence a los 5 minutos;
+  - no hay paso 2 sin pasar por la contraseña;
+  - desactivar exige el código;
+  - Django Admin no tiene login propio;
+  - el admin reinicia el 2FA de personal y de clientes.
+- **`PerfilTests` (9):**
+  - permisos por rol (el empleado no cambia su usuario aunque lo envíe a mano; el cliente no cambia su contraseña);
+  - el correo cambiado queda sin verificar;
+  - cambio de contraseña del personal sin cerrar la sesión;
+  - foto reprocesada a JPEG 256×256 y protegida por sesión;
+  - un archivo que no es imagen se rechaza;
+  - verificación de correo por enlace, sin sesión;
+  - un enlace alterado o de un correo anterior no verifica;
+  - límite de 3 correos por hora;
+  - sin SMTP configurado, la página avisa que el correo no salió.
+
+## P12.11 Pendientes
+
+- **Actualizar `Sistema_2FA_Sinergi.md`** y la **matriz de control de cambios**: 2FA opcional, `pyotp` en vez de `django-otp`, limitador propio en vez de `django-axes`.
+- **Correo real: se configura solo en Docker y lo prueban los compañeros que usan Docker.** En el entorno local (`.env.local.example`) queda en modo consola, a propósito.
+  1. En el `.env` de Docker, completar el bloque `EMAIL_*` (ya viene en `.env.example`): `EMAIL_HOST`, `EMAIL_HOST_USER` y `EMAIL_HOST_PASSWORD`.
+     - Con Gmail: contraseña de aplicación de 16 letras, sin espacios.
+     - En producción: Brevo.
+  2. Recrear los contenedores para que lean el `.env` nuevo: `docker compose up --build`.
+  3. Probar el envío: `docker compose exec web python manage.py sendtestemail tucorreo@dominio.cl`.
+  4. Probar el flujo completo: Mi perfil → "Enviar correo de verificación" → abrir el enlace → el correo queda "Verificado".
+- **Quienes usan Docker** deben correr `docker compose up --build` una vez: `requirements.txt` agregó `pyotp`, `qrcode` y `pillow`.
+- Opcional: aplicar el mismo diseño macizo a los engranajes decorativos de la tarjeta "Nuestro Objetivo" y de la franja "¡Contáctanos!", que siguen con el estilo de trazos.
+
+## P12.12 Archivos
+
+- **Nuevos:**
+
+  | Grupo | Archivos |
+  |---|---|
+  | Código | `usuarios/dos_factores.py`, `usuarios/perfil.py` |
+  | Plantillas | `templates/perfil.html`, `templates/perfil_2fa.html`, `templates/login_2fa.html`, `templates/_codigo_2fa.html`, `templates/_avatar.html` |
+  | Migraciones | `usuarios/migrations/0010_dos_factores.py`, `usuarios/migrations/0011_perfil_foto_correo_2fa_clientes.py`, `proyectos/migrations/0014_peticion_tipo_cuenta.py` |
+  | Entorno local | `.env.local.example`, `iniciar_local.ps1` |
+
+- **Modificados:**
+
+  | Grupo | Archivos |
+  |---|---|
+  | Modelos, vistas y formularios | `usuarios/models.py` (modelo `Perfil`), `usuarios/views.py` (login en dos pasos), `usuarios/forms.py` (`EdicionCuentaMixin`, `FotoPerfilForm`, `DatosPerfilForm`, casilla "Reiniciar 2FA"), `usuarios/urls.py`, `usuarios/admin.py`, `proyectos/models.py` (tipo de petición `CUENTA`) |
+  | Configuración | `sinergi/settings.py` (correo, Celery desde `.env`), `requirements.txt` (`pyotp`, `qrcode`, `pillow`), `.env.example` |
+  | Plantillas y estilos | `templates/_header_portal.html` (avatar con enlace a Mi perfil), `templates/pagina_inicio.html`, `templates/base_paginas.html` (`?v=4`), `static/css/style.css` |
+  | Tests | `usuarios/tests.py` |
+
+
+---
+---
+
+# Parte 13 — Noticias internacionales (NFPA), filtro por temas de Sinergi y API pública de noticias
+
+**Fecha:** 30-10-2026
+**Verificación (local, SQLite):**
+- **13/13 tests de `web`** aprobados, 10 de ellos nuevos o reescritos. En la suite completa, la única falla sigue siendo la de SQLite (P11.1).
+- Prueba **con las fuentes reales**:
+  - la primera actualización tarda ~18 s; la portada siguiente carga desde la caché en 0,01 s;
+  - quedan 8 leyes, 4 noticias de la SEC y 6 artículos de NFPA;
+  - en Edge, sin scroll horizontal ni errores de JavaScript en 1440 y 390 px.
+
+## P13.1 Objetivo
+
+- Sumar **noticias internacionales** a las de Chile (Ley Chile y SEC), que ya existían.
+- Que **todas** sean del rubro de Sinergi: instalaciones eléctricas y corrientes débiles, HVAC, protección contra incendio, seguridad electrónica, sistemas sanitarios y edificación/inmuebles (cartera inmobiliaria y Technical Due Diligence).
+- Al hacer clic, cada tarjeta lleva al artículo real.
+
+## P13.2 Fuente internacional: NFPA
+
+- **Lo que se investigó:**
+  - NFPA **no tiene API pública ni RSS vigente**: su feed de Feedburner dejó de actualizarse en 2023.
+  - Su versión en español está abandonada: 5 artículos, el último de 2024.
+  - Su listado de blogs carga los artículos con Coveo, un buscador externo, usando una clave privada. No se usa, por no estar autorizado.
+- **Lo que se usa:** el **sitemap público** (`nfpa.org/sitemap.xml`), pensado justamente para que lo lean programas.
+  - Tiene 744 artículos técnicos del blog y del NFPA Journal, con la fecha en la URL.
+  - De cada artículo nuevo se lee **solo** el título, la bajada y la fecha. No se copia el contenido. `robots.txt` permite estas páginas.
+- **Se respeta lo que NFPA marca:** se omiten los artículos exclusivos para miembros (`Require Member Access`), los no indexables (`noIndex`) y los que NFPA excluye de su propio RSS (`HideForRSS`).
+- **Carga mínima sobre NFPA:**
+  - 1 descarga del sitemap cada 6 horas;
+  - los datos de cada artículo se guardan **30 días**, así que solo se descargan los nuevos;
+  - máximo 12 artículos por actualización.
+- **El sitemap tarda ~16 s en generarse** (medido, para cualquier cliente). Por eso esa descarga tiene un límite de 45 s; las demás siguen en 15 s. Como corre en segundo plano (Celery), el visitante nunca espera.
+- **Tarjeta:**
+  - etiqueta "Blog NFPA" o "NFPA Journal" más "Internacional";
+  - título y bajada;
+  - enlace "Leer en nfpa.org (en inglés)", en pestaña nueva y con `rel="noopener noreferrer"`.
+
+## P13.3 Filtro por temas de Sinergi (las tres fuentes)
+
+| Fuente | Entra si… | Queda fuera |
+|---|---|---|
+| **NFPA** | Toca rociadores, alarmas y detección, humo, evacuación, electricidad (NEC, NFPA 70E, arco eléctrico), baterías y energía, HVAC, seguridad electrónica, agua, edificios (altura, data centers, bodegas, oficinas, conversiones, hospitales) o normas NFPA del rubro (13, 72, 75, 101, 241, 800, 855…) | Bomberos, incendios forestales, rescate, premios, conferencias, nombramientos, campañas educativas |
+| **SEC** | Todo, salvo exclusiones | Gas vehicular, Fiestas Patrias (fondas, ramadas, parrillas), combustibles líquidos, cortes de luz y temporales |
+| **Ley Chile** | El **título** toca energía, electricidad, construcción, urbanización, edificación, vivienda, copropiedad, incendio, sanitaria, desalinización, climatización o ascensores; o la dicta la SEC, la SISS, el MINVU o el Ministerio de Energía | Derechos de aprovechamiento de aguas, beneficios de bomberos, tránsito, días nacionales |
+
+- **Corrección del filtro de Ley Chile que ya existía.** Dejaba pasar leyes ajenas al rubro:
+  - "Reconstrucción nacional y desarrollo económico": *re**construcción*** contiene "construcción".
+  - "Beneficios para bomberos accidentados", por la palabra *bomberos*.
+  - "Derechos de aprovechamiento de aguas": todo lo del Ministerio de Obras Públicas entraba por el organismo.
+  - Con datos reales pasó de 13 a **8 leyes, todas del rubro**.
+- Resultado real de NFPA (6 artículos): incendio en data centers (NFPA 75), seguridad de baterías de litio en obras (2), seguridad de edificios de altura, conversión de oficinas a viviendas y seguridad de locales con público.
+
+## P13.4 Traducción al español
+
+- Los títulos y bajadas de NFPA se traducen con **el mismo proveedor de IA del chatbot** (Groq, `LLM_API_KEY`).
+  - Es **una sola llamada por actualización**, solo para los artículos nuevos. Cada traducción se guarda 30 días.
+  - Las siglas y normas (NFPA 70E, NEC…) no se traducen.
+- **Sin `LLM_API_KEY`**, o si la IA falla o responde algo inválido, el artículo se muestra en inglés. La API indica el idioma (`idioma: "en"`) y la tarjeta marca el texto con `lang="en"` para los lectores de pantalla.
+- El título original siempre queda disponible (`titulo_original`).
+
+## P13.5 Portada: primero una noticia por fuente
+
+- Ley Chile publica mucho más que las otras fuentes. Si se ordenara solo por fecha, la primera fila serían puras leyes y NFPA quedaría escondida tras "Ver más".
+- Ahora **la primera fila muestra la más reciente de cada fuente** (Ley Chile · SEC · NFPA) y después vienen las demás por fecha.
+- Se muestran hasta 12: 3 a la vista y el resto con "Ver más noticias".
+- Se agregó el enlace "NFPA →" junto a "Ley Chile →" y "Sitio SEC →", y el texto de la sección menciona las fuentes internacionales.
+
+## P13.6 API pública de noticias: `/api/noticias/`
+
+| Petición | Respuesta |
+|---|---|
+| `GET /api/noticias/` | Todas (hasta 30), de la más reciente a la más antigua |
+| `GET /api/noticias/?fuente=nfpa` | Solo una fuente: `leychile`, `sec` o `nfpa` |
+| `?fuente=otra` | **400** con las fuentes válidas |
+| `POST`, `PUT`, `DELETE` | **405**: solo lectura |
+| Más de 60 peticiones por minuto desde una IP | **429** |
+
+- **Formato:**
+
+  ```json
+  {"total": 6, "fuentes": {"leychile": "Ley Chile", "sec": "SEC", "nfpa": "NFPA"},
+   "noticias": [{"fuente": "NFPA", "codigo": "nfpa", "etiqueta": "Blog NFPA",
+                 "titulo": "...", "titulo_original": "...", "bajada": "...", "idioma": "en",
+                 "fecha": "2026-09-09", "url": "https://www.nfpa.org/news-blogs-and-articles/..."}]}
+  ```
+
+- Hecha con Django REST Framework (`APIView`). Desde el navegador se ve la **API navegable** de DRF, con su documentación.
+- **Seguridad:**
+  - pública y de solo lectura;
+  - **no lee la sesión** (`authentication_classes = []`), así que no expone datos del usuario ni necesita CSRF;
+  - **solo lee la caché** y nunca consulta las fuentes durante la petición;
+  - el límite por IP usa `ip_cliente()`, que no se deja engañar con un `X-Forwarded-For` falso (P9.4).
+
+## P13.7 Actualización automática, sin intervención manual
+
+El objetivo es que los dueños del sitio nunca tengan que actualizar las noticias a mano, y que la portada no quede desactualizada sin que nadie lo note.
+
+- **Programación con horarios fijos** (`CELERY_BEAT_SCHEDULE`, hora de Chile):
+
+  | Tarea | Antes | Ahora |
+  |---|---|---|
+  | Noticias y normativa (Ley Chile, SEC, NFPA) | "cada 6 h desde que arrancó beat" | **Todos los días a las 00:00, 06:00, 12:00 y 18:00** |
+  | Purga de archivados vencidos | "cada 24 h desde que arrancó beat" | **Todos los días a las 03:30** |
+
+  **Por qué:** en producción `celery-beat` no guarda su archivo de estado. Con intervalos, cada reinicio o despliegue volvía a contar desde cero, y con despliegues diarios la purga podía no correr nunca. Con horarios de reloj eso ya no pasa.
+- **Respaldo si la programación falla:**
+  - si las noticias guardadas tienen **más de 7 horas** (beat o el worker caídos, Redis reiniciado), la primera visita a la portada o a la API pide una actualización en segundo plano;
+  - mientras tanto se sigue mostrando lo guardado;
+  - un candado de 15 minutos evita que cada visita repita el pedido.
+- **Servicios que vuelven solos:** `celery-worker` y `celery-beat` tienen `restart: unless-stopped` también en `docker-compose.yml` (en producción ya lo tenían).
+- **Las noticias ya no desaparecen:** si las fuentes fallan, lo último se conserva **7 días** (antes 2). Si ninguna fuente responde, queda un error en el log: `Noticias: ninguna fuente respondió`.
+- **Se ve cuándo se actualizó:**
+  - la portada muestra "Se actualizan solas cada 6 horas · Última actualización: 30 oct 2026, 18:18";
+  - la API devuelve `"actualizado"` (fecha y hora ISO).
+- **Verificación:**
+  - `celery beat` arrancado localmente carga ambas tareas con su horario (`0 */6 * * *` y `30 3 * * *`);
+  - la tarea ejecutada como lo haría el worker terminó con `SUCCESS`, 18 noticias guardadas y la hora registrada;
+  - tests nuevos en `ActualizacionAutomaticaTests`:
+    - los horarios corresponden a tareas reales;
+    - con datos al día no se pide actualizar;
+    - con datos viejos se pide una sola vez aunque haya varias visitas.
+- **Los tests ya no descargan noticias reales.** En local Celery ejecuta las tareas en el mismo proceso, así que los tests que abrían la portada con la caché vacía descargaban Ley Chile, SEC y NFPA de verdad. La base de tests (`sinergi/pruebas.py`) ahora lo impide para todos, y la suite completa bajó de ~75–100 s a ~30 s.
+- **En local sin Docker** no hay `celery-beat`. Ahí actúa solo el respaldo: la primera visita después de 7 horas actualiza, y esa visita espera unos 18 s.
+
+## P13.8 Tests (`web/tests.py`)
+
+- Las descargas se simulan por URL, con un sitemap y páginas de artículos de NFPA de prueba. **Ningún test llama a la IA real**, aunque el `.env` tenga clave.
+- Tests:
+  - filtro por tema en las tres fuentes;
+  - título sin el prefijo "NFPA |", y bajada desde `Subtitle` o `metaDescription`;
+  - un artículo no se descarga dos veces;
+  - traducción guardada: la IA no se vuelve a llamar;
+  - una respuesta inválida de la IA deja el texto en inglés;
+  - una fuente caída no borra las otras;
+  - la portada muestra NFPA;
+  - orden de la portada: una por fuente;
+  - API: filtro, 400, 405 y límite 429.
+
+## P13.9 Pendientes
+
+- **Traducción en Docker:** basta con poner `LLM_API_KEY` en el `.env`; es la misma clave del chatbot. En local, sin clave, NFPA se ve en inglés.
+- NFPA cubre bien incendio, electricidad y edificación. **No cubre HVAC ni sanitarios.** Si se quiere, se puede evaluar una fuente internacional para esos temas (por ejemplo, ASHRAE) con el mismo filtro.
+- Si NFPA rediseña su sitio, la lectura puede dejar de funcionar. Las otras fuentes siguen y lo último de NFPA se mantiene 48 h. El aviso queda en el log: `Noticias: no se pudo leer…`.
+
+## P13.10 Archivos
+
+- **Modificados:**
+  - `web/noticias.py`: fuente NFPA, filtros, traducción, orden de portada y `todas()` para la API.
+  - `web/views.py`: `NoticiasAPI`.
+  - `web/urls.py`: `api/noticias/`.
+  - `templates/pagina_inicio.html`: tarjeta NFPA, bajada, enlaces y textos.
+  - `web/tests.py`: reescrito.
+  - `sinergi/settings.py`: horarios fijos con `crontab`.
+  - `docker-compose.yml`: `restart` del worker y de beat.
+  - `sinergi/pruebas.py`: los tests no descargan noticias reales.
+- **Sin cambios de base de datos:** todo vive en la caché (Redis en Docker, memoria en local).
+
+---
+---
+
+# Parte 14 — Avisos por correo, paneles en vivo, curaduría de noticias, fuentes HVAC/sanitaria y engranajes
+
+**Fecha:** 16-11-2026
+**Motivo:** cerrar funciones que pide la Definición del proyecto (secciones 2.2 y 2.3, Módulo 3) y pendientes de las Partes 12 y 13.
+**Verificación (local, SQLite):**
+- 116/117 tests aprobados. La única falla es la conocida de SQLite (P11.1).
+- 19 tests nuevos: `proyectos/test_notificaciones.py` (9), `proyectos/test_en_vivo.py` (5) y `web/tests.py` (5: curaduría y fuentes nuevas).
+- Descarga real de las 5 fuentes de noticias: Ley Chile, SEC, NFPA, CSE y CIBSE Journal.
+
+## P14.1 Notificaciones automáticas por correo (Definición 2.3)
+
+- **Flujo:** `django signal → tarea Celery → SMTP` (Brevo en producción). La señal solo encola la tarea cuando la transacción se confirma (`on_commit`); el correo lo envía `celery-worker`, nunca la petición web.
+- **Si el SMTP falla**, la tarea reintenta sola a los 1, 2 y 4 minutos. **Si Celery o Redis no responden**, la acción del usuario no falla: queda en el log.
+
+  | Evento | Destinatario |
+  |---|---|
+  | Cuenta creada (cliente o personal) | La persona de la cuenta. Bienvenida con su usuario y el enlace para entrar. **Nunca la contraseña.** |
+  | Petición nueva abierta por el cliente | El ingeniero a cargo de la obra. Si no hay, los admins. |
+  | Petición nueva abierta por Sinergi | El cliente. |
+  | Respuesta de Sinergi en una petición, con la casilla **"Enviar por correo electrónico"** marcada | El cliente, con el mensaje completo. Sin marcar, la respuesta queda solo en el chat. |
+  | Avance de la obra: proyecto registrado, cambio de estado, fases y subfases | El cliente dueño del proyecto. |
+
+- **Avance agrupado:** el primer cambio de la bitácora programa el correo para dentro de `AVISOS_AGRUPAR_MINUTOS` (5 por defecto); los cambios de ese lapso salen en el mismo correo como resumen. Así el cliente no recibe un correo por cada clic del ingeniero. En local (`CELERY_TASK_ALWAYS_EAGER=True`) no hay espera: cada cambio se imprime de inmediato.
+- **Correo en texto y HTML** (`templates/correos/aviso.txt` y `aviso.html`, con estilos en línea para Gmail y Outlook). Un correo por destinatario: nadie ve el correo de los demás.
+- **Nuevo en `.env`:** `SITIO_URL` (dirección pública para los enlaces del correo; vacío = `http://localhost:8000`, o `https://DOMINIO` si `DOMINIO` no es localhost) y `AVISOS_AGRUPAR_MINUTOS`.
+- **Pendiente (Definición 2.1, paso 3):** la activación de cuenta por enlace (el cliente define su propia contraseña). Hoy el admin crea la cuenta con contraseña y la entrega por otro medio; el correo de bienvenida lo dice.
+
+## P14.2 Estado del proyecto que se actualiza solo (Definición 2.2)
+
+- **Cada 3 segundos** los paneles del cliente, del empleado y del admin piden `GET /proyectos/en-vivo/`: una "huella" por proyecto visible para ese usuario (solo JSON, una consulta liviana).
+- La huella cambia con todo lo que se ve en los paneles: datos del proyecto, estado, fases y subfases (cada cambio deja una anotación en la bitácora) y documentos.
+- **Si cambió**, el navegador vuelve a pedir el panel en segundo plano y reemplaza solo las zonas marcadas con `data-vivo` (tarjetas, detalle con hitos/ficha/bitácora, documentos, filas e indicadores del admin). La pestaña abierta, el proyecto seleccionado, los filtros y los formularios a medio llenar no se tocan.
+- **Si aparece o desaparece un proyecto**, muestra un aviso "Hay cambios en los proyectos · Actualizar" en vez de reordenar la página sola.
+- No consulta con la pestaña oculta. Si la sesión expira, deja de consultar.
+- La consulta en segundo plano lleva la cabecera `X-En-Vivo` y `_mensajes.html` no lee los avisos en ella, para no "gastar" un mensaje que el usuario aún no ve.
+
+## P14.3 Curaduría de noticias (Módulo 3)
+
+- **Nueva pestaña "10. Noticias"** en el panel del admin: todo el feed actual con un botón **Ocultar / Mostrar otra vez** por noticia.
+- Lo oculto deja de verse en la portada y en `/api/noticias/`; su lugar lo toma la siguiente noticia.
+- Solo se pueden ocultar noticias que están en el feed (no URLs arbitrarias). Solo el rol ADMIN. Queda en el Registro de Actividad.
+- **Base de datos:** modelo `web.NoticiaOculta` (migración `web/0001_noticia_oculta`): enlace, título, fuente, quién y cuándo.
+
+## P14.4 Fuentes internacionales de HVAC y sanitaria (pendiente P13.9)
+
+- **ASHRAE no se pudo usar:** su sitio responde 403 a cualquier programa (también el RSS y el sitemap). Lo mismo las revistas de BNP Media (ACHR News, PM Engineer). No se intentó saltar ese bloqueo.
+- **Se agregaron dos revistas técnicas de ingeniería de instalaciones** con RSS público y `robots.txt` sin restricciones:
+  - **Consulting-Specifying Engineer (CSE)**, EE. UU. (`csemag.com`).
+  - **CIBSE Journal**, de la Chartered Institution of Building Services Engineers, Reino Unido (`cibsejournal.com`).
+- **Filtro:** solo artículos de HVAC y sanitaria, buscando en el título y la bajada (CSE etiqueta todo con categorías genéricas). Fuera premios, webcasts, conferencias y anuncios de la revista. Hasta 5 por revista.
+- Se usa solo lo que trae el RSS (título, bajada, fecha); no se descargan páginas. Se traducen con la misma IA que NFPA.
+- **Portada:** etiqueta celeste, "Internacional" y enlace "Leer en csemag.com / cibsejournal.com (en inglés)". **API:** `?fuente=cse` y `?fuente=cibse`.
+
+## P14.5 Engranajes decorativos macizos (pendiente P12.11)
+
+- Los engranajes de la tarjeta **"Nuestro Objetivo"** y de la franja **"¡Contáctanos!"** pasaron del estilo de trazos (`stroke-dasharray`) al macizo del hero: 16 dientes trapezoidales cortos (55 % del paso en la raíz, 30 % en la punta) y agujero central. Path generado por script con la misma geometría del hero, escalada a 200×200.
+- Opacidad un poco menor (20 % → 15 % y 15 % → 12 %): un engranaje relleno pesa más a la vista que uno de trazos.
+
+## P14.5b Peticiones: "Enviar por correo electrónico" reemplaza a "Nota interna"
+
+- En la conversación de una petición, la casilla del personal **"Nota interna (el cliente no la ve)"** se reemplazó por **"Enviar por correo electrónico"**: el mensaje se publica en el chat como siempre y, además, le llega completo al cliente por correo (con el enlace a la conversación).
+- Ya no se crean notas internas nuevas. Las que existían siguen ocultas para el cliente y se siguen mostrando al personal como "NOTA INTERNA".
+- Solo el personal ve la casilla; si un cliente la envía igual (manipulando el formulario), se ignora.
+
+## P14.5c Ventana sobrepuesta: peticiones y formularios del panel sin salir de él
+
+- **Abrir un chat** (bandeja "Peticiones & Chat") lo muestra en un **panel lateral** que se desliza desde la derecha; **"+ Nueva Petición"** (bandeja, "Nueva Petición sobre esta Obra" del portal del cliente y los botones de "Mi perfil") abre una **ventana centrada** (pantalla completa en móvil). Al enviar la petición nueva, la misma ventana pasa a mostrar su conversación.
+- Se cierra con la X, con Esc, con clic fuera o con "Cancelar". Al cerrar se actualiza la bandeja y el contador del menú sin recargar el panel. El ícono ↗ abre la página completa; Ctrl+clic abre en otra pestaña como antes.
+- **Cómo funciona:** la ventana (`templates/_ventana.html`) carga la página existente en un `iframe` del mismo sitio, así el chat, las validaciones y los avisos funcionan igual que solos; dentro de la ventana se ocultan la barra superior y el pie. Las páginas siguen existiendo (los enlaces de los correos las abren normalmente).
+- **Seguridad:** el sitio sigue sin poder mostrarse dentro de otros sitios (`X-Frame-Options: DENY`, `frame-ancestors 'none'`). Solo las dos vistas de peticiones llevan el decorador `ventana_interna` (`sinergi/seguridad.py`), que permite enmarcarlas **solo desde el mismo sitio** (`SAMEORIGIN`, `frame-ancestors 'self'`). Si la sesión venció, la ventana se cierra y el panel recarga (va al login).
+- **También en ventana centrada:** Solicitar nuevo proyecto (cliente), Crear / editar usuario y Crear / editar empresa (admin), Nueva subfase y Editar fase / subfase (pantalla de control de obra). **Asignar cliente a una solicitud** (admin) usa una ventana centrada más ancha, porque tiene dos formularios lado a lado.
+- **Al guardar** un formulario desde la ventana, se cierra y el panel (o el control de obra) se recarga en el destino de siempre, mostrando el aviso de "guardado". Si hay errores de validación, se ven dentro de la ventana.
+  - Cómo: dentro de la ventana, `base_usuarios.html` agrega `_ventana=1` a los formularios. Si la vista termina en una redirección a una página que no va en ventana, `ventana_interna` responde `templates/ventana_cerrar.html` con el destino en vez de redirigir el iframe (así el aviso no se pierde dentro de la ventana). Sin `_ventana`, la vista redirige como siempre.
+- Para sumar otra pantalla a la ventana: decorar su vista con `@ventana_interna` y poner `data-ventana` en el enlace (`data-ventana="lateral"` o `"ancha"` para otras formas).
+
+## P14.5d Pestaña "Inicio" en los tres portales
+
+- **Nueva opción "Inicio"** al principio del menú lateral del cliente, del empleado y del admin. Es la pestaña que abre por defecto al entrar (antes: Mis Proyectos / Proyectos Asignados / Mi Perfil). Con `?tab=...` en la dirección sigue abriendo esa pestaña.
+- **Contenido** (`templates/_inicio.html`, compartido por los tres):
+  - Saludo "Bienvenido, nombre", el panel y la fecha.
+  - **Tarjeta de perfil** con foto (o iniciales), nombre y correo: lleva a **Mi perfil** (foto, datos, contraseña y 2FA).
+  - **Proyectos** del usuario (el cliente, los suyos; el empleado, los asignados; el admin, todos los activos) con código, avance y estado. Al tocar uno, abre su pestaña, lo selecciona y lo resalta. Se actualiza solo con el estado en vivo (P14.2).
+  - **Resumen** de obras por estado y mensajes sin leer.
+  - **Accesos rápidos:** un botón por cada opción del menú lateral, con su ícono y contador. Se arman solos desde el menú, así que si se agrega o quita una opción aparece o desaparece también aquí, y la grilla se reacomoda según cuántas haya (y según el ancho de pantalla).
+- "Marcar como Finalizado" (y los demás cambios rápidos de estado) ahora vuelven a la pestaña de proyectos, no al Inicio.
+
+## P14.5e Borrado automático de las conversaciones (Peticiones & Chat) a los 60 días
+
+- **Regla:** una petición que lleva más de `DIAS_CHAT` días (60 por defecto) **sin actividad** se elimina completa, con todos sus mensajes, de PostgreSQL. Cuenta como actividad un mensaje nuevo o un cambio de estado (`ultima_actividad`): una conversación que sigue en uso nunca se corta a la mitad, aunque haya empezado hace más de 60 días.
+- **Cuándo:** tarea diaria de Celery `proyectos.tasks.purgar_chats`, a las 03:45 (hora de Chile), justo después de la limpieza de archivados (03:30).
+- **Constancia:** cada borrado queda en el Registro de Actividad como `sistema · Eliminación · PET-N asunto · Automático: 60 días sin actividad (N mensajes)`. El contenido de los mensajes no se guarda.
+- **Aviso a los usuarios:** en la bandeja "Peticiones & Chat" y dentro de cada conversación se avisa que se eliminan tras 60 días sin actividad.
+- **Configurable** en el `.env`: `DIAS_CHAT=60`.
+- **Probarla a mano** (borra de verdad): `docker compose exec web python manage.py shell -c "from proyectos.tasks import purgar_chats; print(purgar_chats())"`.
+
+## P14.5f SuperAdmin de demostración: una sesión, tres vistas
+
+- **Para qué:** presentar el sistema completo sin cerrar e iniciar sesión con tres usuarios. Una cuenta **SuperAdmin** tiene en la barra superior el selector **"SuperAdmin · Vista: Admin | Empleado | Cliente"**.
+- **Cómo funciona** (`usuarios/superadmin.py`): son tres cuentas reales, una por rol. Solo la principal tiene contraseña.
+
+  | Cuenta | Tabla y rol | Contraseña |
+  |---|---|---|
+  | `superadmin` | Personal, Admin web (no superusuario Django) | Sí: con ella se inicia sesión |
+  | `superadmin_empleado` | Personal, Empleado | No: nadie puede entrar directo |
+  | `superadmin_cliente` | Cliente (empresa "Empresa Demo (SuperAdmin)") | No: nadie puede entrar directo |
+
+  Al iniciar sesión como `superadmin`, la sesión queda marcada. Solo una sesión marcada puede cambiar de vista: abre la sesión de la cuenta de ese rol y conserva la marca. Como cada vista es una cuenta real, ve y puede hacer exactamente lo mismo que un usuario normal de ese rol (los permisos de las vistas no se tocaron).
+- **Seguridad:** cualquier otro usuario (otro admin, un cliente) no ve el selector y recibe 403 si lo intenta. El cambio es solo por POST con CSRF. Si se desactiva la cuenta `superadmin`, el selector desaparece. Cerrar sesión borra la marca. Cada cambio queda en el log de seguridad.
+- **Crear las cuentas** (una vez; repetirlo no duplica nada):
+  - `docker compose exec web python manage.py crear_superadmin --proyecto-demo`
+  - Pide la contraseña del SuperAdmin (o `--password "..."`). `--proyecto-demo` crea además una obra de ejemplo con las fases estándar, del cliente demo y a cargo del empleado demo, para que las tres vistas tengan algo que mostrar.
+- **Nombre configurable** en el `.env`: `SUPERADMIN_USUARIO=superadmin`.
+- **Para quitarlo** después de la demostración: desactivar o eliminar las tres cuentas desde "Gestión de Usuarios".
+
+## P14.5g Peticiones como WhatsApp: editar y eliminar mensajes, eliminar el chat solo para mí
+
+- **Menú ⋯ en cada mensaje** (aparece al pasar el mouse; en celular, siempre visible):
+
+  | Opción | Quién | Plazo | Efecto |
+  |---|---|---|---|
+  | **Editar** | Solo quien lo escribió | 15 minutos desde que lo envió | Ambos lados ven el texto nuevo, marcado "editado". |
+  | **Eliminar para todos** | Solo quien lo escribió | 48 horas | El texto se borra de la base de datos. Ambos lados ven "Se eliminó este mensaje" (quien lo eliminó ve "Eliminaste este mensaje"). |
+  | **Eliminar para mí** | Cualquiera, cualquier mensaje | Sin plazo | Desaparece solo para esa persona. La otra parte (y el resto del personal) lo sigue viendo. |
+
+  Con la petición **cerrada** no se puede editar ni eliminar para todos (sí eliminar para mí). Los plazos los controla el servidor, no solo la pantalla (`MensajePeticion.EDITAR_MINUTOS` y `ELIMINAR_HORAS`). En el personal, "quien lo escribió" es esa persona: un admin no puede editar el mensaje de un ingeniero.
+- **Eliminar chat (solo para mí):** botón "Eliminar chat" en la conversación y papelera en cada fila de la bandeja. La conversación desaparece de la bandeja de quien la elimina, con todo lo conversado hasta ese momento; **la otra parte la sigue viendo completa**. En el personal es por persona: si el ingeniero la elimina, el admin la sigue viendo. Si después llega un mensaje nuevo, la conversación reaparece solo con lo nuevo (como en WhatsApp). Nunca se borra de la base de datos por esto; el borrado real sigue siendo el automático de los 60 días (P14.5e).
+- **En vivo:** los cambios (editados y eliminados para todos) llegan al otro lado en la siguiente actualización del chat (cada 4 s), sin recargar.
+- **Base de datos** (migración `proyectos/0015_mensajes_editar_eliminar`): en `MensajePeticion`, `editado_en`, `eliminado_en`, `actualizado_en`, `oculto_cliente` y `ocultos_para`; en `Peticion`, `borrada_cliente_hasta`; tabla nueva `PeticionBorrada` (eliminar chat de cada persona del personal).
+
+
+## P14.7 Archivos
+
+- **Nuevos:** `proyectos/notificaciones.py`, `proyectos/test_notificaciones.py`, `proyectos/test_en_vivo.py`, `templates/correos/aviso.html`, `templates/correos/aviso.txt`, `templates/_en_vivo.html`, `web/migrations/0001_noticia_oculta.py`.
+- **Modificados:** `proyectos/apps.py`, `proyectos/tasks.py`, `proyectos/views.py`, `proyectos/urls.py`, `sinergi/settings.py`, `.env.example`, `.env.local.example`, `web/models.py`, `web/noticias.py`, `web/views.py`, `web/urls.py`, `web/tests.py`, `usuarios/views.py`, `templates/usuario_cliente.html`, `templates/usuario_empresa.html`, `templates/usuario_admin.html`, `templates/_mensajes.html`, `templates/pagina_inicio.html`, `templates/peticion_detalle.html`, `proyectos/tests.py`, `sinergi/seguridad.py`, `templates/base_usuarios.html`, `templates/_peticiones.html`, `templates/panel_form.html`, `templates/perfil.html`, `static/css/style_usuarios.css`. `usuarios/views.py`, `templates/solicitud_asignar.html`, `templates/proyecto_control.html`, `templates/_tabla_cuentas.html`, `templates/usuario_empresa.html`. `usuarios/tests.py`, `.env.example`, `.env.local.example`. `usuarios/apps.py`, `usuarios/urls.py`, `templates/_header_portal.html`, `proyectos/models.py`, `proyectos/admin.py`, `proyectos/notificaciones.py`. **Migración:** `proyectos/migrations/0015_mensajes_editar_eliminar.py`. **Nuevos:** `usuarios/superadmin.py`, `usuarios/management/commands/crear_superadmin.py`, `sinergi/contexto.py`, `templates/_ventana.html`, `templates/ventana_cerrar.html`, `templates/_inicio.html`.
+
+---
+---

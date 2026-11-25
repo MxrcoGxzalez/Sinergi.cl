@@ -1,0 +1,179 @@
+<!-- ======================================================== -->
+<!-- INICIO DEL PORTAL (cliente, empleado y admin)             -->
+<!-- ======================================================== -->
+<!-- Requiere `proyectos` y `peticiones_no_leidas`. `pestana`: pestaña donde se ven los proyectos
+     ('proyectos' o 'supervision-hitos'). Los accesos rápidos se arman solos desde el menú lateral
+     (#portal-menu nav): si se agrega o quita una opción del menú, aparece o desaparece aquí también. -->
+<section id="view-inicio" class="tab-content block space-y-6">
+
+  <!-- Saludo y tarjeta de perfil (lleva a Mi perfil: foto, datos, contraseña y 2FA) -->
+  <div class="inicio-cabecera bg-white border border-slate-200 rounded-lg shadow-sm p-5 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5">
+    <div class="min-w-0">
+      <p class="font-mono text-[11px] uppercase tracking-widest text-slate-500">
+        {% if user.role == 'ADMIN' %}Panel de Administración{% elif user.role == 'EMPLEADO' %}Panel de Ingeniería{% else %}Portal de Clientes{% endif %}
+        · {% now "l j \d\e F" %}
+      </p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 break-words">Bienvenido, {{ user.first_name|default:user.username }}</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        {% if user.role == 'ADMIN' %}Resumen general de Sinergi: obras activas, solicitudes y conversaciones.
+        {% elif user.role == 'EMPLEADO' %}Tus obras asignadas y accesos a la gestión técnica.
+        {% else %}El estado de tus obras con Sinergi, siempre al día.{% endif %}
+      </p>
+    </div>
+    <a href="{% url 'perfil' %}" title="Editar mi perfil" class="inicio-perfil group flex items-center gap-4 min-w-0 md:max-w-[22rem] border border-slate-200 rounded-lg p-3 pr-5 hover:border-sinergi-blue hover:bg-sinergi-blue-light transition-colors">
+      {% include '_avatar.html' with cuenta=user clases="w-16 h-16 text-lg ring-2 ring-white shadow" %}
+      <span class="min-w-0">
+        <span class="block font-semibold text-slate-900 truncate">{{ user.get_full_name|default:user.username }}</span>
+        <span class="block text-xs font-mono text-slate-500 truncate">{{ user.email|default:"Sin correo registrado" }}</span>
+        <span class="block text-[11px] text-sinergi-blue font-semibold mt-1 group-hover:underline">Editar mi perfil &rarr;</span>
+      </span>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Proyectos del usuario: clic lleva a la obra en su pestaña -->
+    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
+      <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
+        <h2 class="text-sm font-bold text-slate-900">
+          {% if user.role == 'ADMIN' %}Proyectos activos{% elif user.role == 'EMPLEADO' %}Mis proyectos asignados{% else %}Mis proyectos{% endif %}
+        </h2>
+        <span class="text-[11px] font-mono text-slate-500">{{ proyectos|length }} obra{{ proyectos|length|pluralize }}</span>
+      </div>
+      <div data-vivo="inicio-proyectos">
+        {% if proyectos %}
+        <ul class="divide-y divide-slate-100 max-h-[24rem] overflow-y-auto">
+          {% for p in proyectos %}
+          <li>
+            <button type="button" data-inicio-proyecto="{{ p.id }}" class="w-full text-left px-5 py-3 hover:bg-slate-50 transition-colors grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_9rem_auto] items-center gap-x-4 gap-y-2">
+              <span class="min-w-0">
+                <span class="font-mono text-[10px] text-sinergi-blue font-bold">{{ p.codigo }}</span>{% if p.es_nuevo %} <span class="badge-nuevo">NUEVO</span>{% endif %}
+                <span class="block text-sm font-semibold text-slate-900 truncate">{{ p.nombre }}</span>
+                <span class="block text-[11px] text-slate-500 truncate">
+                  {% with encargado=p.empleado_encargado %}
+                  {% if user.role == 'CLIENTE' %}Ingeniero a cargo: {% if encargado %}{{ encargado.get_full_name|default:encargado.username }}{% else %}por asignar{% endif %}
+                  {% else %}{{ p.empresa|default:p.cliente.username }}{% if user.role == 'ADMIN' %} · {% if encargado %}{{ encargado.username }}{% else %}sin encargado{% endif %}{% endif %}{% endif %}
+                  {% endwith %}
+                </span>
+              </span>
+              <span class="order-last sm:order-none col-span-2 sm:col-span-1 flex items-center gap-2">
+                <span class="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden"><span class="block bg-sinergi-blue h-full" style="width: {{ p.porcentaje_avance }}%"></span></span>
+                <span class="text-[11px] font-mono text-slate-500 w-9 text-right">{{ p.porcentaje_avance }}%</span>
+              </span>
+              <span class="estado justify-self-end" data-estado="{{ p.estado }}">{{ p.estado }}</span>
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-8 text-center text-xs text-slate-500">
+          {% if user.role == 'CLIENTE' %}Aún no tienes obras vinculadas.
+          <a href="{% url 'proyectos:solicitar' %}" data-ventana class="text-sinergi-blue font-semibold hover:underline">Solicitar un proyecto &rarr;</a>
+          {% elif user.role == 'EMPLEADO' %}No tienes obras asignadas por ahora.
+          {% else %}No hay obras activas.{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Resumen por estado -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="px-5 py-3 bg-slate-50 border-b border-slate-200">
+        <h2 class="text-sm font-bold text-slate-900">Resumen</h2>
+      </div>
+      <div data-vivo="inicio-resumen" class="p-5 space-y-3 text-sm">
+        {% regroup proyectos|dictsort:"estado" by estado as por_estado %}
+        {% for grupo in por_estado %}
+        <div class="flex items-center justify-between gap-2">
+          <span class="estado" data-estado="{{ grupo.grouper }}">{{ grupo.grouper }}</span>
+          <span class="font-mono font-bold text-slate-900">{{ grupo.list|length }}</span>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-500 italic">Sin obras para resumir.</p>
+        {% endfor %}
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+          <span class="text-slate-600">Mensajes sin leer</span>
+          <span class="font-mono font-bold {% if peticiones_no_leidas %}text-sinergi-red{% else %}text-slate-900{% endif %}">{{ peticiones_no_leidas }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos: uno por opción del menú lateral (se arman abajo con JavaScript) -->
+  <div>
+    <h2 class="text-sm font-bold text-slate-900 mb-3">Accesos rápidos</h2>
+    <div id="inicio-accesos" class="inicio-accesos"></div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const PESTANA_PROYECTOS = "{{ pestana|escapejs }}";
+    const accesos = document.getElementById('inicio-accesos');
+    const menu = () => document.querySelectorAll('#portal-menu nav > .nav-btn:not([data-inicio]), #portal-menu nav > a');
+
+    // Un acceso por opción del menú: mismo ícono y nombre; al tocarlo hace lo mismo que la opción del menú
+    function armarAccesos() {
+      accesos.replaceChildren();
+      menu().forEach(opcion => {
+        const esEnlace = opcion.tagName === 'A';
+        const acceso = document.createElement(esEnlace ? 'a' : 'button');
+        acceso.className = 'inicio-acceso' + (esEnlace ? ' inicio-acceso-destacado' : '');
+        if (esEnlace) {
+          acceso.href = opcion.href;
+          if (opcion.hasAttribute('data-ventana')) acceso.dataset.ventana = opcion.dataset.ventana;
+        } else {
+          acceso.type = 'button';
+          acceso.addEventListener('click', () => { opcion.click(); window.scrollTo({top: 0}); });
+        }
+        const icono = document.createElement('span');
+        icono.className = 'inicio-acceso-icono';
+        const svg = opcion.querySelector('svg');
+        if (svg) {
+          const copia = svg.cloneNode(true);
+          copia.removeAttribute('class');
+          icono.append(copia);
+        } else {
+          icono.textContent = '+';
+        }
+        const contador = [...opcion.querySelectorAll('span')].find(s => s.style.display !== 'none' && /\d/.test(s.textContent));
+        const nombre = document.createElement('span');
+        nombre.textContent = [...opcion.childNodes].filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join(' ')
+          .replace(/\s+/g, ' ').trim().replace(/^\d+\.\s*/, '').replace(/^\+\s*/, '') || opcion.textContent.trim();
+        const pie = document.createElement('span');
+        pie.className = 'inicio-acceso-pie';
+        pie.textContent = 'Abrir →';
+        acceso.append(icono, nombre, pie);
+        if (contador) {
+          const marca = document.createElement('span');
+          marca.className = contador.classList.contains('badge-nuevo') ? 'badge-nuevo' : 'inicio-acceso-contador';
+          marca.textContent = contador.textContent.trim();
+          acceso.append(marca);
+        }
+        accesos.append(acceso);
+      });
+    }
+
+    armarAccesos();
+    // Al volver a Inicio se rearman (los contadores del menú se actualizan solos cada cierto tiempo)
+    const navInicio = document.querySelector('#portal-menu .nav-btn[data-inicio]');
+    if (navInicio) navInicio.addEventListener('click', armarAccesos);
+
+    // Clic en un proyecto: abre su pestaña, lo selecciona y lo resalta
+    document.addEventListener('click', e => {
+      const boton = e.target.closest('[data-inicio-proyecto]');
+      if (!boton) return;
+      const id = boton.dataset.inicioProyecto;
+      const nav = document.querySelector(`#portal-menu .nav-btn[onclick*="'${CSS.escape(PESTANA_PROYECTOS)}'"]`);
+      if (nav) nav.click();
+      if (typeof selectProjectCard === 'function') selectProjectCard(id);
+      if (typeof selectEmployeeProject === 'function') selectEmployeeProject(id);
+      const destino = document.querySelector(`[data-vivo="tarjeta-${id}"], [data-vivo="fila-${id}"]`);
+      if (destino) {
+        destino.scrollIntoView({block: 'center', behavior: 'smooth'});
+        destino.classList.remove('inicio-resaltar');
+        void destino.offsetWidth;  // reinicia la animación si se toca dos veces
+        destino.classList.add('inicio-resaltar');
+      }
+    });
+  })();
+</script>

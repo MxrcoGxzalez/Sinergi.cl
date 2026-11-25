@@ -1,10 +1,11 @@
 from django.urls import path, re_path
-from . import perfil, views
+from . import perfil, superadmin, views
 
 urlpatterns = [
     path('login/', views.vista_login, name='login'),
     path('login/2fa/', views.vista_2fa, name='login_2fa'),
     path('logout/', views.vista_logout, name='logout'),
+    path('vista/<str:rol>/', superadmin.cambiar_vista, name='cambiar_vista'),  # solo sesión SuperAdmin
     path('dashboard/', views.dashboard, name='dashboard'),
     path('perfil/', perfil.perfil, name='perfil'),
     path('perfil/2fa/', perfil.activar_2fa, name='activar_2fa'),

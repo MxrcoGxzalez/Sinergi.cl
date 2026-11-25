@@ -1,0 +1,12 @@
+{% autoescape off %}{{ titulo }}
+{% for p in parrafos %}
+{{ p }}
+{% endfor %}{% if detalle %}
+{% for fecha, texto in detalle %}- {{ fecha }}  {{ texto }}
+{% endfor %}{% endif %}{% if boton %}
+{{ boton.0 }}: {{ boton.1 }}
+{% endif %}
+--
+Sinergi · {{ sitio }}
+Este es un aviso automático de la plataforma; no respondas este correo.
+{% endautoescape %}

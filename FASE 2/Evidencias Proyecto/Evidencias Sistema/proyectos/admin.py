@@ -48,7 +48,7 @@ class SolicitudProyectoAdmin(admin.ModelAdmin):
 class MensajeInline(admin.TabularInline):
     model = MensajePeticion
     extra = 0
-    readonly_fields = ('autor', 'de_cliente', 'texto', 'interno', 'fecha')
+    readonly_fields = ('autor', 'de_cliente', 'texto', 'interno', 'fecha', 'editado_en', 'eliminado_en')
     can_delete = False
 
 class PeticionAdmin(admin.ModelAdmin):

@@ -205,3 +205,33 @@ git add .
 git commit -m "mensaje del cambio"
 git push
 ```
+
+---
+
+## 8. Actualización de noviembre 2026: qué hacer después del `git pull`
+
+Se agregaron verificación en dos pasos (2FA), "Mi perfil" (foto, datos, contraseña, verificación de correo), noticias internacionales de NFPA con API propia y actualización automática de noticias. El detalle está en `cambios_proyecto.md` (Partes 11 a 13).
+
+**Una sola vez, con Docker abierto:**
+
+```powershell
+git pull
+docker compose up --build
+```
+
+- `--build` es **obligatorio esta vez**: `requirements.txt` agregó `pyotp`, `qrcode` y `pillow`, y `docker-compose.yml` cambió.
+- Las migraciones nuevas (`usuarios` 0010 y 0011, `proyectos` 0014) se aplican solas al levantar `web`.
+- **El `.env` que ya tienen sigue sirviendo.** Todo lo nuevo tiene valores por defecto. Para tenerlo completo, comparen con `.env.example`, que trae nuevas las secciones de Celery y de correo.
+
+**Comprobar que todo funciona:**
+
+| Qué | Cómo |
+|---|---|
+| Los 7 servicios arriba (web, db, redis, celery-worker, celery-beat, clamav, respaldos) | `docker compose ps` |
+| Tests (deben pasar todos, también el que en SQLite falla) | `docker compose exec web python manage.py test` |
+| Tareas automáticas programadas | `docker compose logs celery-beat` → debe listar `actualizar-noticias` y `purgar-archivados` |
+| Noticias (Ley Chile, SEC y NFPA) | Abrir http://localhost:8000/#noticias. La primera vez aparecen al minuto, cuando el worker termina de descargarlas. |
+| API de noticias | http://localhost:8000/api/noticias/ |
+| 2FA y Mi perfil | Iniciar sesión → clic en el avatar (arriba a la derecha) → "Activar 2FA" |
+| Envío real de correos (opcional) | Completar `EMAIL_*` en `.env` (ver `.env.example`), `docker compose up -d` y luego `docker compose exec web python manage.py sendtestemail su@correo.cl` |
+| Títulos de NFPA en español (opcional) | Poner `LLM_API_KEY` en `.env` (la misma clave del chatbot) |

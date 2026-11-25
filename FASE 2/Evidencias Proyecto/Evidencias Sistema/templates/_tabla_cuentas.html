@@ -3,7 +3,7 @@
 <div class="space-y-3">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <h2 class="text-sm font-bold text-slate-900">{{ titulo }} <span class="font-mono text-xs text-slate-400">({{ cuentas|length }})</span></h2>
-    <a href="{% url 'crear_usuario' tipo %}{% if rol %}?rol={{ rol }}{% endif %}" class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-3.5 py-1.5 rounded shadow-sm">
+    <a href="{% url 'crear_usuario' tipo %}{% if rol %}?rol={{ rol }}{% endif %}" data-ventana class="bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-3.5 py-1.5 rounded shadow-sm">
       + {{ boton }}
     </a>
   </div>
@@ -38,7 +38,7 @@
           </td>
           <td class="p-3.5 text-right">
             <div class="flex flex-wrap items-center md:justify-end gap-1">
-            <a href="{% url 'editar_usuario' tipo u.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
+            <a href="{% url 'editar_usuario' tipo u.id %}" data-ventana class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a>
             <form method="POST" action="{% url 'eliminar_usuario' tipo u.id %}" class="inline" onsubmit="return confirm('¿Eliminar la cuenta {{ u.username|escapejs }}? Esta acción no se puede deshacer.')">
               {% csrf_token %}
               <button type="submit" class="text-xs text-red-600 hover:bg-red-50 border border-red-200 px-2 py-1 rounded font-medium">Eliminar</button>

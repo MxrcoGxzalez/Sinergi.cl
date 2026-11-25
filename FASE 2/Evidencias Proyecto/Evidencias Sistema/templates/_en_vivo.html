@@ -1,0 +1,56 @@
+<!-- Actualización automática de los paneles (Definición 2.2: estado y avance de hitos cada ~3 s, sin recargar).
+     1. Cada 3 s pide la huella de cada proyecto (proyectos:firmas): una consulta liviana que solo devuelve JSON.
+     2. Si cambió la de algún proyecto, pide este mismo panel en segundo plano y reemplaza el contenido de los
+        elementos marcados con data-vivo="..." por el nuevo. Nada más se toca: la pestaña abierta, el proyecto
+        seleccionado, los filtros y los formularios a medio llenar quedan como estaban.
+     3. Si aparece o desaparece un proyecto, muestra un aviso para recargar en vez de reordenar la página sola.
+     No consulta con la pestaña oculta, y si el usuario está escribiendo dentro de una zona, espera. -->
+<div id="aviso-en-vivo" hidden role="status"
+     class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg">
+  Hay cambios en los proyectos.
+  <button type="button" onclick="location.reload()" class="ml-2 font-semibold underline">Actualizar</button>
+</div>
+<script>
+  (function () {
+    const URL_FIRMAS = "{% url 'proyectos:firmas' %}";
+    const INTERVALO = 3000;
+    let firmas = null, ocupado = false, temporizador = null;
+
+    async function refrescar() {
+      const activo = document.activeElement;
+      if (activo && activo.closest('[data-vivo]') && activo.matches('input, textarea, select')) return false;
+      const r = await fetch(location.href, {cache: 'no-store', headers: {'X-En-Vivo': '1'}});
+      if (!r.ok || r.redirected) return false;
+      const nueva = new DOMParser().parseFromString(await r.text(), 'text/html');
+      nueva.querySelectorAll('[data-vivo]').forEach(zona => {
+        const actual = document.querySelector(`[data-vivo="${CSS.escape(zona.dataset.vivo)}"]`);
+        if (!actual) return;
+        if (actual.innerHTML !== zona.innerHTML) actual.innerHTML = zona.innerHTML;
+        if (zona.dataset.status !== undefined) actual.dataset.status = zona.dataset.status;  // filtros por estado
+      });
+      return true;
+    }
+
+    async function revisar() {
+      if (document.hidden || ocupado) return;
+      ocupado = true;
+      try {
+        const r = await fetch(URL_FIRMAS, {cache: 'no-store', headers: {Accept: 'application/json'}});
+        if (r.redirected) { clearInterval(temporizador); return; }  // sesión cerrada: deja de consultar
+        if (!r.ok) return;
+        const nuevas = (await r.json()).firmas;
+        if (firmas === null) { firmas = nuevas; return; }
+        if (Object.keys(nuevas).sort().join() !== Object.keys(firmas).sort().join()) {
+          document.getElementById('aviso-en-vivo').hidden = false;
+          firmas = nuevas;
+        } else if (Object.keys(nuevas).some(id => nuevas[id] !== firmas[id]) && await refrescar()) {
+          firmas = nuevas;
+        }
+      } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
+      finally { ocupado = false; }
+    }
+
+    revisar();
+    temporizador = setInterval(revisar, INTERVALO);
+  })();
+</script>

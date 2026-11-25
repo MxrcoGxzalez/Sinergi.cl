@@ -4,8 +4,8 @@
 
 {% block content %}
 <!-- Conversación de una petición. Los mensajes se cargan y actualizan solos cada pocos segundos. -->
-<div class="max-w-3xl mx-auto">
-  <a href="{% url 'dashboard' %}?tab={% if user.role == 'ADMIN' %}chat-admin{% else %}chat{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver a Peticiones</a>
+<div class="max-w-3xl mx-auto" data-ventana-tipo="lateral">
+  <a data-fuera-ventana href="{% url 'dashboard' %}?tab={% if user.role == 'ADMIN' %}chat-admin{% else %}chat{% endif %}" class="text-xs text-slate-500 hover:underline">&larr; Volver a Peticiones</a>
 
   <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mt-2">
     <div class="min-w-0 break-words">
@@ -19,8 +19,19 @@
     <div class="flex items-center gap-2 self-start shrink-0">
       <span id="pet-estado" class="pet-estado" data-estado="{{ peticion.estado }}">{{ peticion.get_estado_display }}</span>
       {% if not es_cliente %}{% include '_estado_peticion.html' with p=peticion %}{% endif %}
+      <!-- Eliminar chat SOLO para mí (como WhatsApp): el otro lado la sigue viendo -->
+      <form method="POST" action="{% url 'proyectos:borrar_peticion' peticion.id %}" onsubmit="return confirm('¿Eliminar {{ peticion.codigo }} de tus conversaciones?\n\nSe elimina solo para ti: la otra parte la seguirá viendo completa. Si llega un mensaje nuevo, volverá a aparecer solo con lo nuevo.')">
+        {% csrf_token %}
+        <button type="submit" title="Eliminar esta conversación solo para mí" class="flex items-center gap-1 text-[11px] text-slate-500 hover:text-red-700 border border-slate-200 hover:border-red-300 rounded px-2 py-1 bg-white">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Eliminar chat
+        </button>
+      </form>
     </div>
   </div>
+
+  <p class="text-[11px] text-slate-400 mt-2">Si pasa {{ DIAS_CHAT }} días sin mensajes nuevos ni cambios de estado, esta conversación se elimina automáticamente.
+    Tus mensajes se pueden editar durante 15 minutos y eliminar para todos durante 48 horas (menú ⋯ de cada mensaje).</p>
 
   <div class="mt-4">{% include '_mensajes.html' %}</div>
 
@@ -35,7 +46,7 @@
     <div class="flex flex-wrap items-center justify-between gap-2">
       {% if not es_cliente %}
       <label class="flex items-center gap-2 text-[11px] text-slate-600 cursor-pointer">
-        <input type="checkbox" name="interno" value="1" class="accent-amber-600"> Nota interna (el cliente no la ve)
+        <input type="checkbox" name="correo" value="1" class="accent-[#1D5B8A]"> Enviar por correo electrónico
       </label>
       {% else %}<span></span>{% endif %}
       <div class="flex items-center gap-2 ml-auto">
@@ -61,33 +72,164 @@
 
 {% block extra_scripts %}
 <script>
+  // Conversación en vivo. Cada mensaje tiene un menú ⋯ (como WhatsApp): editar y eliminar para todos (solo
+  // los míos, con plazo; el servidor también lo controla) y eliminar para mí (cualquiera).
   (function () {
     const urlMensajes = "{% url 'proyectos:mensajes_peticion' peticion.id %}";
+    const urlEditar = "{% url 'proyectos:editar_mensaje' 0 %}";
+    const urlEliminar = "{% url 'proyectos:eliminar_mensaje' 0 %}";
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const caja = document.getElementById('pet-mensajes');
     const form = document.getElementById('pet-form');
-    const marcas = [];   // "Enviado / Leído" de mis mensajes
-    let ultimoId = 0, primeraCarga = true;
+    const abierta = !!form;
+    const marcas = new Map();   // "Enviado / Leído" de mis mensajes, por id
+    let ultimoId = 0, cambiosDesde = '', primeraCarga = true;
 
-    function pintar(m) {
+    const urlDe = (base, id) => base.replace('/0/', `/${id}/`);
+    const vigente = hasta => !!hasta && Date.now() < Date.parse(hasta);
+
+    async function enviar(url, datos) {
+      const cuerpo = new FormData();
+      cuerpo.append('csrfmiddlewaretoken', csrf);
+      Object.entries(datos).forEach(([k, v]) => cuerpo.append(k, v));
+      try {
+        const r = await fetch(url, {method: 'POST', body: cuerpo, headers: {Accept: 'application/json'}});
+        const d = await r.json();
+        if (!d.ok) { alert(d.error); return false; }
+        return true;
+      } catch (e) { alert('No se pudo completar. Revisa tu conexión.'); return false; }
+    }
+
+    function construir(m) {
       const div = document.createElement('div');
-      div.className = 'pet-msg ' + (m.propio ? 'pet-msg-propio' : 'pet-msg-otro') + (m.interno ? ' pet-msg-interno' : '');
+      div.dataset.id = m.id;
+      div.className = 'pet-msg ' + (m.propio ? 'pet-msg-propio' : 'pet-msg-otro') + (m.interno ? ' pet-msg-interno' : '')
+        + (m.eliminado ? ' pet-msg-eliminado' : '');
       const autor = document.createElement('span');
       autor.className = 'pet-msg-autor';
       autor.textContent = m.autor + (m.interno ? ' · NOTA INTERNA' : '');
       const texto = document.createElement('p');
       texto.className = 'whitespace-pre-line';
-      texto.textContent = m.texto;  // textContent: nunca se interpreta como HTML
+      texto.textContent = m.eliminado ? (m.mio ? 'Eliminaste este mensaje' : 'Se eliminó este mensaje') : m.texto;  // nunca HTML
       const pie = document.createElement('span');
       pie.className = 'pet-msg-pie';
-      pie.textContent = m.fecha_txt;
-      if (m.propio && !m.interno) {
+      pie.textContent = m.fecha_txt + (m.editado ? ' · editado' : '');
+      marcas.delete(m.id);
+      if (m.propio && !m.interno && !m.eliminado) {
         const estado = document.createElement('span');
         estado.dataset.fecha = m.fecha;
         pie.append(' · ', estado);
-        marcas.push(estado);
+        marcas.set(m.id, estado);
       }
-      div.append(autor, texto, pie);
-      caja.appendChild(div);
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.className = 'pet-msg-menu-btn';
+      boton.setAttribute('aria-label', 'Opciones del mensaje');
+      boton.setAttribute('aria-haspopup', 'menu');
+      boton.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+      boton.addEventListener('click', e => { e.stopPropagation(); abrirMenu(div, m, boton); });
+      div.append(boton, autor, texto, pie);
+      return div;
+    }
+
+    function cerrarMenus() {
+      document.querySelectorAll('.pet-msg-menu').forEach(menu => menu.remove());
+      document.querySelectorAll('.pet-msg-menu-btn[aria-expanded]').forEach(b => b.removeAttribute('aria-expanded'));
+    }
+
+    function abrirMenu(div, m, boton) {
+      const yaAbierto = div.querySelector('.pet-msg-menu');
+      cerrarMenus();
+      if (yaAbierto) return;
+      const menu = document.createElement('div');
+      menu.className = 'pet-msg-menu flex flex-col';
+      menu.setAttribute('role', 'menu');
+      const opcion = (nombre, accion, peligro) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'menuitem');
+        b.textContent = nombre;
+        b.className = 'block w-full text-left px-3 py-1.5' + (peligro ? ' pet-peligro' : '');
+        b.addEventListener('click', e => { e.stopPropagation(); cerrarMenus(); accion(); });
+        menu.append(b);
+      };
+      if (abierta && m.mio && !m.eliminado && vigente(m.editable_hasta)) opcion('Editar', () => editar(div, m));
+      if (abierta && m.mio && !m.eliminado && vigente(m.eliminable_hasta)) opcion('Eliminar para todos', () => eliminarParaTodos(m), true);
+      opcion('Eliminar para mí', () => eliminarParaMi(div, m), true);
+      boton.setAttribute('aria-expanded', 'true');
+      div.append(menu);
+      // Si no cabe bajo el mensaje (últimos mensajes de la caja), se abre hacia arriba
+      if (menu.getBoundingClientRect().bottom > caja.getBoundingClientRect().bottom) menu.classList.add('pet-msg-menu-arriba');
+      menu.querySelector('button').focus();
+    }
+    document.addEventListener('click', cerrarMenus);
+
+    function editar(div, m) {
+      const parrafo = div.querySelector('p');
+      const area = document.createElement('textarea');
+      area.className = 'pet-msg-editor';
+      area.maxLength = 3000;
+      area.rows = Math.min(8, m.texto.split('\n').length + 1);
+      area.value = m.texto;
+      const botones = document.createElement('div');
+      botones.className = 'pet-msg-editor-botones';
+      const cancelar = document.createElement('button');
+      cancelar.type = 'button';
+      cancelar.textContent = 'Cancelar';
+      const guardarBtn = document.createElement('button');
+      guardarBtn.type = 'button';
+      guardarBtn.className = 'pet-msg-guardar';
+      guardarBtn.textContent = 'Guardar';
+      botones.append(cancelar, guardarBtn);
+      div.classList.add('pet-msg-editando');
+      parrafo.replaceWith(area);
+      area.after(botones);
+      area.focus();
+      area.setSelectionRange(area.value.length, area.value.length);
+
+      const terminar = () => { area.replaceWith(parrafo); botones.remove(); div.classList.remove('pet-msg-editando'); };
+      const guardar = async () => {
+        const nuevo = area.value.trim();
+        if (!nuevo || nuevo === m.texto) { terminar(); return; }
+        if (await enviar(urlDe(urlEditar, m.id), {texto: nuevo})) {
+          terminar();
+          cargar();  // trae el mensaje editado (marcado "editado") para ambos lados
+        }
+      };
+      area.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); guardar(); }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); terminar(); }  // no cierra la ventana
+      });
+      cancelar.addEventListener('click', terminar);
+      guardarBtn.addEventListener('click', guardar);
+    }
+
+    async function eliminarParaTodos(m) {
+      if (!confirm('¿Eliminar este mensaje para todos?\n\nNadie podrá volver a leerlo: quedará "Se eliminó este mensaje".')) return;
+      if (await enviar(urlDe(urlEliminar, m.id), {para: 'todos'})) cargar();
+    }
+
+    async function eliminarParaMi(div, m) {
+      if (!confirm('¿Eliminar este mensaje solo para ti?\n\nLa otra parte lo seguirá viendo.')) return;
+      if (await enviar(urlDe(urlEliminar, m.id), {para: 'mi'})) {
+        div.remove();
+        marcas.delete(m.id);
+        mostrarVacio();
+      }
+    }
+
+    function mostrarVacio() {
+      const vacio = document.getElementById('pet-vacio');
+      const hay = caja.querySelector('.pet-msg');
+      if (!hay && !vacio) {
+        const p = document.createElement('p');
+        p.id = 'pet-vacio';
+        p.className = 'text-xs text-slate-400 italic';
+        p.textContent = 'No hay mensajes para mostrar.';
+        caja.append(p);
+      } else if (hay && vacio) {
+        vacio.remove();
+      }
     }
 
     function marcarLeidos(leidaOtro) {
@@ -101,19 +243,26 @@
 
     async function cargar() {
       try {
-        const r = await fetch(`${urlMensajes}?desde=${ultimoId}&visto=${document.hidden ? 0 : 1}`, {headers: {Accept: 'application/json'}});
+        const cambios = cambiosDesde ? `&cambios=${encodeURIComponent(cambiosDesde)}` : '';
+        const r = await fetch(`${urlMensajes}?desde=${ultimoId}&visto=${document.hidden ? 0 : 1}${cambios}`, {headers: {Accept: 'application/json'}});
         if (!r.ok) return;
         const datos = await r.json();
         const alFondo = caja.scrollHeight - caja.scrollTop - caja.clientHeight < 60;
         if (primeraCarga) document.getElementById('pet-cargando').remove();
-        datos.mensajes.forEach(m => { pintar(m); ultimoId = m.id; });
+        datos.mensajes.forEach(m => { caja.appendChild(construir(m)); ultimoId = Math.max(ultimoId, m.id); });
+        datos.cambiados.forEach(m => {  // editados o eliminados para todos (por mí o por el otro lado)
+          const actual = caja.querySelector(`.pet-msg[data-id="${m.id}"]`);
+          if (actual && !actual.classList.contains('pet-msg-editando')) actual.replaceWith(construir(m));
+        });
+        cambiosDesde = datos.ahora;
+        mostrarVacio();
         marcarLeidos(datos.leida_otro);
         const etiqueta = document.getElementById('pet-estado');
         etiqueta.textContent = datos.estado_display;
         etiqueta.dataset.estado = datos.estado;
         if (datos.mensajes.length && (alFondo || primeraCarga)) caja.scrollTop = caja.scrollHeight;
         primeraCarga = false;
-        if ((datos.estado === 'CERRADA') === !!form) location.reload();  // el otro lado la cerró o la reabrió
+        if ((datos.estado === 'CERRADA') === abierta) location.reload();  // el otro lado la cerró o la reabrió
       } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
     }
 

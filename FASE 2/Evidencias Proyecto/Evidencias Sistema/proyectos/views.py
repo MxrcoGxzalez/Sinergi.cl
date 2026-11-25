@@ -7,17 +7,21 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import BooleanField, Case, F, Max, Q, When
+from django.db.models import BooleanField, Case, Count, F, Max, OuterRef, Q, Subquery, When
 from django.http import FileResponse, Http404, JsonResponse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_POST
 
+from sinergi.seguridad import ventana_interna
 from usuarios.forms import ClienteExistenteForm, ClienteNuevoForm
 from usuarios.models import Cliente, Empresa
+from . import notificaciones
 from .forms import (DocumentoForm, FaseForm, PeticionForm, PortafolioForm, ProyectoForm, SolicitudPortalForm,
                     SubfaseForm)
-from .models import Documento, Fase, Peticion, Proyecto, RegistroActividad, SolicitudProyecto, Subfase
+from .models import (Documento, Fase, MensajePeticion, Peticion, PeticionBorrada, Proyecto, RegistroActividad,
+                     SolicitudProyecto, Subfase)
 
 log = logging.getLogger('sinergi.seguridad')
 
@@ -165,6 +169,7 @@ def _volver_solicitudes():
     return redirect(f"{reverse('dashboard')}?tab=solicitudes-proyectos")
 
 
+@ventana_interna
 @login_required(login_url='login')
 def solicitar_proyecto(request):
     """Portal cliente: pedir otro proyecto con la cuenta ya creada."""
@@ -196,6 +201,7 @@ def solicitar_proyecto(request):
     })
 
 
+@ventana_interna
 @login_required(login_url='login')
 @transaction.atomic
 def asignar_cliente_solicitud(request, solicitud_id):
@@ -273,16 +279,31 @@ def con_no_leidas(qs, usuario):
     ))
 
 
+def sin_borradas(qs, usuario):
+    """Quita las conversaciones que ESTE usuario eliminó para sí (Peticion.borrar_para), salvo que tengan
+    mensajes posteriores: entonces reaparecen (y en el chat solo se ve lo nuevo), como en WhatsApp."""
+    if usuario.role == 'CLIENTE':
+        hasta, visibles = F('borrada_cliente_hasta'), Q(mensajes__interno=False)
+    else:
+        hasta = Subquery(PeticionBorrada.objects.filter(peticion=OuterRef('pk'), usuario=usuario).values('hasta')[:1])
+        visibles = None
+    qs = qs.annotate(borrada_hasta=hasta, ultimo_mensaje=Max('mensajes__fecha', filter=visibles))
+    return qs.exclude(Q(borrada_hasta__isnull=False)
+                      & (Q(ultimo_mensaje__isnull=True) | Q(ultimo_mensaje__lte=F('borrada_hasta'))))
+
+
 def _bandeja(usuario):
     """Peticiones agrupadas por proyecto (para `{% regroup %}`): primero el proyecto con actividad
     más reciente y, dentro de cada uno, de la más reciente a la más antigua."""
-    peticiones = list(con_no_leidas(peticiones_visibles(usuario).select_related('proyecto', 'cliente__empresa'), usuario))
+    peticiones = list(con_no_leidas(sin_borradas(peticiones_visibles(usuario), usuario)
+                                    .select_related('proyecto', 'cliente__empresa'), usuario))
     orden = {}
     for p in peticiones:
         orden.setdefault(p.proyecto_id, len(orden))
     return sorted(peticiones, key=lambda p: orden[p.proyecto_id])
 
 
+@ventana_interna
 @login_required(login_url='login')
 def nueva_peticion(request):
     initial = {}
@@ -315,6 +336,7 @@ def nueva_peticion(request):
     })
 
 
+@ventana_interna
 @login_required(login_url='login')
 def detalle_peticion(request, peticion_id):
     peticion = get_object_or_404(peticiones_visibles(request.user).select_related('proyecto', 'cliente__empresa'), id=peticion_id)
@@ -328,8 +350,9 @@ def detalle_peticion(request, peticion_id):
             error = 'Escribe un mensaje.'
         else:
             error = None
-            peticion.mensajes.create(autor=_personal(request.user), de_cliente=es_cliente, texto=texto,
-                                     interno=not es_cliente and request.POST.get('interno') == '1')
+            mensaje = peticion.mensajes.create(autor=_personal(request.user), de_cliente=es_cliente, texto=texto)
+            if not es_cliente and request.POST.get('correo') == '1':  # casilla "Enviar por correo electrónico"
+                notificaciones.avisar_mensaje(mensaje)
             if not es_cliente and peticion.estado == Peticion.ABIERTA:
                 peticion.estado = Peticion.EN_PROCESO
             peticion.ultima_actividad = timezone.now()
@@ -354,10 +377,14 @@ def mensajes_peticion(request, peticion_id):
     if request.GET.get('visto') == '1':
         peticion.marcar_leida(request.user)
 
+    ahora = timezone.now()  # antes de consultar: lo que cambie durante la consulta sale en la próxima
     desde = request.GET.get('desde', '0')
-    mensajes = peticion.mensajes.filter(id__gt=int(desde) if desde.isdigit() else 0).select_related('autor')
-    if es_cliente:
-        mensajes = mensajes.filter(interno=False)
+    desde = int(desde) if desde.isdigit() else 0
+    visibles = _mensajes_visibles(peticion, request.user)
+    mensajes = visibles.filter(id__gt=desde)
+    # Editados o eliminados para todos desde la consulta anterior (mensajes que el chat ya muestra)
+    cambios = parse_datetime(request.GET.get('cambios', ''))
+    cambiados = visibles.filter(id__lte=desde, actualizado_en__gt=cambios) if cambios else []
 
     def autor(m):
         cuenta = peticion.cliente if m.de_cliente else m.autor
@@ -366,17 +393,109 @@ def mensajes_peticion(request, peticion_id):
         nombre = cuenta.get_full_name() or cuenta.username
         return nombre if m.de_cliente else f'{nombre} · Sinergi'
 
+    def datos(m):
+        mio = m.es_de(request.user) and not m.eliminado_en
+        return {
+            'id': m.id, 'texto': '' if m.eliminado_en else m.texto, 'autor': autor(m), 'interno': m.interno,
+            'propio': m.de_cliente == es_cliente,  # de mi lado de la conversación (a la derecha)
+            'mio': m.es_de(request.user),  # lo escribí yo: puedo editarlo o eliminarlo para todos (con plazo)
+            'eliminado': bool(m.eliminado_en), 'editado': bool(m.editado_en) and not m.eliminado_en,
+            'editable_hasta': m.editable_hasta.isoformat() if mio else None,
+            'eliminable_hasta': m.eliminable_hasta.isoformat() if mio else None,
+            'fecha': m.fecha.isoformat(), 'fecha_txt': timezone.localtime(m.fecha).strftime('%d-%m-%Y %H:%M'),
+        }
+
     leida_otro = peticion.leida_sinergi_en if es_cliente else peticion.leida_cliente_en
     return JsonResponse({
         'estado': peticion.estado,
         'estado_display': peticion.get_estado_display(),
         'leida_otro': leida_otro.isoformat() if leida_otro else None,
-        'mensajes': [{
-            'id': m.id, 'texto': m.texto, 'autor': autor(m), 'interno': m.interno,
-            'propio': m.de_cliente == es_cliente, 'fecha': m.fecha.isoformat(),
-            'fecha_txt': timezone.localtime(m.fecha).strftime('%d-%m-%Y %H:%M'),
-        } for m in mensajes],
+        'ahora': ahora.isoformat(),
+        'mensajes': [datos(m) for m in mensajes],
+        'cambiados': [datos(m) for m in cambiados],
     })
+
+
+def _mensajes_visibles(peticion, usuario):
+    """Lo que ESTE usuario ve de la conversación: sin notas internas (cliente), sin lo que eliminó solo para
+    sí y sin lo anterior a cuando eliminó el chat."""
+    qs = peticion.mensajes.select_related('autor')
+    if usuario.role == 'CLIENTE':
+        qs = qs.filter(interno=False, oculto_cliente=False)
+    else:
+        qs = qs.exclude(ocultos_para=usuario)
+    hasta = peticion.borrada_hasta(usuario)
+    return qs.filter(fecha__gt=hasta) if hasta else qs
+
+
+def _mensaje_visible(request, mensaje_id):
+    qs = MensajePeticion.objects.select_related('peticion').filter(peticion__in=peticiones_visibles(request.user))
+    if request.user.role == 'CLIENTE':
+        qs = qs.filter(interno=False)
+    return get_object_or_404(qs, id=mensaje_id)
+
+
+def _respuesta(error):
+    return JsonResponse({'ok': not error, 'error': error}, status=400 if error else 200)
+
+
+@login_required(login_url='login')
+@require_POST
+def editar_mensaje(request, mensaje_id):
+    """Editar un mensaje propio (como WhatsApp): solo su autor, durante EDITAR_MINUTOS y con la petición abierta."""
+    mensaje = _mensaje_visible(request, mensaje_id)
+    texto = request.POST.get('texto', '').strip()[:3000]
+    if not mensaje.es_de(request.user) or mensaje.eliminado_en:
+        error = 'Solo puedes editar tus propios mensajes.'
+    elif mensaje.peticion.estado == Peticion.CERRADA:
+        error = 'La petición está cerrada.'
+    elif timezone.now() > mensaje.editable_hasta:
+        error = f'Un mensaje solo se puede editar durante {MensajePeticion.EDITAR_MINUTOS} minutos después de enviarlo.'
+    elif not texto:
+        error = 'El mensaje no puede quedar vacío.'
+    else:
+        error = None
+        if texto != mensaje.texto:
+            mensaje.texto, mensaje.editado_en = texto, timezone.now()
+            mensaje.save(update_fields=['texto', 'editado_en', 'actualizado_en'])
+    return _respuesta(error)
+
+
+@login_required(login_url='login')
+@require_POST
+def eliminar_mensaje(request, mensaje_id):
+    """Eliminar un mensaje (como WhatsApp).
+    para=todos: solo su autor, durante ELIMINAR_HORAS y con la petición abierta; el texto se borra y ambos
+    lados ven "Se eliminó este mensaje". para=mi: cualquiera, cualquier mensaje; desaparece solo para él."""
+    mensaje = _mensaje_visible(request, mensaje_id)
+    error = None
+    if request.POST.get('para') == 'todos':
+        if not mensaje.es_de(request.user) or mensaje.eliminado_en:
+            error = 'Solo puedes eliminar para todos tus propios mensajes.'
+        elif mensaje.peticion.estado == Peticion.CERRADA:
+            error = 'La petición está cerrada.'
+        elif timezone.now() > mensaje.eliminable_hasta:
+            error = f'Un mensaje solo se puede eliminar para todos durante {MensajePeticion.ELIMINAR_HORAS} horas.'
+        else:
+            mensaje.texto, mensaje.eliminado_en = '', timezone.now()
+            mensaje.save(update_fields=['texto', 'eliminado_en', 'actualizado_en'])
+    elif request.user.role == 'CLIENTE':
+        mensaje.oculto_cliente = True
+        mensaje.save(update_fields=['oculto_cliente'])
+    else:
+        mensaje.ocultos_para.add(request.user)
+    return _respuesta(error)
+
+
+@ventana_interna
+@login_required(login_url='login')
+@require_POST
+def borrar_peticion(request, peticion_id):
+    """Eliminar chat SOLO para mí (Peticion.borrar_para). El otro lado sigue viendo la conversación completa."""
+    peticion = get_object_or_404(peticiones_visibles(request.user), id=peticion_id)
+    peticion.borrar_para(request.user)
+    messages.success(request, f'{peticion.codigo} se eliminó de tus conversaciones. La otra parte la sigue viendo.')
+    return redirect(f"{reverse('dashboard')}?tab={'chat-admin' if request.user.role == 'ADMIN' else 'chat'}")
 
 
 @login_required(login_url='login')
@@ -407,7 +526,8 @@ def estado_peticion(request, peticion_id):
 @require_GET
 def peticiones_no_leidas(request):
     """Contador para el aviso del menú (los paneles lo consultan cada 30 s)."""
-    total = con_no_leidas(peticiones_visibles(request.user), request.user).filter(no_leida=True).count()
+    total = con_no_leidas(sin_borradas(peticiones_visibles(request.user), request.user),
+                          request.user).filter(no_leida=True).count()
     return JsonResponse({'no_leidas': total})
 
 
@@ -484,6 +604,7 @@ def diagrama_proyecto(request, proyecto_id):
     })
 
 
+@ventana_interna
 @login_required(login_url='login')
 def fase_form(request, proyecto_id, fase_id=None):
     proyecto = get_object_or_404(_proyectos_editables(request.user), id=proyecto_id)
@@ -507,6 +628,7 @@ def fase_form(request, proyecto_id, fase_id=None):
     })
 
 
+@ventana_interna
 @login_required(login_url='login')
 def subfase_form(request, fase_id, subfase_id=None):
     fase = get_object_or_404(Fase.objects.filter(proyecto__in=_proyectos_editables(request.user)).select_related('proyecto'),
@@ -573,6 +695,32 @@ def cargar_fases_estandar(request, proyecto_id):
         proyecto.recalcular_avance(request.user, 'Fases estándar cargadas')
         messages.success(request, 'Fases estándar cargadas. Ajústalas, agrega subfases o quita las que no apliquen.')
     return _volver_control(proyecto.id)
+
+
+# ==================== ESTADO EN VIVO (polling, Definición sección 2.2) ====================
+# Los paneles consultan `firmas_proyectos` cada 3 s. Si la huella de un proyecto cambió, el navegador
+# vuelve a pedir el panel y reemplaza solo las partes marcadas con data-vivo (ver _en_vivo.html).
+
+def proyectos_visibles(usuario):
+    if usuario.role == 'CLIENTE':
+        return Proyecto.objects.activos().filter(cliente=usuario)
+    return _proyectos_editables(usuario)
+
+
+@login_required(login_url='login')
+@require_GET
+def firmas_proyectos(request):
+    """Huella de cada proyecto visible para el usuario. Cambia con todo lo que se ve en los paneles:
+    datos del proyecto (actualizado_en), estado, fases y subfases (cada cambio deja una anotación en la
+    bitácora) y documentos (subidos o eliminados). Es una consulta liviana: no arma ningún HTML."""
+    filas = proyectos_visibles(request.user).annotate(
+        bitacora=Max('actualizaciones__id'), ultimo_doc=Max('documentos__id'),
+        n_docs=Count('documentos', distinct=True),
+    ).values_list('id', 'actualizado_en', 'bitacora', 'ultimo_doc', 'n_docs')
+    return JsonResponse({'firmas': {
+        str(pk): f'{actualizado.timestamp()}:{bitacora or 0}:{ultimo_doc or 0}:{n_docs}'
+        for pk, actualizado, bitacora, ultimo_doc, n_docs in filas
+    }})
 
 
 @login_required(login_url='login')

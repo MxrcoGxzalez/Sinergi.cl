@@ -425,6 +425,9 @@ class Peticion(models.Model):
     # Marca "leído": cuándo vio la conversación por última vez cada lado
     leida_cliente_en = models.DateTimeField(null=True, blank=True)
     leida_sinergi_en = models.DateTimeField(null=True, blank=True)
+    # "Eliminar chat" del cliente: deja de ver la conversación y los mensajes hasta esa fecha (solo él).
+    # Para el personal, cada uno tiene su propia marca en PeticionBorrada.
+    borrada_cliente_hasta = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ['-ultima_actividad']
@@ -440,12 +443,46 @@ class Peticion(models.Model):
         setattr(self, campo, timezone.now())
         self.save(update_fields=[campo])
 
+    def borrada_hasta(self, usuario):
+        """Hasta cuándo eliminó este usuario la conversación (None si nunca). Solo afecta a ese usuario."""
+        if usuario.role == 'CLIENTE':
+            return self.borrada_cliente_hasta
+        return self.borradas.filter(usuario=usuario).values_list('hasta', flat=True).first()
+
+    def borrar_para(self, usuario):
+        """Eliminar chat (como WhatsApp): desaparece de la bandeja de ESTE usuario con todo lo conversado hasta
+        ahora. El otro lado la sigue viendo completa. Si llega un mensaje nuevo, reaparece solo con lo nuevo."""
+        ahora = timezone.now()
+        if usuario.role == 'CLIENTE':
+            self.borrada_cliente_hasta = ahora
+            self.save(update_fields=['borrada_cliente_hasta'])
+        else:
+            PeticionBorrada.objects.update_or_create(peticion=self, usuario=usuario, defaults={'hasta': ahora})
+        self.marcar_leida(usuario)
+
     def __str__(self):
         return f"{self.codigo} {self.asunto}"
 
 
+class PeticionBorrada(models.Model):
+    """"Eliminar chat" de una persona del personal (ver Peticion.borrar_para): la conversación desaparece solo
+    para ella. Una fila por persona y petición; `hasta` se mueve si la vuelve a eliminar."""
+    peticion = models.ForeignKey(Peticion, on_delete=models.CASCADE, related_name='borradas')
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    hasta = models.DateTimeField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['peticion', 'usuario'], name='peticion_borrada_unica')]
+
+
 class MensajePeticion(models.Model):
-    """Mensaje de una petición. No se editan ni se borran: son el registro de lo conversado."""
+    """Mensaje de una petición. Como en WhatsApp, su autor puede:
+    - editarlo durante EDITAR_MINUTOS (queda marcado "editado"),
+    - eliminarlo para todos durante ELIMINAR_HORAS (queda "Se eliminó este mensaje" y el texto se borra),
+    y cualquiera puede eliminar un mensaje solo para sí (oculto_cliente / ocultos_para)."""
+    EDITAR_MINUTOS = 15
+    ELIMINAR_HORAS = 48
+
     peticion = models.ForeignKey(Peticion, on_delete=models.CASCADE, related_name='mensajes')
     # Personal que lo escribió. Si de_cliente, el autor es el cliente de la petición (peticion.cliente)
     autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+')
@@ -453,11 +490,32 @@ class MensajePeticion(models.Model):
     texto = models.TextField(max_length=3000)
     interno = models.BooleanField(default=False, verbose_name="Nota interna (el cliente no la ve)")
     fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+    editado_en = models.DateTimeField(null=True, blank=True, editable=False)
+    eliminado_en = models.DateTimeField(null=True, blank=True, editable=False)  # eliminado para todos
+    # Cambia con cada edición o eliminación: el chat abierto consulta lo cambiado desde su última consulta
+    actualizado_en = models.DateTimeField(auto_now=True, db_index=True)
+    # Eliminado solo para mí: el cliente de la petición o cada persona del personal que lo ocultó
+    oculto_cliente = models.BooleanField(default=False, editable=False)
+    ocultos_para = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='+', editable=False)
 
     class Meta:
         ordering = ['fecha', 'id']
         verbose_name = "Mensaje de Petición"
         verbose_name_plural = "Mensajes de Peticiones"
+
+    def es_de(self, usuario):
+        """¿Lo escribió este usuario? (los del cliente no tienen autor: es el cliente de la petición)"""
+        if usuario.role == 'CLIENTE':
+            return self.de_cliente
+        return not self.de_cliente and self.autor_id == usuario.pk
+
+    @property
+    def editable_hasta(self):
+        return self.fecha + timedelta(minutes=self.EDITAR_MINUTOS)
+
+    @property
+    def eliminable_hasta(self):
+        return self.fecha + timedelta(hours=self.ELIMINAR_HORAS)
 
 
 # ==================== REGISTRO DE ACTIVIDAD (auditoría) ====================

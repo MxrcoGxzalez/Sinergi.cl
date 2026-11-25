@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}?v={{ VERSION_CSS }}">
   <link rel="icon" type="image/png" href="{% static 'loader.png' %}">
 </head>
 <body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
@@ -62,7 +62,11 @@
 
       <!-- Menú de Navegación del Administrador -->
       <nav class="flex flex-col gap-1 text-sm font-medium">
-        <button onclick="switchAdminTab('perfil', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+        <button data-inicio onclick="switchAdminTab('inicio', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+          Inicio
+        </button>
+        <button onclick="switchAdminTab('perfil', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
           1. Mi Perfil (Admin)
         </button>
@@ -109,6 +113,12 @@
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           9. Registro de Actividad
         </button>
+
+        <button onclick="switchAdminTab('noticias', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5"/></svg>
+          10. Noticias
+          {% if noticias_ocultas %}<span class="ml-auto text-[10px] font-mono text-slate-500">{{ noticias_ocultas }} oculta{{ noticias_ocultas|pluralize }}</span>{% endif %}
+        </button>
       </nav>
 
       <div class="mt-auto pt-4 border-t border-slate-200 space-y-3">
@@ -130,10 +140,12 @@
 
       {% include '_mensajes.html' %}
 
+      {% include '_inicio.html' with pestana='supervision-hitos' %}
+
       <!-- ======================================================== -->
       <!-- VISTA 1: MI PERFIL (ADMINISTRADOR)                       -->
       <!-- ======================================================== -->
-      <section id="view-perfil" class="tab-content block space-y-6">
+      <section id="view-perfil" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200">
           <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Perfil de Administración</h1>
           <p class="text-sm text-slate-500 mt-1">Configuración del dueño/administrador de Sinergi con privilegios de gestión total.</p>
@@ -215,7 +227,7 @@
             {% if sol.origen == 'PORTAL' %}
             <a href="{% url 'proyectos:crear' %}?solicitud={{ sol.id }}" class="text-center bg-sinergi-blue hover:bg-sky-800 text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Crear Proyecto (cliente {{ sol.cliente.username }})</a>
             {% else %}
-            <a href="{% url 'proyectos:asignar_solicitud' sol.id %}" class="text-center bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Asignar Cliente y Aprobar</a>
+            <a href="{% url 'proyectos:asignar_solicitud' sol.id %}" data-ventana="ancha" class="text-center bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">Asignar Cliente y Aprobar</a>
             {% endif %}
             <form method="POST" action="{% url 'proyectos:rechazar_solicitud' sol.id %}" class="flex gap-2 flex-1 min-w-0" onsubmit="return confirm('¿Rechazar la solicitud SOL-{{ sol.id }}?')">
               {% csrf_token %}
@@ -304,7 +316,7 @@
         </div>
 
         <!-- Indicadores Clave (KPIs) -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div data-vivo="indicadores" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white border border-slate-200 border-l-4 border-l-slate-900 p-4 rounded-lg shadow-sm">
             <span class="font-mono text-[10px] uppercase font-bold text-slate-500">Clientes Activos</span>
             <p class="text-3xl font-black text-slate-900 mt-1">{{ total_clientes }}</p>
@@ -340,7 +352,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 text-slate-900">
                 {% for proyecto in proyectos %}
-                <tr class="hover:bg-slate-50">
+                <tr data-vivo="fila-{{ proyecto.id }}" class="hover:bg-slate-50">
                   <td class="px-5 py-3.5">
                     <div class="font-mono text-[10px] text-slate-400">SNG-{{ proyecto.id }}{% if proyecto.es_nuevo %} <span class="badge-nuevo">NUEVO</span>{% endif %}</div>
                     <a href="{% url 'proyectos:control' proyecto.id %}" class="font-bold hover:text-sinergi-blue hover:underline">{{ proyecto.nombre }}</a>
@@ -401,7 +413,7 @@
           </div>
 
           <div class="p-5">
-            <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
+            <div data-vivo="docs-{{ proyecto.id }}" class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
               {% for doc in proyecto.documentos.all %}
               <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
                 <div class="flex items-start gap-3 min-w-0">
@@ -447,7 +459,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Empresas Mandantes</h1>
             <p class="text-sm text-slate-500 mt-1">Registro de las empresas cliente. No se eliminan: se desactivan para conservar el historial de sus proyectos.</p>
           </div>
-          <a href="{% url 'crear_empresa' %}" class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">+ Registrar Empresa</a>
+          <a href="{% url 'crear_empresa' %}" data-ventana class="self-start sm:self-auto bg-sinergi-red hover:bg-sinergi-red-hover text-white text-xs font-semibold px-4 py-2 rounded shadow-sm">+ Registrar Empresa</a>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
           <table class="tabla-responsive w-full text-left border-collapse text-xs">
@@ -471,7 +483,7 @@
                 <td class="px-4 py-3 font-mono">{{ e.n_clientes }}</td>
                 <td class="px-4 py-3 font-mono">{{ e.n_proyectos }}</td>
                 <td class="px-4 py-3">{% if e.activa %}<span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Activa</span>{% else %}<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded">Inactiva</span>{% endif %}</td>
-                <td class="px-4 py-3 text-right"><a href="{% url 'editar_empresa' e.id %}" class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a></td>
+                <td class="px-4 py-3 text-right"><a href="{% url 'editar_empresa' e.id %}" data-ventana class="text-xs text-sinergi-blue hover:underline bg-slate-100 px-2 py-1 rounded">Editar</a></td>
               </tr>
               {% empty %}
               <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 italic">No hay empresas registradas.</td></tr>
@@ -530,6 +542,55 @@
         </div>
       </section>
 
+      <!-- ======================================================== -->
+      <!-- VISTA 10: CURADURÍA DE NOTICIAS                          -->
+      <!-- ======================================================== -->
+      <section id="view-noticias" class="tab-content hidden space-y-6">
+        <div class="pb-4 border-b border-slate-200">
+          <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Noticias de la Portada</h1>
+          <p class="text-sm text-slate-500 mt-1">Feed automático (se renueva a las 0, 6, 12 y 18 h). Oculta las noticias que no sirvan: dejan de verse en la portada y en la API pública, y su lugar lo toma la siguiente. Puedes volver a mostrarlas cuando quieras.</p>
+          <p class="font-mono text-[11px] text-slate-400 mt-1">Última actualización: {{ noticias_actualizado|date:"d M Y H:i"|default:"aún no hay" }}</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
+          <table class="tabla-responsive w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-mono text-slate-500 uppercase border-b border-slate-200">
+                <th class="px-4 py-3">Fecha</th>
+                <th class="px-4 py-3">Fuente</th>
+                <th class="px-4 py-3">Noticia</th>
+                <th class="px-4 py-3 text-right">En la portada</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for n in noticias_feed %}
+              <tr class="{% if n.oculta %}bg-slate-50 text-slate-400{% endif %}">
+                <td class="px-4 py-2.5 font-mono text-[11px] whitespace-nowrap">{{ n.fecha|date:"d M Y" }}</td>
+                <td class="px-4 py-2.5"><span class="bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded whitespace-nowrap">{{ n.etiqueta|default:n.fuente }}</span></td>
+                <td class="px-4 py-2.5">
+                  <a href="{{ n.url }}" target="_blank" rel="noopener noreferrer" class="font-medium {% if n.oculta %}line-through{% else %}text-slate-900{% endif %} hover:underline">{{ n.titulo }}</a>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <form method="POST" action="{% url 'curar_noticia' %}" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="url" value="{{ n.url }}">
+                    {% if n.oculta %}
+                    <input type="hidden" name="accion" value="mostrar">
+                    <button type="submit" class="text-xs text-emerald-700 hover:bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded font-medium whitespace-nowrap">Mostrar otra vez</button>
+                    {% else %}
+                    <input type="hidden" name="accion" value="ocultar">
+                    <button type="submit" class="text-xs text-slate-600 hover:bg-slate-100 border border-slate-300 px-2.5 py-1 rounded font-medium">Ocultar</button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500 italic">Aún no hay noticias descargadas. Aparecen solas en la próxima actualización automática.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -551,6 +612,8 @@
     if (tabInicial) switchAdminTab(tabInicial, document.querySelector(`.nav-btn[onclick*="'${CSS.escape(tabInicial)}'"]`));
 
   </script>
+  {% include '_en_vivo.html' %}
+  {% include '_ventana.html' %}
 {% include '_portal_responsivo.html' %}
 </body>
 </html>

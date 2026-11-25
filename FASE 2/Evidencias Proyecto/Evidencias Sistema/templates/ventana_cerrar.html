@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<!-- Respuesta a un formulario guardado desde la ventana sobrepuesta (ver ventana_interna en sinergi/seguridad.py).
+     La ventana (_ventana.html) lee el destino, se cierra y lleva el panel completo ahí. Sin ventana, redirige. -->
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Guardado | Sinergi</title>
+</head>
+<body>
+  {{ destino|json_script:"ventana-destino" }}
+  <script>
+    if (window.top === window.self) location.replace(JSON.parse(document.getElementById('ventana-destino').textContent));
+  </script>
+  <noscript><a href="{{ destino }}">Continuar</a></noscript>
+</body>
+</html>

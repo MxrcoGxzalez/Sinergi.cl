@@ -12,10 +12,17 @@ Internacional:
 - NFPA (National Fire Protection Association, EE. UU.): artículos técnicos de su blog y del NFPA Journal.
   NFPA no tiene API ni RSS vigente; se usa su sitemap público (pensado para ser leído por programas)
   y de cada artículo solo el título, la bajada y la fecha. El enlace lleva al artículo original.
-  Los títulos se traducen al español con el mismo proveedor de IA del chatbot (si está configurado).
+- HVAC y sanitaria (NFPA no los cubre): Consulting-Specifying Engineer (CSE, EE. UU.) y CIBSE Journal
+  (Chartered Institution of Building Services Engineers, Reino Unido), revistas técnicas de ingeniería de
+  instalaciones de edificios. Ambas publican RSS y su robots.txt permite leerlo. De cada artículo se usa el
+  título, la bajada y la fecha del propio RSS (no se descargan páginas). Solo pasan los de HVAC y sanitaria.
+  ASHRAE y las revistas de BNP Media (ACHR News, PM Engineer) responden 403 a los programas: no se usan.
+  Los títulos internacionales se traducen al español con el mismo proveedor de IA del chatbot (si está
+  configurado).
 
 Todas las fuentes pasan por un filtro de temas de Sinergi: instalaciones eléctricas y corrientes débiles,
 HVAC, protección contra incendio, seguridad electrónica, sistemas sanitarios y edificación/inmuebles.
+El admin puede además ocultar noticias puntuales desde su panel (ver visibles()).
 
 Actualización automática, sin intervención manual: la tarea de Celery `actualizar_noticias` las descarga
 todos los días a las 00:00, 06:00, 12:00 y 18:00 (hora de Chile; celery-beat) y las deja en caché (Redis).
@@ -23,6 +30,7 @@ Si esa programación falla, la primera visita con datos de más de 7 horas pide 
 La portada y la API solo leen la caché: el visitante nunca espera a los sitios externos.
 """
 import hashlib
+import html
 import json
 import logging
 import re
@@ -30,6 +38,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 from email.utils import parsedate_to_datetime
+from functools import partial
 
 from django.core.cache import cache
 from django.utils import timezone
@@ -47,11 +56,21 @@ VIGENCIA = timedelta(hours=7)          # beat actualiza cada 6 h; más que esto 
 DURACION_ARTICULO = 60 * 60 * 24 * 30  # datos y traducción de cada artículo NFPA: no se piden de nuevo
 MAX_BYTES = 5 * 1024 * 1024            # el sitemap de NFPA pesa ~1 MB
 MAX_NOTICIAS = 12                      # portada: se muestran 3 y el resto con "Ver más"
-MAX_GUARDADAS = 30                     # API
+MAX_GUARDADAS = 40                     # API (5 fuentes)
 MAX_NFPA = 6                           # artículos NFPA relevantes que se guardan
 MAX_DESCARGAS_NFPA = 12                # páginas de artículos NFPA por actualización (solo los nuevos)
+MAX_RSS = 5                            # artículos de HVAC y sanitaria que se guardan por revista
 
-FUENTES = {'leychile': 'Ley Chile', 'sec': 'SEC', 'nfpa': 'NFPA'}
+# Revistas internacionales de HVAC y sanitaria (RSS de WordPress). 'sitio': texto del enlace en la portada.
+FUENTES_RSS = {
+    'cse': {'fuente': 'CSE', 'etiqueta': 'Consulting-Specifying Engineer', 'sitio': 'csemag.com',
+            'url': 'https://www.csemag.com/feed/'},
+    'cibse': {'fuente': 'CIBSE', 'etiqueta': 'CIBSE Journal', 'sitio': 'cibsejournal.com',
+              'url': 'https://www.cibsejournal.com/feed/'},
+}
+
+FUENTES = {'leychile': 'Ley Chile', 'sec': 'SEC', 'nfpa': 'NFPA',
+           **{codigo: datos['etiqueta'] for codigo, datos in FUENTES_RSS.items()}}
 
 # Una ley se muestra si su título toca los temas de Sinergi (o la dicta un organismo del rubro) y no es
 # de las que solo comparten una palabra: derechos de agua, beneficios de bomberos, tránsito...
@@ -95,6 +114,19 @@ EXCLUIR_NFPA = re.compile(
     re.IGNORECASE)
 ARTICULO_NFPA = re.compile(
     r'https://www\.nfpa\.org/news-blogs-and-articles/(blogs|nfpa-journal)/(\d{4})/(\d{2})/(\d{2})/([\w-]+)')
+
+# CSE y CIBSE: solo HVAC y sanitaria (lo eléctrico y de incendio ya lo cubre NFPA). Se busca en el título y
+# la bajada, no en las categorías: CSE etiqueta todo con "mechanical engineer", "electrical engineer"...
+TEMAS_HVAC_SANITARIA = re.compile(
+    r'hvac|mechanical|heating|cooling|ventilat|air[- ]condition|air quality|\biaq\b|chiller|boiler|heat pump|'
+    r'heat recovery|heat network|district heat|refrigera|\bducts?\b|ductwork|thermal comfort|'
+    r'plumbing|water|drainage|sanitar|sewer|wastewater|rainwater|\bpumps?\b|pumping|condensate|legionella|flushing',
+    re.IGNORECASE)
+# ... sin premios, eventos, anuncios de la revista o de la empresa editora
+EXCLUIR_RSS = re.compile(
+    r'award|graduate of the year|young engineer|read the .*issue|webinar|webcast|podcast|conference|launch|'
+    r'parent company|sponsored|\bjobs?\b|career|obituar|people on the move',
+    re.IGNORECASE)
 
 
 def _descargar(url):
@@ -207,6 +239,35 @@ def articulos_nfpa(xml):
     return noticias
 
 
+# ==================== HVAC y sanitaria (CSE y CIBSE, internacional) ====================
+
+def _texto_html(fragmento):
+    """Bajada del RSS de WordPress: sin etiquetas HTML ni la línea final "The post ... appeared first on ..."."""
+    texto = html.unescape(re.sub(r'<[^>]+>', ' ', fragmento or ''))
+    texto = ' '.join(re.sub(r'The post .*? appeared first on .*$', '', texto, flags=re.S).split())
+    return texto if len(texto) <= 280 else texto[:279].rsplit(' ', 1)[0] + '…'
+
+
+def noticias_rss(codigo, xml):
+    """Artículos de HVAC y sanitaria del RSS de una revista (FUENTES_RSS), del más reciente al más antiguo."""
+    datos = FUENTES_RSS[codigo]
+    noticias = []
+    for item in ET.fromstring(xml).iter('item'):
+        titulo = ' '.join(html.unescape(item.findtext('title') or '').split())
+        bajada = _texto_html(item.findtext('description'))
+        if not TEMAS_HVAC_SANITARIA.search(f'{titulo} {bajada}') or EXCLUIR_RSS.search(f'{titulo} {bajada}'):
+            continue
+        noticias.append({
+            'fuente': datos['fuente'], 'codigo': codigo, 'etiqueta': datos['etiqueta'], 'sitio': datos['sitio'],
+            'titulo': titulo, 'titulo_original': titulo, 'bajada': bajada,
+            'idioma': 'en', 'fecha': parsedate_to_datetime(item.findtext('pubDate')).date(),
+            'url': (item.findtext('link') or '').strip(),
+        })
+        if len(noticias) == MAX_RSS:
+            break
+    return noticias
+
+
 def traducir(noticias):
     """Títulos y bajadas en inglés → español, una sola llamada al proveedor de IA por actualización.
     Cada traducción se guarda 30 días. Sin LLM_API_KEY o si falla, se muestran en inglés."""
@@ -225,9 +286,10 @@ def traducir(noticias):
     try:
         texto = llm.completar([
             {'role': 'system', 'content': (
-                'Traduce al español de Chile títulos y bajadas de artículos técnicos de NFPA (protección contra '
-                'incendio, electricidad, edificación). No traduzcas siglas ni nombres de normas (NFPA 70E, NEC, '
-                'NFPA 13...). Responde SOLO un arreglo JSON con objetos {"titulo": ..., "bajada": ...} en el mismo orden.')},
+                'Traduce al español de Chile títulos y bajadas de artículos técnicos de ingeniería de instalaciones '
+                '(protección contra incendio, electricidad, climatización y ventilación HVAC, sanitaria, edificación). '
+                'No traduzcas siglas ni nombres de normas (NFPA 70E, NEC, NFPA 13, HVAC, CIBSE...). '
+                'Responde SOLO un arreglo JSON con objetos {"titulo": ..., "bajada": ...} en el mismo orden.')},
             {'role': 'user', 'content': json.dumps(entrada, ensure_ascii=False)},
         ], max_tokens=400 + 250 * len(entrada))
         traducciones = json.loads(re.search(r'\[.*\]', texto, re.S).group(0))
@@ -236,7 +298,7 @@ def traducir(noticias):
     except llm.LLMNoConfigurado:
         return
     except Exception as error:  # proveedor caído o respuesta inesperada: quedan en inglés
-        log.warning('Noticias: no se pudieron traducir los títulos de NFPA (%s)', error)
+        log.warning('Noticias: no se pudieron traducir los títulos internacionales (%s)', error)
         return
     for n, t in zip(pendientes, traducciones):
         if not isinstance(t, dict) or not str(t.get('titulo', '')).strip():
@@ -249,10 +311,11 @@ def traducir(noticias):
 # ==================== Actualización y lectura ====================
 
 def actualizar():
-    """Descarga las tres fuentes y guarda las más recientes en caché. Una fuente caída no borra las otras."""
+    """Descarga todas las fuentes y guarda las más recientes en caché. Una fuente caída no borra las otras."""
     noticias = []
-    for url, interpretar in ((URL_LEYCHILE, leyes_relevantes), (URL_SEC, noticias_sec),
-                             (URL_NFPA_SITEMAP, articulos_nfpa)):
+    fuentes = [(URL_LEYCHILE, leyes_relevantes), (URL_SEC, noticias_sec), (URL_NFPA_SITEMAP, articulos_nfpa)]
+    fuentes += [(datos['url'], partial(noticias_rss, codigo)) for codigo, datos in FUENTES_RSS.items()]
+    for url, interpretar in fuentes:
         try:
             noticias += interpretar(_descargar(url))
         except Exception as error:  # red, XML inválido o formato cambiado: se registra y se sigue
@@ -272,8 +335,20 @@ def actualizado():
     return cache.get(CLAVE_ACTUALIZADO)
 
 
+def ocultas():
+    """Enlaces que el admin ocultó desde su panel (curaduría, ver web.models.NoticiaOculta)."""
+    from .models import NoticiaOculta
+    return set(NoticiaOculta.objects.values_list('url', flat=True))
+
+
+def visibles():
+    """Lo que se publica en la portada y en la API: todo el feed menos lo que el admin ocultó."""
+    excluir = ocultas()
+    return [n for n in todas() if n['url'] not in excluir]
+
+
 def todas():
-    """Lo guardado, del más reciente al más antiguo.
+    """Lo guardado, del más reciente al más antiguo (incluye lo oculto: el panel del admin lo muestra).
 
     Respaldo de la actualización programada (celery-beat cada 6 h): si no hay nada guardado o lo guardado
     tiene más de VIGENCIA (beat o el worker caídos, Redis reiniciado), pide actualizar en segundo plano.
@@ -293,8 +368,9 @@ def todas():
 
 def recientes():
     """Para la portada: primero la más reciente de cada fuente, así la primera fila mezcla normativa
-    chilena e internacional aunque una fuente publique mucho más que otra; luego el resto por fecha."""
-    noticias = todas()
+    chilena e internacional aunque una fuente publique mucho más que otra; luego el resto por fecha.
+    Lo oculto por el admin se salta y su lugar lo toma la siguiente (se guardan hasta MAX_GUARDADAS)."""
+    noticias = visibles()
     primeras = {}
     for n in noticias:
         primeras.setdefault(n['fuente'], n)

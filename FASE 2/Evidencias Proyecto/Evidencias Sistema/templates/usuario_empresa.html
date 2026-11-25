@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_usuarios.css' %}?v={{ VERSION_CSS }}">
   <link rel="icon" type="image/png" href="{% static 'loader.png' %}">
 </head>
 <body class="bg-sinergi-bg text-slate-800 font-sans antialiased min-h-screen flex flex-col">
@@ -62,12 +62,16 @@
 
       <!-- Menú de Navegación -->
       <nav class="flex flex-col gap-1 text-sm font-medium">
+        <button data-inicio onclick="switchTab('inicio', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+          Inicio
+        </button>
         <button onclick="switchTab('perfil', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
           1. Mi Perfil
         </button>
 
-        <button onclick="switchTab('proyectos', this)" class="nav-btn tab-active w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
+        <button onclick="switchTab('proyectos', this)" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-slate-700 hover:bg-slate-100 transition-colors">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           2. Proyectos Asignados
         </button>
@@ -94,6 +98,8 @@
     <main class="flex-1 min-w-0 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
 
       {% include '_mensajes.html' %}
+
+      {% include '_inicio.html' with pestana='proyectos' %}
 
       <!-- ======================================================== -->
       <!-- VISTA 1: MI PERFIL Y PERMISOS                            -->
@@ -140,7 +146,7 @@
       <!-- ======================================================== -->
       <!-- VISTA 2: PROYECTOS ASIGNADOS                             -->
       <!-- ======================================================== -->
-      <section id="view-proyectos" class="tab-content block space-y-6">
+      <section id="view-proyectos" class="tab-content hidden space-y-6">
         <div class="pb-4 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           <div>
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Proyectos Asignados</h1>
@@ -159,7 +165,7 @@
         <!-- Selector de Proyectos en Tarjetas -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           {% for proyecto in proyectos %}
-          <div data-id="{{ proyecto.id }}" data-status="{{ proyecto.estado }}" onclick="selectEmployeeProject('{{ proyecto.id }}')" class="p-card {% if forloop.first %}p-card-selected{% endif %} bg-white border border-slate-200 rounded-lg p-5 cursor-pointer hover:border-slate-400 shadow-sm transition-all hover:shadow-md">
+          <div data-id="{{ proyecto.id }}" data-status="{{ proyecto.estado }}" data-vivo="tarjeta-{{ proyecto.id }}" onclick="selectEmployeeProject('{{ proyecto.id }}')" class="p-card {% if forloop.first %}p-card-selected{% endif %} bg-white border border-slate-200 rounded-lg p-5 cursor-pointer hover:border-slate-400 shadow-sm transition-all hover:shadow-md">
             <div class="flex justify-between items-start">
               <span class="font-mono text-xs text-slate-500">SNG-{{ proyecto.id }}{% if proyecto.es_nuevo %} <span class="badge-nuevo">NUEVO</span>{% endif %}</span>
               <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
@@ -176,7 +182,7 @@
 
         <!-- Detalle técnico por proyecto -->
         {% for proyecto in proyectos %}
-        <div data-id="{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm space-y-6 {% if not forloop.first %}hidden{% endif %}">
+        <div data-id="{{ proyecto.id }}" data-vivo="detalle-{{ proyecto.id }}" class="p-detail bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-sm space-y-6 {% if not forloop.first %}hidden{% endif %}">
           <div class="flex flex-col xl:flex-row xl:items-center justify-between pb-4 border-b border-slate-200 gap-3">
             <div class="min-w-0 break-words">
               <span class="font-mono text-xs text-sinergi-blue font-bold">CONTROL DE OBRA</span>
@@ -248,7 +254,7 @@
 
         {% for proyecto in proyectos %}
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          <div class="bg-slate-50 px-5 py-4 border-b border-slate-200">
+          <div data-vivo="docs-cabecera-{{ proyecto.id }}" class="bg-slate-50 px-5 py-4 border-b border-slate-200">
             <div class="flex items-center gap-2">
               <span class="font-mono text-xs bg-slate-200 text-slate-700 font-medium px-2 py-0.5 rounded">SNG-{{ proyecto.id }}</span>
               <span class="estado" data-estado="{{ proyecto.estado }}">{{ proyecto.estado }}</span>
@@ -257,7 +263,7 @@
           </div>
 
           <div class="p-5 space-y-3">
-            <div class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
+            <div data-vivo="docs-{{ proyecto.id }}" class="divide-y divide-slate-100 border border-slate-200 rounded-md overflow-hidden bg-white">
               {% for doc in proyecto.documentos.all %}
               <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
                 <div class="flex items-start gap-3 min-w-0">
@@ -344,6 +350,8 @@
       document.querySelectorAll('.p-detail').forEach(d => d.classList.toggle('hidden', d.dataset.id !== id));
     }
   </script>
+  {% include '_en_vivo.html' %}
+  {% include '_ventana.html' %}
 {% include '_portal_responsivo.html' %}
 </body>
 </html>

@@ -17,6 +17,8 @@ urlpatterns = [
     path('fases/<int:fase_id>/subfases/<int:subfase_id>/editar/', views.subfase_form, name='subfase_editar'),
     path('etapa/<str:tipo>/<int:pk>/<str:accion>/', views.accion_etapa, name='etapa'),
     path('documentos/subir/', views.subir_documento, name='subir_documento'),
+    # Huellas para la actualización automática de los paneles (polling)
+    path('en-vivo/', views.firmas_proyectos, name='firmas'),
     # Archivar / restaurar / eliminar definitivamente (proyectos y solicitudes)
     path('archivo/<str:tipo>/<int:pk>/<str:accion>/', views.gestionar_archivo, name='archivo'),
     path('solicitar/', views.solicitar_proyecto, name='solicitar'),
@@ -27,4 +29,7 @@ urlpatterns = [
     path('peticiones/<int:peticion_id>/', views.detalle_peticion, name='peticion'),
     path('peticiones/<int:peticion_id>/mensajes/', views.mensajes_peticion, name='mensajes_peticion'),
     path('peticiones/<int:peticion_id>/estado/', views.estado_peticion, name='estado_peticion'),
+    path('peticiones/<int:peticion_id>/eliminar/', views.borrar_peticion, name='borrar_peticion'),  # solo para mí
+    path('peticiones/mensajes/<int:mensaje_id>/editar/', views.editar_mensaje, name='editar_mensaje'),
+    path('peticiones/mensajes/<int:mensaje_id>/eliminar/', views.eliminar_mensaje, name='eliminar_mensaje'),
 ]

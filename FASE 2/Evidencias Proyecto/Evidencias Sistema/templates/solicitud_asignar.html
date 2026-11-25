@@ -3,8 +3,8 @@
 {% block title %}Asignar Cliente SOL-{{ solicitud.id }} | Sinergi{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
-  <a href="{% url 'dashboard' %}?tab=solicitudes-proyectos" class="text-xs text-slate-500 hover:underline">&larr; Volver a Solicitudes</a>
+<div class="max-w-5xl mx-auto" data-ventana-tipo="ancha">
+  <a data-fuera-ventana href="{% url 'dashboard' %}?tab=solicitudes-proyectos" class="text-xs text-slate-500 hover:underline">&larr; Volver a Solicitudes</a>
   <h1 class="text-xl sm:text-2xl font-bold text-slate-900 mt-2">Asignar Cliente a SOL-{{ solicitud.id }}</h1>
   <p class="text-sm text-slate-500 mt-1">Crea una cuenta de cliente con los datos de la solicitud o vincúlala a un cliente que ya existe.</p>
 

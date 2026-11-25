@@ -65,6 +65,13 @@ EMAIL_TIMEOUT = 15  # segundos: un SMTP caído no deja la página colgada
 # Gmail exige que el remitente sea la misma cuenta que inicia sesión
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='') or f'Sinergi <{EMAIL_HOST_USER or "no-responder@sinergi.cl"}>'
 
+# Avisos automáticos por correo (proyectos/notificaciones.py). Los envía el worker de Celery, que no tiene
+# la petición web a mano: los enlaces de los correos se arman con SITIO_URL. Por defecto sale de DOMINIO.
+DOMINIO = env('DOMINIO', default='localhost')
+SITIO_URL = env('SITIO_URL', default='') or ('http://localhost:8000' if DOMINIO == 'localhost' else f'https://{DOMINIO}')
+# Los cambios de avance de una obra se juntan en un solo correo al cliente durante estos minutos
+AVISOS_AGRUPAR_MINUTOS = env.int('AVISOS_AGRUPAR_MINUTOS', default=5)
+
 # Antivirus de documentos subidos (ClamAV, servicio "clamav"). Vacío = desactivado (solo para tests).
 CLAMAV_HOST = env('CLAMAV_HOST', default='clamav')
 CLAMAV_PORT = env.int('CLAMAV_PORT', default=3310)
@@ -78,10 +85,17 @@ CELERY_TIMEZONE = 'America/Santiago'
 
 # Proyectos y solicitudes archivados se eliminan definitivamente tras estos días
 DIAS_ARCHIVO = env.int('DIAS_ARCHIVO', default=60)
+# Peticiones & Chat: una conversación sin actividad (mensajes ni cambios de estado) por más de estos días
+# se elimina completa con sus mensajes (proyectos.tasks.purgar_chats)
+DIAS_CHAT = env.int('DIAS_CHAT', default=60)
+# SuperAdmin de demostración (usuarios/superadmin.py, manage.py crear_superadmin): una sesión que cambia entre
+# las vistas Admin, Empleado y Cliente. Cuentas: este nombre, <nombre>_empleado y <nombre>_cliente
+SUPERADMIN_USUARIO = env('SUPERADMIN_USUARIO', default='superadmin')
 # Horarios fijos de reloj (hora de Chile), no "cada N horas desde que arrancó beat": en producción beat no
 # guarda su estado, y con intervalos cada reinicio o despliegue volvía a contar desde cero.
 CELERY_BEAT_SCHEDULE = {
     'purgar-archivados': {'task': 'proyectos.tasks.purgar_archivados', 'schedule': crontab(hour=3, minute=30)},
+    'purgar-chats': {'task': 'proyectos.tasks.purgar_chats', 'schedule': crontab(hour=3, minute=45)},
     'actualizar-noticias': {'task': 'web.tasks.actualizar_noticias', 'schedule': crontab(hour='*/6', minute=0)},
 }
 
@@ -192,6 +206,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sinergi.contexto.ajustes',
+                'usuarios.superadmin.contexto',
             ],
         },
     },
